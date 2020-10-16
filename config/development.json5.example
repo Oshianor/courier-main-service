@@ -1,0 +1,36 @@
+{
+	application: {
+    port: 4000,
+		jwt: {
+			key: "5eb90nWgiGBaf6c024d207",
+			expireDate: "20w"
+		}
+  },
+  database: {
+    port: 27001,
+    url: "mongodb+srv://techone:techone2020@churchapp-tb9kg.gcp.mongodb.net/logistics",
+  },
+  aws: {
+    region: "af-south-1",
+    bucket: "commerceLogistics",
+  },
+  mail: {
+    key: "SG.pfpHEvA8T6apQE0IXi4J1g.8y_6kNdw1oMq0ky7Ho_BvW4",
+    email: "admin@techoneesystems.com",
+    domain: "https://exaltweb.netlify.app",
+    agreementURL: "https://dev.agreement.exaltchurches.com",
+  },
+  cdn: {
+    url: "https://d12xp0t1lkbg8.cloudfront.net/",
+  },
+  otp: {
+    termil: "TLBMcobpjGogzsYvZWvcKsdLHFw",
+  },
+  paystack: {
+    secret: "sk_test_44f0de5ab496afb",
+    public: "pk_test_ad7a14206a8abc7",
+  },
+  api: {
+    base: "http://localhost:9090/api/v1",
+  },
+}

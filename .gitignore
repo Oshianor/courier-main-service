@@ -1,0 +1,6 @@
+public/images/*
+config/development.json5
+node_modules/
+logs/*
+sendgrid.env
+.DS_Store

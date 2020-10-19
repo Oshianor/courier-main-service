@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const JWT = require("jsonwebtoken");
+const config = require("config");
 
 const adminSchema = new mongoose.Schema({
   name: {
@@ -28,7 +29,7 @@ adminSchema.pre("save", async function (next) {
 });
 
 //validate admin's password
-adminSchema.methods.validPassword = async function (inputedPassword) {
+adminSchema.methods.isValidPassword = async function (inputedPassword) {
   let validPassword = await bcrypt.compare(inputedPassword, this.password);
   return validPassword;
 };
@@ -40,8 +41,8 @@ adminSchema.methods.generateToken = function () {
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
       adminId: this._id,
     },
-    jwtSecret
+    config.get("application.jwt.key")
   );
 };
 
-module.exports = mongoose.model("Admin", adminScema);
+module.exports = mongoose.model("Admin", adminSchema);

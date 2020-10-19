@@ -29,7 +29,7 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       required: false,
-      index: true
+      index: true,
     },
     phoneNumber: {
       type: String,
@@ -41,7 +41,7 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       required: false,
-      index: true
+      index: true,
     },
     firstName: {
       type: String,
@@ -83,15 +83,18 @@ UserSchema.methods.generateToken = function () {
 
 const User = mongoose.model("User", UserSchema);
 
-
 function validateUser(user) {
   const Schema = Joi.object().keys({
     email: Joi.string().email().label("Email").max(50).required(),
     firstName: Joi.string().label("First Name").max(15).required(),
     lastName: Joi.string().label("Last Name").max(15).required(),
     phoneNumber: Joi.string().label("Phone Number").min(10).max(11).required(),
-    password: passwordComplexity(complexityOptions).label("Password").required(),
-    confirmPassword: passwordComplexity(complexityOptions).label("Confirm Password").required(),
+    password: passwordComplexity(complexityOptions)
+      .label("Password")
+      .required(),
+    confirmPassword: passwordComplexity(complexityOptions)
+      .label("Confirm Password")
+      .required(),
   });
 
   return Schema.validate(user);
@@ -100,12 +103,13 @@ function validateUser(user) {
 function validateLogin(user) {
   const Schema = Joi.object().keys({
     email: Joi.string().email().label("Email").max(50).required(),
-    password: passwordComplexity(complexityOptions).label("Password").required(),
+    password: passwordComplexity(complexityOptions)
+      .label("Password")
+      .required(),
   });
 
   return Schema.validate(user);
 }
-
 
 module.exports = {
   validateUser,

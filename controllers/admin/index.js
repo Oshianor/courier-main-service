@@ -6,7 +6,8 @@ const { MSG_TYPES } = require("../../constant/msg");
 createAdmin = async (req, res) => {
   try {
     adminSchema = Joi.object({
-      name: Joi.string().required(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
       email: Joi.string().required(),
       password: Joi.string().required(),
       role: Joi.string().required().valid("super_admin", "admin"),
@@ -21,14 +22,13 @@ createAdmin = async (req, res) => {
     // check if an existing admin has incoming email
     const admins = await Admin.find({ email: req.body.email });
 
-    console.log(admins.length);
-
     if (admins.length > 0) {
       return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
     }
 
     const admin = new Admin();
-    admin.name = req.body.name;
+    admin.firstName = req.body.firstName;
+    admin.lastName = req.body.lastName;
     admin.email = req.body.email;
     admin.password = req.body.password;
     admin.role = req.body.role;

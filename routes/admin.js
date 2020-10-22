@@ -1,3 +1,7 @@
+/**
+ * This File contains all Admin Related Routes
+ */
+
 const express = require("express");
 const router = express.Router();
 const controllers = require("../controllers/admin");

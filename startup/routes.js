@@ -5,7 +5,7 @@ const cors = require("cors");
 const error = require("../middlewares/error");
 const user = require("../routes/user");
 const auth = require("../routes/auth");
-const adminRoutes = require("../routes/adminRoutes");
+const adminRoutes = require("../routes/admin");
 const port = process.env.PORT || config.get("application.port");
 const corsOptions = {
   origin: "*",

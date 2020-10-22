@@ -5,7 +5,7 @@ const cors = require("cors");
 const error = require("../middlewares/error");
 const user = require("../routes/user");
 const auth = require("../routes/auth");
-const admin = require("../routes/admin");
+const adminRoutes = require("../routes/adminRoutes");
 const port = process.env.PORT || config.get("application.port");
 const corsOptions = {
   origin: "*",
@@ -18,6 +18,6 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.static("public"));
 app.use("/api/v1/user", user);
 app.use("/api/v1/auth", auth);
-app.use("/api/v1/admins", admin);
+app.use("/api/v1/admins", adminRoutes);
 app.use(error);
 app.listen(port, () => console.log(`Listening on port ${port}...`));

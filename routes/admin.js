@@ -1,15 +1,30 @@
+/**
+ * This File contains all Admin Related Routes
+ */
+
 const express = require("express");
 const router = express.Router();
-const { createAdmin, adminLogin, getAdmins } = require("../controllers/admin");
+const controllers = require("../controllers/admin");
 
 const { hasRole, ROLES } = require("../middlewares/role");
 const { adminAuth } = require("../middlewares/adminAuth");
 
-// Create a new admin
-router.post("/", createAdmin);
+// Auth Routes
+router.post("/", controllers.auth.createAdmin);
+router.post("/login", controllers.auth.adminLogin);
 
-router.post("/login", adminLogin);
+//Admin Routes
+router.get("/", adminAuth, hasRole(["admin"]), controllers.admin.getAdmins);
 
-router.get("/", adminAuth, hasRole(["admin"]), getAdmins);
+// Company routes
+router.post("/companies", adminAuth, controllers.company.createCompany);
+
+router.get("/companies", adminAuth, controllers.company.getAll);
+
+router.get("/companies/:companyId", adminAuth, controllers.company.getOne);
+
+router.put("/companies/:companyId", adminAuth, controllers.company.update);
+
+router.delete("/companies/:companyId", adminAuth, controllers.company.destroy);
 
 module.exports = router;

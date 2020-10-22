@@ -16,7 +16,8 @@ CreateUser = async (req, res) => {
   try {
     // validate request
     const { error } = validateUser(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message, null, null);
 
     // check if account exist
     const userExist = await User.findOne({ email: req.body.email });
@@ -28,7 +29,6 @@ CreateUser = async (req, res) => {
     newUser.email.toLowerCase();
     await newUser.save();
 
-    
     JsonResponse(res, 200, "ACCOUNT_CREATED", null, null);
     return;
   } catch (error) {

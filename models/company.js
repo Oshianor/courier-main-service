@@ -47,7 +47,7 @@ const companySchema = new mongoose.Schema(
       type: [String],
     },
     priority: {
-      type: [String],
+      type: Number,
     },
     logo: {
       type: String,

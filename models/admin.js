@@ -3,25 +3,27 @@ const bcrypt = require("bcrypt");
 const JWT = require("jsonwebtoken");
 const config = require("config");
 
-const adminSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
+const adminSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+    },
+    role: {
+      type: String,
+      enum: ["super_admin", "admin"],
+    },
   },
-  lastName: {
-    type: String,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  password: {
-    type: String,
-  },
-  role: {
-    type: String,
-    enum: ["super_admin", "admin"],
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 // hash passwords for new records before saving
 adminSchema.pre("save", async function (next) {

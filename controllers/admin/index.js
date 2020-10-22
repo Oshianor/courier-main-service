@@ -6,8 +6,7 @@ const { MSG_TYPES } = require("../../constant/msg");
 createAdmin = async (req, res) => {
   try {
     adminSchema = Joi.object({
-      firstName: Joi.string().required(),
-      lastName: Joi.string().required(),
+      name: Joi.string().required(),
       email: Joi.string().required(),
       password: Joi.string().required(),
       role: Joi.string().required().valid("super_admin", "admin"),
@@ -27,8 +26,7 @@ createAdmin = async (req, res) => {
     }
 
     const admin = new Admin();
-    admin.firstName = req.body.firstName;
-    admin.lastName = req.body.lastName;
+    admin.name = req.body.name;
     admin.email = req.body.email;
     admin.password = req.body.password;
     admin.role = req.body.role;

@@ -26,9 +26,10 @@ const companySchema = new mongoose.Schema(
     },
     RCnumber: String,
     TIN: String,
-    Status: {
+    status: {
       type: String,
       enum: ["active", "inactive", "suspended"],
+      default: "active",
     },
     totalRiders: {
       type: Number,
@@ -44,10 +45,11 @@ const companySchema = new mongoose.Schema(
       ref: "Vehicle",
     },
     rcDoc: {
-      type: [String],
+      type: String,
     },
     priority: {
       type: Number,
+      default: 0,
     },
     logo: {
       type: String,

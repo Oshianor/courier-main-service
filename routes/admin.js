@@ -25,6 +25,8 @@ router.get("/companies/:companyId", adminAuth, controllers.company.getOne);
 
 router.put("/companies/:companyId", adminAuth, controllers.company.update);
 
+router.patch("/companies/:companyId/status", adminAuth, controllers.company.updateStatus);
+
 router.delete("/companies/:companyId", adminAuth, controllers.company.destroy);
 
 module.exports = router;

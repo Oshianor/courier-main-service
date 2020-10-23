@@ -2,6 +2,7 @@ const Joi = require("joi");
 const Company = require("../../models/company");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
+const { Storage } = require("../../utils");
 
 /**
  * Create Company
@@ -27,16 +28,35 @@ exports.createCompany = async (req, res) => {
     const { error } = adminSchema.validate(req.body);
 
     if (error) {
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      JsonResponse(res, 400, error.details[0].message, null, null);
+      return;
     }
+
     // check if an existing company  has incoming email
     const admins = await Company.find({ email: req.body.email });
 
     if (admins.length > 0) {
-      return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
+      JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
+      return;
     }
 
-    const company = await Company.create(req.body);
+    const data = req.body;
+
+    if (req.files.rcDoc) {
+      data.rcDoc = await Storage.upload(
+        req.files.rcDoc.data,
+        req.files.rcDoc.name
+      );
+    }
+    if (req.files.logo) {
+      data.logo = await Storage.upload(
+        req.files.logo.data,
+        req.files.logo.name
+      );
+    }
+
+    //Save Data to bb
+    const company = await Company.create(data);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, company, null);
   } catch (error) {
@@ -104,8 +124,23 @@ exports.update = async (req, res) => {
       JsonResponse(res, 400, error.details[0].message, null, null);
       return;
     }
+
+    const data = req.body;
+
+    if (req.files.rcDoc) {
+      data.rcDoc = await Storage.upload(
+        req.files.rcDoc.data,
+        req.files.rcDoc.name
+      );
+    }
+    if (req.files.logo) {
+      data.logo = await Storage.upload(
+        req.files.logo.data,
+        req.files.logo.name
+      );
+    }
     const companyId = req.params.companyId;
-    const company = await Company.findByIdAndUpdate(companyId, req.body, {
+    const company = await Company.findByIdAndUpdate(companyId, data, {
       new: true,
     });
 

@@ -44,10 +44,11 @@ const companySchema = new mongoose.Schema(
       ref: "Vehicle",
     },
     rcDoc: {
-      type: [String],
+      type: String,
     },
     priority: {
       type: Number,
+      default: 0,
     },
     logo: {
       type: String,

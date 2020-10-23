@@ -9,7 +9,6 @@ const { Storage } = require("../../utils");
  * @param {*} req
  * @param {*} res
  */
-
 exports.createCompany = async (req, res) => {
   try {
     adminSchema = Joi.object({
@@ -150,6 +149,40 @@ exports.update = async (req, res) => {
     }
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, company, null);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+/**
+ * Update Company Status
+ * @param {*} req
+ * @param {*} res
+ */
+exports.updateStatus = async (req, res) => {
+  try {
+    adminSchema = Joi.object({
+      status: Joi.string().required().valid("active", "inactive", "suspended"),
+    }).with("password", "repeat_password");
+
+    const { error } = adminSchema.validate(req.body);
+
+    if (error) {
+      return JsonResponse(res, 400, error.details[0].message, null, null);
+    }
+
+    const companyId = req.params.companyId;
+    const company = await Company.findOne({ _id: companyId });
+    if (!company) {
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      return;
+    }
+
+    company.status = req.body.status;
+    await company.save();
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

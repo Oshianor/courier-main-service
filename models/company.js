@@ -26,9 +26,10 @@ const companySchema = new mongoose.Schema(
     },
     RCnumber: String,
     TIN: String,
-    Status: {
+    status: {
       type: String,
       enum: ["active", "inactive", "suspended"],
+      default: "active",
     },
     totalRiders: {
       type: Number,

@@ -7,7 +7,7 @@ const riderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    lastname: {
+    lastName: {
       type: String,
       required: true,
     },
@@ -35,6 +35,9 @@ const riderSchema = new mongoose.Schema(
     },
     proofOfIdentityExpireAt: {
       type: Date,
+    },
+    image: {
+      type: String,
     },
     company: {
       type: mongoose.Types.ObjectId,
@@ -78,4 +81,4 @@ const riderSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Rider", companySchema);
+module.exports = mongoose.model("Rider", riderSchema);

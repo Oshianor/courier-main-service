@@ -19,41 +19,39 @@ const companySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      maxlength: 50,
     },
     email: {
       type: String,
       required: true,
-      maxlength: 70
+      maxlength: 70,
+      index: true,
     },
     password: {
       type: String,
-      required: true,
     },
     address: {
       type: String,
+      required: true,
     },
     contactName: {
       type: String,
+      required: true,
+      maxlength: 30,
     },
     contactPhoneNumber: {
       type: String,
+      required: true,
+      maxlength: 11,
     },
-    RCnumber: String,
-    TIN: String,
+    RCNumber: { type: String, required: true },
+    TIN: { type: String, required: true },
     status: {
       type: String,
       enum: ["active", "inactive", "suspended"],
       default: "active",
     },
-    totalRiders: {
-      type: Number,
-    },
-    totalTransaction: {
-      type: Number,
-    },
-    totalOrders: {
-      type: Number,
-    },
+
     vehicles: {
       type: [ObjectId],
       ref: "Vehicle",
@@ -63,13 +61,11 @@ const companySchema = new mongoose.Schema(
     },
     publicToken: {
       type: String,
-    },
-    priority: {
-      type: Number,
-      default: 0,
+      required: true,
     },
     logo: {
       type: String,
+      required: true,
     },
     tier: {
       type: ObjectId,
@@ -91,6 +87,25 @@ const companySchema = new mongoose.Schema(
     createdBy: {
       type: ObjectId,
       ref: "Admin",
+    },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
+    },
+    totalRiders: {
+      type: Number,
+    },
+    totalTransaction: {
+      type: Number,
+    },
+    totalOrders: {
+      type: Number,
     },
   },
   {

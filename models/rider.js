@@ -75,6 +75,16 @@ const riderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

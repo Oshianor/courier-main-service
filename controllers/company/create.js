@@ -1,7 +1,10 @@
 const {Company, validateCompany} = require("../../models/company");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
-const { Storage } = require("../../utils");
+const { Storage, Mailer } = require("../../utils");
+const { Verification } = require("../../templates")
+const moment = require("moment");
+const { v4: uuidv4 } = require("uuid");
 
 /**
  * Create Company
@@ -20,26 +23,31 @@ exports.createCompany = async (req, res) => {
     const company = await Company.findOne({ email: req.body.email });
     if (company) return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
-    const data = req.body;
-
     if (req.files.rcDoc) {
       const rcDoc = await Storage.upload(
         req.files.rcDoc.data,
         req.files.rcDoc.name
       );
-      data.rcDoc = rcDoc.Key;
+      req.body.rcDoc = rcDoc.Key;
     }
     if (req.files.logo) {
       const logo = await Storage.upload(
         req.files.logo.data,
         req.files.logo.name
       );
-      data.logo = logo.Key;
+      req.body.logo = logo.Key;
     }
-    data.createdBy = req.user.id;
 
     //Save Data to bb
-    const newCompany = await Company.create(data);
+    const token = GenerateToken(50);
+    req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
+    req.body.createdBy = req.user.id;
+    req.body.publicToken = uuidv4();
+    const newCompany = await Company.create(req.body);
+
+    const subject = "Welcome to Exalt Logistics";
+    const html = Verification(token, req.body.email);
+    Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, newCompany, null);
     return

@@ -15,7 +15,7 @@ module.exports = {
       instances: 0,
       exec_mode: "cluster",
       watch_delay: 3000,
-      ignore_watch: ["node_modules", "public", "startup/access.log", "startup/errors.log"],
+      ignore_watch: ["node_modules", "public"],
       watch_options: {
         followSymlinks: false,
       },

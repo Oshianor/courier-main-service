@@ -49,6 +49,16 @@ const adminSchema = new mongoose.Schema(
       default: null,
       required: true,
     },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

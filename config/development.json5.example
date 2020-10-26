@@ -4,7 +4,8 @@
 		jwt: {
 			key: "5eb90nWgiGBaf6c024d207",
 			expireDate: "20w"
-		}
+		},
+    website: "https://exaltapp.com"
   },
   database: {
     port: 27001,
@@ -17,10 +18,8 @@
     bucket: "test-bucket-ndie",
   },
   mail: {
-    key: "SG.pfpHEvA8T6apQE0IXi4J1g.8y_6kNdw1oMq0ky7Ho_BvW4",
+    key: "SG.p6apQE0IXi4J1g.8y_6kNdw1oMq0ky7Ho_BvW4",
     email: "admin@techoneesystems.com",
-    domain: "https://exaltweb.netlify.app",
-    agreementURL: "https://dev.agreement.exaltchurches.com",
   },
   cdn: {
     url: "https://d12xp0t1lkbg8.cloudfront.net/",

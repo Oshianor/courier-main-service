@@ -29,4 +29,18 @@ router.patch("/companies/:companyId/status", adminAuth, controllers.company.upda
 
 router.delete("/companies/:companyId", adminAuth, controllers.company.destroy);
 
+
+// Rider routes
+router.post("/companies/:companyId/riders", adminAuth, controllers.rider.create);
+
+router.get("/companies/:companyId/riders", adminAuth, controllers.rider.getAll);
+
+router.get("/companies/:companyId/riders/:riderId", adminAuth, controllers.rider.getOne);
+
+router.put("/companies/:companyId/riders/:riderId", adminAuth, controllers.rider.update);
+
+router.delete("/companies/:companyId/riders/:riderId", adminAuth, controllers.rider.destroy);
+
+
+
 module.exports = router;

@@ -41,10 +41,13 @@ const companySchema = new mongoose.Schema(
       type: Number,
     },
     vehicles: {
-      type: mongoose.Types.ObjectId,
+      type: [mongoose.Types.ObjectId],
       ref: "Vehicle",
     },
     rcDoc: {
+      type: String,
+    },
+    publicToken: {
       type: String,
     },
     priority: {

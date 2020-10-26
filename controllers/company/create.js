@@ -11,36 +11,37 @@ const { Storage } = require("../../utils");
 exports.createCompany = async (req, res) => {
   try {
     const { error } = validateCompany(req.body);
-
     if (error) {
       JsonResponse(res, 400, error.details[0].message, null, null);
       return;
     }
 
     // check if an existing company  has incoming email
-    const admins = await Company.findOne({ email: req.body.email });
-    if (admins) return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-
+    const company = await Company.findOne({ email: req.body.email });
+    if (company) return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
     const data = req.body;
 
     if (req.files.rcDoc) {
-      data.rcDoc = await Storage.upload(
+      const rcDoc = await Storage.upload(
         req.files.rcDoc.data,
         req.files.rcDoc.name
       );
+      data.rcDoc = rcDoc.Key;
     }
     if (req.files.logo) {
-      data.logo = await Storage.upload(
+      const logo = await Storage.upload(
         req.files.logo.data,
         req.files.logo.name
       );
+      data.logo = logo.Key;
     }
+    data.createdBy = req.user.id;
 
     //Save Data to bb
-    const company = await Company.create(data);
+    const newCompany = await Company.create(data);
 
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, company, null);
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, newCompany, null);
     return
   } catch (error) {
     console.log(error);

@@ -20,10 +20,10 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
     email: {
       type: String,
       required: true,
+      maxlength: 70
     },
     password: {
       type: String,

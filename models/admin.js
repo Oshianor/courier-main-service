@@ -38,6 +38,11 @@ const adminSchema = new mongoose.Schema(
       required: true,
       enum: ["super_admin", "admin", "accountant"],
     },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
+    },
     createdBy: {
       type: ObjectId,
       ref: "Admin",

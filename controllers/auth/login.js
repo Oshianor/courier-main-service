@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const Admin = require("../../models/admin");
+const {Admin} = require("../../models/admin");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { User, validateLogin } = require("../../models/users");
@@ -62,7 +62,11 @@ exports.adminLogin = async (req, res) => {
     }
     let token = admin.generateToken();
 
-    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, { token, admin }, null);
+    delete admin.password;
+
+    res.header("x-auth-token", token);
+    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
+    return
   } catch (error) {
     console.log(error);
     return res.status(500).send("Something went wrong!");

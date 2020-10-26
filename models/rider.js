@@ -91,4 +91,46 @@ const riderSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Rider", riderSchema);
+function validateRider(body) {
+  const riderSchema = Joi.object({
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    email: Joi.string().email().optional(),
+    phoneNumber: Joi.string().required(),
+    address: Joi.string().required(),
+    DOB: Joi.date().required(),
+    proofOfIdentityExpireAt: Joi.date().optional(),
+    policyNumber: Joi.string().optional(),
+    plateNumber: Joi.string().optional(),
+    ecName: Joi.string().optional(),
+    ecPhone: Joi.string().optional(),
+    ecEmail: Joi.string().email().optional(),
+  });
+
+  return riderSchema.validate(body);
+}
+
+function validateUpdateRider(body) {
+  const riderSchema = Joi.object({
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    address: Joi.string().required(),
+    DOB: Joi.date().required(),
+    proofOfIdentityExpireAt: Joi.date().optional(),
+    policyNumber: Joi.string().optional(),
+    plateNumber: Joi.string().optional(),
+    ecName: Joi.string().optional(),
+    ecPhone: Joi.string().optional(),
+    ecEmail: Joi.string().email().optional(),
+  });
+
+  return riderSchema.validate(body);
+}
+
+const Rider = mongoose.model("Rider", riderSchema);
+
+mongoose.exports = {
+  Rider,
+  validateRider,
+  validateUpdateRider,
+};

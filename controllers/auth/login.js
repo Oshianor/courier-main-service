@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const { Admin } = require("../../models/admin");
+const { Admin, validateAdminLogin } = require("../../models/admin");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { User, validateLogin } = require("../../models/users");
@@ -42,12 +42,7 @@ exports.LoginAsUser = async (req, res) => {
  */
 exports.adminLogin = async (req, res) => {
   try {
-    adminSchema = Joi.object({
-      email: Joi.string().required(),
-      password: Joi.string().required(),
-    });
-
-    const { error } = adminSchema.validate(req.body);
+    const { error } = validateAdminLogin(req.body);
 
     if (error) {
       return JsonResponse(res, 400, error.details[0].message, null, null);

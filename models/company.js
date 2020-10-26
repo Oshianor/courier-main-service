@@ -131,7 +131,7 @@ companySchema.methods.isValidPassword = async function (inputedPassword) {
 function validateCompany(body) {
   const schema = Joi.object({
     name: Joi.string().required(),
-    email: Joi.string().email(),
+    email: Joi.string().email().required(),
     contactName: Joi.string().required(),
     contactPhoneNumber: Joi.string().required(),
     RCnumber: Joi.string().required(),
@@ -151,10 +151,30 @@ function validateCompanyLogin(body) {
   return schema.validate(body);
 }
 
-const Company = mongoose.model("Company", companySchema);
+function validateUpdateCompany(body) {
+  const adminSchema = Joi.object({
+    name: Joi.string().required(),
+    contactName: Joi.string().required(),
+    contactPhoneNumber: Joi.string().required(),
+    RCnumber: Joi.string().optional(),
+    TIN: Joi.string().optional(),
+  });
+  return adminSchema.validate(body);
+}
 
+function validateStatusUpdate(body) {
+  const adminSchema = Joi.object({
+    status: Joi.string().required().valid("active", "inactive", "suspended"),
+  });
+
+  return adminSchema.validate(body);
+}
+
+const Company = mongoose.model("Company", companySchema);
 
 module.exports = {
   Company,
   validateCompany,
+  validateUpdateCompany,
+  validateStatusUpdate,
 };

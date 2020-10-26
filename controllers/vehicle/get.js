@@ -1,6 +1,6 @@
 const { JsonResponse } = require("../../lib/apiResponse");
 const { Admin } = require("../../models/admin");
-const { Pricing, validatePricing } = require("../../models/pricing");
+const { Vehicle} = require("../../models/vehicle");
 const { MSG_TYPES } = require("../../constant/msg");
 
 
@@ -11,9 +11,9 @@ exports.all = async (req, res) => {
     if (!admin) return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
 
 
-    const pricing = await Pricing.find();
+    const vehicle = await Vehicle.find();
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, pricing, null);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle, null);
     return;
   } catch (error) {
     console.log(error);

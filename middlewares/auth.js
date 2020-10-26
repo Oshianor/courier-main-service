@@ -4,7 +4,7 @@ const config = require("config");
 const { MSG_TYPES } = require("../constant/msg");
 const { Admin } = require("../models/admin")
 const ROLES = {
-  SUPER_ADMIN: "super_admin",
+  SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
 };
 

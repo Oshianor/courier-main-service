@@ -36,7 +36,7 @@ const adminSchema = new mongoose.Schema(
     role: {
       type: String,
       required: true,
-      enum: ["super_admin", "admin", "accountant"],
+      enum: ["superAdmin", "admin", "accountant"],
     },
     status: {
       type: String,
@@ -83,8 +83,9 @@ adminSchema.methods.isValidPassword = async function (inputedPassword) {
 adminSchema.methods.generateToken = function () {
   return JWT.sign(
     {
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
       id: this._id,
+      email: this.email,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
     },
     config.get("application.jwt.key")
   );
@@ -96,8 +97,8 @@ function validateAdmin(body) {
     name: Joi.string().max(30).required(),
     email: Joi.string().max(50).email().required(),
     password: passwordComplexity(complexityOptions).required(),
-    confirmPassword: Joi.ref("password").required(),
-    role: Joi.string().required().valid("super_admin", "admin", "accountant"),
+    confirmPassword: Joi.string().disallow(Joi.ref("password")).required(),
+    role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
   });
 
   return schema.validate(body);

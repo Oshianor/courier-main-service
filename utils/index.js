@@ -1,9 +1,82 @@
-const normalizedPath = require("path").join(__dirname);
-require("fs")
-  .readdirSync(normalizedPath)
-  .forEach(function (file) {
-    if (!file.includes("index")) {
-      var moduleName = file.split(".")[0];
-      exports[moduleName] = require("./" + moduleName);
-    }
-  });
+const config = require("config");
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
+const fs = require("fs");
+const path = require("path");
+const AWS = require("aws-sdk");
+const s3 = new AWS.S3();
+const sgMail = require("@sendgrid/mail");
+
+const GenerateToken = (num) => {
+  var text = "";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < num; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+};
+
+const Mailer = (
+  email,
+  subject,
+  html,
+  senderEmail = config.get("mail.email")
+) => {
+  sgMail.setApiKey(config.get("mail.key"));
+  const msg = {
+    to: email,
+    from: senderEmail,
+    subject,
+    html,
+  };
+
+  return sgMail.send(msg);
+};
+
+const UploadFileFormLocal = async (file, churchId) => {
+  try {
+    
+
+    console.log("start");
+
+    const params = {
+      Bucket: config.get("aws.bucket"),
+      Key: `${churchId}/${Date.now()}`,
+      // ACL: "public-read"
+    };
+
+    const fileContent = fs.readFileSync(__dirname + "/../" + file.path);
+    params.Body = fileContent;
+    params.ContentEncoding = file.encoding;
+    params.ContentType = file.mimetype;
+    params.Key = params.Key + "." + file.mimetype.split("/")[1];
+
+    console.log("params", params);
+
+    const upload = await s3.upload(params).promise();
+    console.log("Uploaded in:", upload);
+    return upload;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const UploadFileFromBinary = async (fileInBanary, fileName) => {
+  const params = {
+    Bucket: config.get("aws.bucket"),
+    Key: `${Date.now()}_${fileName}`, // File name you want to save as in S3
+    Body: fileInBanary,
+  };
+  const upload = await s3.upload(params).promise();
+  // console.log("Upload Data:", upload);
+  return upload;
+};
+
+module.exports = {
+  GenerateToken,
+  Mailer,
+  UploadFileFormLocal,
+  UploadFileFromBinary,
+};

@@ -8,14 +8,20 @@ const complexityOptions = {
   min: 6,
   max: 20,
   lowerCase: 1,
-  upperCase: 0,
+  upperCase: 1,
   numeric: 1,
-  symbol: 0,
+  symbol: 1,
   requirementCount: 1,
 };
 
 const companySchema = new mongoose.Schema(
   {
+    publicToken: {
+      type: String,
+      required: true,
+      index: true,
+      unique: true,
+    },
     name: {
       type: String,
       required: true,
@@ -24,7 +30,7 @@ const companySchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      maxlength: 70,
+      maxlength: 50,
       index: true,
     },
     password: {
@@ -49,17 +55,15 @@ const companySchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["active", "inactive", "suspended"],
-      default: "active",
+      default: "inactive",
+      required: true,
     },
-
     vehicles: {
       type: [ObjectId],
       ref: "Vehicle",
+      // required: true,
     },
     rcDoc: {
-      type: String,
-    },
-    publicToken: {
       type: String,
       required: true,
     },
@@ -92,6 +96,7 @@ const companySchema = new mongoose.Schema(
       token: {
         type: String,
         default: null,
+        maxlength: 50
       },
       expiredDate: {
         type: Date,
@@ -113,13 +118,6 @@ const companySchema = new mongoose.Schema(
   }
 );
 
-// hash passwords for new records before saving
-companySchema.pre("save", async function (next) {
-  if (this.isNew) {
-    this.password = await bcrypt.hash(this.password, 13);
-  }
-  next();
-});
 
 //validate company's password
 companySchema.methods.isValidPassword = async function (inputedPassword) {
@@ -130,12 +128,16 @@ companySchema.methods.isValidPassword = async function (inputedPassword) {
 // validate create company
 function validateCompany(body) {
   const schema = Joi.object({
-    name: Joi.string().required(),
-    email: Joi.string().email(),
-    contactName: Joi.string().required(),
-    contactPhoneNumber: Joi.string().required(),
-    RCnumber: Joi.string().required(),
-    TIN: Joi.string().required(),
+    name: Joi.string().label("Company Name").required(),
+    email: Joi.string().email().label("Email Address").max(50).required(),
+    address: Joi.string().label("Address").max(225).required(),
+    contactName: Joi.string().label("Contact Name").max(30).required(),
+    contactPhoneNumber: Joi.string()
+      .label("Contact Phone Number")
+      .max(11)
+      .required(),
+    RCNumber: Joi.string().label("RC Number").required(),
+    TIN: Joi.string().label("T.I.N").required(),
   });
 
   return schema.validate(body);
@@ -144,8 +146,20 @@ function validateCompany(body) {
 // validate login as company
 function validateCompanyLogin(body) {
   const schema = Joi.object({
-    email: Joi.string().email(),
-    password: Joi.ref("password"),
+    email: Joi.string().email().max(50).required(),
+    password: passwordComplexity(complexityOptions).required(),
+  });
+
+  return schema.validate(body);
+}
+
+// validate company verification
+function validateVerifyCompany(body) {
+  const schema = Joi.object({
+    email: Joi.string().email().max(50).required(),
+    token: Joi.string().max(50).required(),
+    password: passwordComplexity(complexityOptions).required(),
+    confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
   });
 
   return schema.validate(body);
@@ -157,4 +171,6 @@ const Company = mongoose.model("Company", companySchema);
 module.exports = {
   Company,
   validateCompany,
+  validateCompanyLogin,
+  validateVerifyCompany,
 };

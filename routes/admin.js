@@ -21,7 +21,7 @@ router.post("/login", auth.login.adminLogin);
 router.get("/", Auth, hasRole(["admin"]), admin.get.single);
 
 // Company routes
-router.post("/companies", Auth, company.create.createCompany);
+router.post("/companies", Auth, company.create.company);
 
 router.get("/companies", Auth, company.get.all);
 

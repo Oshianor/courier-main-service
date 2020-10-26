@@ -6,7 +6,7 @@ const { User, validateLogin } = require("../../models/users");
 const config = require("config");
 const bcrypt = require("bcrypt");
 
-exports.LoginAsUser = async (req, res) => {
+exports.loginAsUser = async (req, res) => {
   try {
     const { error } = validateLogin(req.body);
     if (error)

@@ -1,14 +1,14 @@
 const config = require("config");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { Admin } = require("../../models/admin");
-const { Pricing, validatePricing } = require("../../models/pricing");
+const { Vehicle, validateVehicle } = require("../../models/vehicle");
 const { MSG_TYPES } = require("../../constant/msg");
 
 
-exports.pricing = async (req, res) => {
+exports.vehicle = async (req, res) => {
   try {
     // validate request
-    const { error } = validatePricing(req.body);
+    const { error } = validateVehicle(req.body);
     if (error)
       return JsonResponse(res, 400, error.details[0].message, null, null);
 
@@ -17,8 +17,9 @@ exports.pricing = async (req, res) => {
     if (!admin) return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
 
     // create new account record
-    const newPricing = new Pricing(req.body);
-    await newPricing.save();
+    req.body.ref = req.body.type.toLowerCase().replace(/\s+/g, "_");
+    const newVehicle = new Vehicle(req.body);
+    await newVehicle.save();
 
     JsonResponse(res, 200, MSG_TYPES.CREATED, null, null);
     return;

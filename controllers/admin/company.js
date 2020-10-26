@@ -11,7 +11,7 @@ const { Storage } = require("../../utils");
  */
 exports.createCompany = async (req, res) => {
   try {
-    adminSchema = Joi.object({
+    companySchema = Joi.object({
       name: Joi.string().required(),
       email: Joi.string().email(),
       password: Joi.string()
@@ -24,7 +24,7 @@ exports.createCompany = async (req, res) => {
       TIN: Joi.string().optional(),
     }).with("password", "repeat_password");
 
-    const { error } = adminSchema.validate(req.body);
+    const { error } = companySchema.validate(req.body);
 
     if (error) {
       JsonResponse(res, 400, error.details[0].message, null, null);

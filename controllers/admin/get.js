@@ -8,7 +8,7 @@ const { MSG_TYPES } = require("../../constant/msg");
  * @param {*} req
  * @param {*} res
  */
-exports.getAdmins = async (req, res) => {
+exports.single = async (req, res) => {
   try {
     const admins = await Admin.find({});
 

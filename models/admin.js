@@ -104,9 +104,19 @@ function validateAdmin(body) {
   return schema.validate(body);
 }
 
+function validateAdminLogin(body) {
+  const adminSchema = Joi.object({
+    email: Joi.string().required(),
+    password: Joi.string().required(),
+  });
+
+  return adminSchema.validate(body);
+}
+
 const Admin = mongoose.model("Admin", adminSchema);
 
 module.exports = {
   Admin,
   validateAdmin,
+  validateAdminLogin,
 };

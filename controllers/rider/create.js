@@ -1,6 +1,6 @@
 const Joi = require("joi");
-const Company = require("../../models/company");
-const Rider = require("../../models/rider");
+const { Company } = require("../../models/company");
+const { Rider, validateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { Storage } = require("../../utils");
@@ -12,22 +12,7 @@ const { Storage } = require("../../utils");
  */
 exports.create = async (req, res) => {
   try {
-    const riderSchema = Joi.object({
-      firstName: Joi.string().required(),
-      lastName: Joi.string().required(),
-      email: Joi.string().email().optional(),
-      phoneNumber: Joi.string().required(),
-      address: Joi.string().required(),
-      DOB: Joi.date().required(),
-      proofOfIdentityExpireAt: Joi.date().optional(),
-      policyNumber: Joi.string().optional(),
-      plateNumber: Joi.string().optional(),
-      ecName: Joi.string().optional(),
-      ecPhone: Joi.string().optional(),
-      ecEmail: Joi.string().email().optional(),
-    });
-
-    const { error } = riderSchema.validate(req.body);
+    const { error } = validateRider(req.body);
 
     if (error) {
       JsonResponse(res, 400, error.details[0].message, null, null);

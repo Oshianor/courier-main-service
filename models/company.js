@@ -165,12 +165,35 @@ function validateVerifyCompany(body) {
   return schema.validate(body);
 }
 
-const Company = mongoose.model("Company", companySchema);
+function validateUpdateCompany(body) {
+  const adminSchema = Joi.object({
+    name: Joi.string().required(),
+    contactName: Joi.string().required(),
+    contactPhoneNumber: Joi.string().required(),
+    RCnumber: Joi.string().optional(),
+    TIN: Joi.string().optional(),
+  });
+  return adminSchema.validate(body);
+}
 
+function validateStatusUpdate(body) {
+  const adminSchema = Joi.object({
+    status: Joi.string().required().valid("active", "inactive", "suspended"),
+  });
+
+  return adminSchema.validate(body);
+}
+
+const Company = mongoose.model("Company", companySchema);
 
 module.exports = {
   Company,
   validateCompany,
+<<<<<<< HEAD
   validateCompanyLogin,
   validateVerifyCompany,
+=======
+  validateUpdateCompany,
+  validateStatusUpdate,
+>>>>>>> 21e80069a3c4e637a4b47ba26cee77df40dbcd2e
 };

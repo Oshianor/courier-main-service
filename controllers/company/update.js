@@ -1,5 +1,10 @@
 const Joi = require("joi");
-const Company = require("../../models/company");
+const {
+  Company,
+  validateUpdateCompany,
+  validateStatusUpdate,
+} = require("../../models/company");
+
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { Storage } = require("../../utils");
@@ -11,15 +16,7 @@ const { Storage } = require("../../utils");
  */
 exports.updateSingle = async (req, res) => {
   try {
-    adminSchema = Joi.object({
-      name: Joi.string().required(),
-      contactName: Joi.string().required(),
-      contactPhoneNumber: Joi.string().required(),
-      RCnumber: Joi.string().optional(),
-      TIN: Joi.string().optional(),
-    });
-
-    const { error } = adminSchema.validate(req.body);
+    const { error } = validateUpdateCompany(req.body);
 
     if (error) {
       JsonResponse(res, 400, error.details[0].message, null, null);
@@ -64,11 +61,7 @@ exports.updateSingle = async (req, res) => {
  */
 exports.updateStatus = async (req, res) => {
   try {
-    adminSchema = Joi.object({
-      status: Joi.string().required().valid("active", "inactive", "suspended"),
-    }).with("password", "repeat_password");
-
-    const { error } = adminSchema.validate(req.body);
+    const { error } = validateStatusUpdate(req.body);
 
     if (error) {
       return JsonResponse(res, 400, error.details[0].message, null, null);

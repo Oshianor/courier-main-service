@@ -1,6 +1,8 @@
 const MSG_ERRORS = Object.freeze({
   ACCOUNT_EXIST: "Account already exist.",
   ACCOUNT_INVALID: "Invalid email or password",
+  SUSPENDED: "Account is suspended!",
+  INACTIVE: "Account is inactive!",
   NOT_FOUND: "Not Found",
   UPLOAD_IMAGE: "Image upload is required.",
   ACCESS_DENIED: "Access denied.",

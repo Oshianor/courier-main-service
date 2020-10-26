@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const {Admin} = require("../../models/admin");
+const { Admin } = require("../../models/admin");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { User, validateLogin } = require("../../models/users");
@@ -60,13 +60,17 @@ exports.adminLogin = async (req, res) => {
     if (!admin.isValidPassword(req.body.password)) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }
+
+    if (admin.status !== "active") {
+      return JsonResponse(res, 401, admin.status.toUpperCase(), null, null);
+    }
     let token = admin.generateToken();
 
     delete admin.password;
 
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
-    return
+    return;
   } catch (error) {
     console.log(error);
     return res.status(500).send("Something went wrong!");

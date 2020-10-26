@@ -1,23 +1,48 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const JWT = require("jsonwebtoken");
+const Joi = require("joi");
 const config = require("config");
+const ObjectId = mongoose.Schema.Types.ObjectId;
+const passwordComplexity = require("joi-password-complexity");
+
+const complexityOptions = {
+  min: 6,
+  max: 20,
+  lowerCase: 1,
+  upperCase: 1,
+  numeric: 1,
+  symbol: 1,
+  requirementCount: 2,
+};
 
 const adminSchema = new mongoose.Schema(
   {
     name: {
       type: String,
+      maxlength: 30,
+      required: true,
     },
     email: {
       type: String,
       required: true,
+      unique: true,
+      index: true,
     },
     password: {
       type: String,
+      required: true,
     },
     role: {
       type: String,
-      enum: ["super_admin", "admin"],
+      required: true,
+      enum: ["super_admin", "admin", "accountant"],
+    },
+    createdBy: {
+      type: ObjectId,
+      ref: "Admin",
+      default: null,
+      required: true,
     },
   },
   {
@@ -44,10 +69,28 @@ adminSchema.methods.generateToken = function () {
   return JWT.sign(
     {
       exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-      adminId: this._id,
+      id: this._id,
     },
     config.get("application.jwt.key")
   );
 };
 
-module.exports = mongoose.model("Admin", adminSchema);
+// validate create company
+function validateAdmin(body) {
+  const schema = Joi.object({
+    name: Joi.string().max(30).required(),
+    email: Joi.string().max(50).email().required(),
+    password: passwordComplexity(complexityOptions).required(),
+    confirmPassword: Joi.ref("password").required(),
+    role: Joi.string().required().valid("super_admin", "admin", "accountant"),
+  });
+
+  return schema.validate(body);
+}
+
+const Admin = mongoose.model("Admin", adminSchema);
+
+module.exports = {
+  Admin,
+  validateAdmin,
+};

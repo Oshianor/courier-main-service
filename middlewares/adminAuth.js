@@ -10,7 +10,7 @@ exports.adminAuth = async (req, res, next) => {
     //verify this token was signed by your server
     const decodedToken = JWT.verify(token, config.get("application.jwt.key"));
     ///Get admin details
-    let admin = await Admin.findById(decodedToken.adminId);
+    let admin = await Admin.findById(decodedToken.id);
     if (!admin) throw Error("Unauthenticated");
     //put admin in req object; so the controller can access current admin
     req.admin = admin;

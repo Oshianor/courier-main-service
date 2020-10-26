@@ -1,5 +1,4 @@
-const Joi = require("joi");
-const Company = require("../../models/company");
+const {Company, validateCompany} = require("../../models/company");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { Storage } = require("../../utils");
@@ -11,20 +10,7 @@ const { Storage } = require("../../utils");
  */
 exports.createCompany = async (req, res) => {
   try {
-    companySchema = Joi.object({
-      name: Joi.string().required(),
-      email: Joi.string().email(),
-      password: Joi.string()
-        .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
-        .required(),
-      repeat_password: Joi.ref("password"),
-      contactName: Joi.string().required(),
-      contactPhoneNumber: Joi.string().required(),
-      RCnumber: Joi.string().optional(),
-      TIN: Joi.string().optional(),
-    }).with("password", "repeat_password");
-
-    const { error } = companySchema.validate(req.body);
+    const { error } = validateCompany(req.body);
 
     if (error) {
       JsonResponse(res, 400, error.details[0].message, null, null);
@@ -32,12 +18,9 @@ exports.createCompany = async (req, res) => {
     }
 
     // check if an existing company  has incoming email
-    const admins = await Company.find({ email: req.body.email });
+    const admins = await Company.findOne({ email: req.body.email });
+    if (admins) return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
-    if (admins.length > 0) {
-      JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-      return;
-    }
 
     const data = req.body;
 
@@ -58,8 +41,9 @@ exports.createCompany = async (req, res) => {
     const company = await Company.create(data);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, company, null);
+    return
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };

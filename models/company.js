@@ -1,5 +1,18 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const Joi = require("joi");
+const ObjectId = mongoose.Schema.Types.ObjectId;
+const passwordComplexity = require("joi-password-complexity");
+
+const complexityOptions = {
+  min: 6,
+  max: 20,
+  lowerCase: 1,
+  upperCase: 0,
+  numeric: 1,
+  symbol: 0,
+  requirementCount: 1,
+};
 
 const companySchema = new mongoose.Schema(
   {
@@ -7,6 +20,7 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
     email: {
       type: String,
       required: true,
@@ -41,7 +55,7 @@ const companySchema = new mongoose.Schema(
       type: Number,
     },
     vehicles: {
-      type: [mongoose.Types.ObjectId],
+      type: [ObjectId],
       ref: "Vehicle",
     },
     rcDoc: {
@@ -58,8 +72,9 @@ const companySchema = new mongoose.Schema(
       type: String,
     },
     tier: {
-      type: String,
-      enum: ["basic", "premium"],
+      type: ObjectId,
+      ref: "Pricing",
+      required: true,
     },
     verified: {
       type: Boolean,
@@ -72,6 +87,10 @@ const companySchema = new mongoose.Schema(
     phoneNumberVerified: {
       type: Boolean,
       default: false,
+    },
+    createdBy: {
+      type: ObjectId,
+      ref: "Admin",
     },
   },
   {
@@ -93,4 +112,34 @@ companySchema.methods.isValidPassword = async function (inputedPassword) {
   return validPassword;
 };
 
-module.exports = mongoose.model("Company", companySchema);
+// validate create company
+function validateCompany(body) {
+  const schema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().email(),
+    contactName: Joi.string().required(),
+    contactPhoneNumber: Joi.string().required(),
+    RCnumber: Joi.string().required(),
+    TIN: Joi.string().required(),
+  });
+
+  return schema.validate(body);
+}
+
+// validate login as company
+function validateCompanyLogin(body) {
+  const schema = Joi.object({
+    email: Joi.string().email(),
+    password: Joi.ref("password"),
+  });
+
+  return schema.validate(body);
+}
+
+const Company = mongoose.model("Company", companySchema);
+
+
+module.exports = {
+  Company,
+  validateCompany,
+};

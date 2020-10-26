@@ -1,10 +1,7 @@
 const AWS = require("aws-sdk");
 const config = require("config");
 
-const s3 = new AWS.S3({
-  accessKeyId: config.get("aws.accessKeyId"),
-  secretAccessKey: config.get("aws.secretKey"),
-});
+const s3 = new AWS.S3({});
 
 const Storage = {};
 
@@ -17,7 +14,7 @@ Storage.upload = async (fileInBanary, fileName) => {
     };
     const upload = await s3.upload(params).promise();
     // console.log("Upload Data:", upload);
-    return upload.Location;
+    return upload;
 }
 
 module.exports = Storage;

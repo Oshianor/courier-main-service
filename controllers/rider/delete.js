@@ -1,9 +1,7 @@
-
-const Company = require("../../models/company");
-const Rider = require("../../models/rider");
+const { Company } = require("../../models/company");
+const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
-
 
 /**
  * Delete One Rider
@@ -12,8 +10,7 @@ const { MSG_TYPES } = require("../../constant/msg");
  */
 exports.destroy = async (req, res) => {
   try {
-    const companyId = req.params.companyId;
-    const company = await Company.findOne({ _id: companyId });
+    const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;

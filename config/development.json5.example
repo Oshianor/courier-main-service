@@ -12,10 +12,8 @@
     url: "mongodb+srv://techone:techone2020@churchapp-tb9kg.gcp.mongodb.net/logistics",
   },
   aws: {
-    accessKeyId: "AKIAIMTKSLHYGEXAEUXA",
-    secretKey: "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",
     region: "af-south-1",
-    bucket: "test-bucket-ndie",
+    bucket: "exalt-dev",
   },
   mail: {
     key: "SG.p6apQE0IXi4J1g.8y_6kNdw1oMq0ky7Ho_BvW4",

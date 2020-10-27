@@ -1,5 +1,6 @@
 const Joi = require("joi");
 const { Admin, validateAdminLogin } = require("../../models/admin");
+const { Company, validateCompanyLogin } = require("../../models/company");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
 const { User, validateLogin } = require("../../models/users");
@@ -65,6 +66,43 @@ exports.adminLogin = async (req, res) => {
 
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
+    return;
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send("Something went wrong!");
+  }
+};
+
+/**
+ * Admin Login
+ * @param {*} req
+ * @param {*} res
+ */
+exports.companyLogin = async (req, res) => {
+  try {
+    const { error } = validateCompanyLogin(req.body);
+
+    if (error) {
+      return JsonResponse(res, 400, error.details[0].message, null, null);
+    }
+
+    const company = await Company.findOne({ email: req.body.email });
+    if (!company) {
+      return JsonResponse(res, 401, "Invalid Credentials!", null, null);
+    }
+    if (!company.isValidPassword(req.body.password)) {
+      return JsonResponse(res, 401, "Invalid Credentials!", null, null);
+    }
+
+    if (company.status !== "active") {
+      return JsonResponse(res, 401, company.status.toUpperCase(), null, null);
+    }
+    let token = company.generateToken();
+
+    delete company.password;
+
+    res.header("x-auth-token", token);
+    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
     return;
   } catch (error) {
     console.log(error);

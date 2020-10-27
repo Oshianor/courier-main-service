@@ -3,8 +3,9 @@ const { Company } = require("../../models/company");
 const { Rider, validateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
-const { Storage } = require("../../utils");
-
+const { Verification } = require("../../templates");
+const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
+const moment = require("moment");
 /**
  * Create Rider
  * @param {*} req
@@ -28,8 +29,8 @@ exports.create = async (req, res) => {
         return;
       }
     }
-    const companyId = req.params.companyId;
-    const company = await Company.findOne({ _id: companyId });
+    const company = await Company.findOne({ _id: req.user.id });
+
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
@@ -39,20 +40,32 @@ exports.create = async (req, res) => {
     data.company = company._id;
 
     if (req.files.proofOfIdentity) {
-      data.proofOfIdentity = await Storage.upload(
+      const proofOfIdentity = await UploadFileFromBinary(
         req.files.proofOfIdentity.data,
         req.files.proofOfIdentity.name
       );
+      data.proofOfIdentity = proofOfIdentity.Key;
     }
 
     if (req.files.image) {
-      data.image = await Storage.upload(
+      const image = await UploadFileFromBinary(
         req.files.image.data,
         req.files.image.name
       );
+      data.image = image.Key;
     }
 
+    const token = GenerateToken(50);
+    data.rememberToken = {
+      token,
+      expiredDate: moment().add(2, "days"),
+    };
+
     const rider = await Rider.create(data);
+
+    const subject = "Welcome to Exalt Logistics";
+    const html = Verification(token, req.body.email);
+    Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, rider, null);
   } catch (error) {

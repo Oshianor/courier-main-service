@@ -9,6 +9,7 @@ const auth = require("../routes/auth");
 const admin = require("../routes/admin");
 const pricing = require("../routes/pricing");
 const vehicle = require("../routes/vehicle");
+const company = require("../routes/company");
 const port = process.env.PORT || config.get("application.port");
 const corsOptions = {
   origin: "*",
@@ -24,6 +25,6 @@ app.use("/api/v1/user", user);
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/admin/pricing", pricing);
-app.use("/api/v1/admin/vehicle", vehicle);
+app.use("/api/v1/company", company);
 app.use(error);
 app.listen(port, () => console.log(`Listening on port ${port}...`));

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const Joi = require("joi");
 
 const riderSchema = new mongoose.Schema(
   {
@@ -129,7 +130,7 @@ function validateUpdateRider(body) {
 
 const Rider = mongoose.model("Rider", riderSchema);
 
-mongoose.exports = {
+module.exports = {
   Rider,
   validateRider,
   validateUpdateRider,

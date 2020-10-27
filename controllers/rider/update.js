@@ -1,9 +1,9 @@
 const Joi = require("joi");
-const Company = require("../../models/company");
+const { Company } = require("../../models/company");
 const { Rider, validateUpdateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
-const { Storage } = require("../../utils");
+const { UploadFileFromBinary } = require("../../utils");
 
 /**
  * Update Rider
@@ -12,7 +12,6 @@ const { Storage } = require("../../utils");
  */
 exports.updateSingle = async (req, res) => {
   try {
-
     const { error } = validateUpdateRider(req.body);
 
     if (error) {
@@ -20,8 +19,7 @@ exports.updateSingle = async (req, res) => {
       return;
     }
 
-    const companyId = req.params.companyId;
-    const company = await Company.findOne({ _id: companyId });
+    const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
@@ -30,17 +28,19 @@ exports.updateSingle = async (req, res) => {
     const data = req.body;
 
     if (req.files.proofOfIdentity) {
-      data.proofOfIdentity = await Storage.upload(
+      const proofOfIdentity = await UploadFileFromBinary(
         req.files.proofOfIdentity.data,
         req.files.proofOfIdentity.name
       );
+      data.proofOfIdentity = proofOfIdentity.Key;
     }
 
     if (req.files.image) {
-      data.image = await Storage.upload(
+      const image = await UploadFileFromBinary(
         req.files.image.data,
         req.files.image.name
       );
+      data.image = image.Key;
     }
 
     const riderId = req.params.riderId;

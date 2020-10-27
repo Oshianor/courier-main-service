@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
+const JWT = require("jsonwebtoken");
+const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 const passwordComplexity = require("joi-password-complexity");
 
@@ -96,7 +98,7 @@ const companySchema = new mongoose.Schema(
       token: {
         type: String,
         default: null,
-        maxlength: 50
+        maxlength: 50,
       },
       expiredDate: {
         type: Date,
@@ -118,11 +120,22 @@ const companySchema = new mongoose.Schema(
   }
 );
 
-
 //validate company's password
 companySchema.methods.isValidPassword = async function (inputedPassword) {
   let validPassword = await bcrypt.compare(inputedPassword, this.password);
   return validPassword;
+};
+
+//sign token for this admin
+companySchema.methods.generateToken = function () {
+  return JWT.sign(
+    {
+      id: this._id,
+      email: this.email,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+    },
+    config.get("application.jwt.key")
+  );
 };
 
 // validate create company
@@ -166,22 +179,22 @@ function validateVerifyCompany(body) {
 }
 
 function validateUpdateCompany(body) {
-  const adminSchema = Joi.object({
+  const schema = Joi.object({
     name: Joi.string().required(),
     contactName: Joi.string().required(),
     contactPhoneNumber: Joi.string().required(),
     RCnumber: Joi.string().optional(),
     TIN: Joi.string().optional(),
   });
-  return adminSchema.validate(body);
+  return schema.validate(body);
 }
 
 function validateStatusUpdate(body) {
-  const adminSchema = Joi.object({
+  const schema = Joi.object({
     status: Joi.string().required().valid("active", "inactive", "suspended"),
   });
 
-  return adminSchema.validate(body);
+  return schema.validate(body);
 }
 
 const Company = mongoose.model("Company", companySchema);
@@ -189,11 +202,8 @@ const Company = mongoose.model("Company", companySchema);
 module.exports = {
   Company,
   validateCompany,
-<<<<<<< HEAD
   validateCompanyLogin,
   validateVerifyCompany,
-=======
   validateUpdateCompany,
   validateStatusUpdate,
->>>>>>> 21e80069a3c4e637a4b47ba26cee77df40dbcd2e
 };

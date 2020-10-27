@@ -3,7 +3,7 @@ const { Company } = require("../../models/company");
 const { Rider, validateUpdateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
-const { Storage } = require("../../utils");
+const { UploadFileFromBinary } = require("../../utils");
 
 /**
  * Update Rider
@@ -28,17 +28,19 @@ exports.updateSingle = async (req, res) => {
     const data = req.body;
 
     if (req.files.proofOfIdentity) {
-      data.proofOfIdentity = await Storage.upload(
+      const proofOfIdentity = await UploadFileFromBinary(
         req.files.proofOfIdentity.data,
         req.files.proofOfIdentity.name
       );
+      data.proofOfIdentity = proofOfIdentity.Key;
     }
 
     if (req.files.image) {
-      data.image = await Storage.upload(
+      const image = await UploadFileFromBinary(
         req.files.image.data,
         req.files.image.name
       );
+      data.image = image.Key;
     }
 
     const riderId = req.params.riderId;

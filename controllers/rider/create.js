@@ -3,8 +3,9 @@ const { Company } = require("../../models/company");
 const { Rider, validateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/msg");
+const { Verification } = require("../../templates");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
-
+const moment = require("moment");
 /**
  * Create Rider
  * @param {*} req
@@ -54,7 +55,17 @@ exports.create = async (req, res) => {
       data.image = image.Key;
     }
 
+    const token = GenerateToken(50);
+    data.rememberToken = {
+      token,
+      expiredDate: moment().add(2, "days"),
+    };
+
     const rider = await Rider.create(data);
+
+    const subject = "Welcome to Exalt Logistics";
+    const html = Verification(token, req.body.email);
+    Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, rider, null);
   } catch (error) {

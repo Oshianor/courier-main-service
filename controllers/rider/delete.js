@@ -1,7 +1,7 @@
 const { Company } = require("../../models/company");
 const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
-const { MSG_TYPES } = require("../../constant/msg");
+const { MSG_TYPES } = require("../../constant/types");
 
 /**
  * Delete One Rider
@@ -10,7 +10,7 @@ const { MSG_TYPES } = require("../../constant/msg");
  */
 exports.destroy = async (req, res) => {
   try {
-    const company = await Company.findOne({ _id: req.user.id });
+    const company = await Company.findOne({ account: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
@@ -23,6 +23,8 @@ exports.destroy = async (req, res) => {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       return;
     }
+    rider.deletedBy = req.user.id;
+    rider.isDeleted = true;
     rider.deletedAt = Date.now();
     await rider.save();
     JsonResponse(res, 200, MSG_TYPES.DELETED, null, null);

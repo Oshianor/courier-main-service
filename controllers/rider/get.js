@@ -1,7 +1,7 @@
 const { Company } = require("../../models/company");
 const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
-const { MSG_TYPES } = require("../../constant/msg");
+const { MSG_TYPES } = require("../../constant/types");
 
 /**
  * Get One Rider
@@ -10,12 +10,12 @@ const { MSG_TYPES } = require("../../constant/msg");
  */
 exports.single = async (req, res) => {
   try {
-    const company = await Company.findOne({ _id: req.user.id });
+  
+    const company = await Company.findOne({ account: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
     }
-
     const riderId = req.params.riderId;
     const rider = await Rider.findOne({ _id: riderId });
 
@@ -38,7 +38,8 @@ exports.single = async (req, res) => {
  */
 exports.all = async (req, res) => {
   try {
-    const company = await Company.findOne({ _id: req.user.id });
+
+    const company = await Company.findOne({ account: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;

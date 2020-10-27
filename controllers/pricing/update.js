@@ -1,11 +1,8 @@
 const config = require("config");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { Admin } = require("../../models/admin");
-const {
-  Pricing,
-  validateUpdatePricing,
-} = require("../../models/pricing");
-const { MSG_TYPES } = require("../../constant/msg");
+const { Pricing, validateUpdatePricing } = require("../../models/pricing");
+const { MSG_TYPES } = require("../../constant/types");
 
 exports.pricing = async (req, res) => {
   try {
@@ -21,7 +18,8 @@ exports.pricing = async (req, res) => {
 
     // create new account record
     const pricing = await Pricing.findById(req.params.pricingId);
-    if (!pricing) return JsonResponse(res, 400, MSG_TYPES.NOT_FOUND, null, null);
+    if (!pricing)
+      return JsonResponse(res, 400, MSG_TYPES.NOT_FOUND, null, null);
 
     await pricing.updateOne(req.body);
 

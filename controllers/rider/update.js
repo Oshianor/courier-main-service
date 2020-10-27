@@ -1,8 +1,9 @@
 const Joi = require("joi");
 const { Company } = require("../../models/company");
+const { Account } = require("../../models/account");
 const { Rider, validateUpdateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
-const { MSG_TYPES } = require("../../constant/msg");
+const { MSG_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary } = require("../../utils");
 
 /**
@@ -19,7 +20,7 @@ exports.updateSingle = async (req, res) => {
       return;
     }
 
-    const company = await Company.findOne({ _id: req.user.id });
+    const company = await Company.findOne({ account: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
@@ -52,6 +53,11 @@ exports.updateSingle = async (req, res) => {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       return;
     }
+
+    const account = await Account.findOneAndUpdate(
+      { _id: rider.account._id },
+      req.body
+    );
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, rider, null);
   } catch (error) {

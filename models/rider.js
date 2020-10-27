@@ -1,25 +1,23 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const Joi = require("joi");
+const passwordComplexity = require("joi-password-complexity");
+
+const complexityOptions = {
+  min: 6,
+  max: 20,
+  lowerCase: 1,
+  upperCase: 1,
+  numeric: 1,
+  symbol: 1,
+  requirementCount: 2,
+};
 
 const riderSchema = new mongoose.Schema(
   {
-    firstName: {
-      type: String,
-      required: true,
-    },
-    lastName: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-    },
-    phoneNumber: {
-      type: String,
-    },
-    address: {
-      type: String,
+    account: {
+      type: mongoose.Types.ObjectId,
+      ref: "Account",
     },
     policyNumber: {
       type: String,
@@ -31,7 +29,6 @@ const riderSchema = new mongoose.Schema(
       type: Date,
     },
     proofOfIdentity: {
-      //proof of Identiry
       type: String,
     },
     proofOfIdentityExpireAt: {
@@ -56,6 +53,7 @@ const riderSchema = new mongoose.Schema(
       type: String,
     },
     ecName: {
+      //emergency contact name
       type: String,
     },
     ecPhone: {
@@ -64,31 +62,17 @@ const riderSchema = new mongoose.Schema(
     ecEmail: {
       type: String,
     },
-    verified: {
+    isDeleted: {
       type: Boolean,
       default: false,
     },
-    emailVerified: {
-      type: Boolean,
-      default: false,
+    deletedBy: {
+      type: mongoose.Types.ObjectId,
+      ref: "Account",
     },
     deletedAt: {
       type: Date,
       default: null,
-    },
-    phoneNumberVerified: {
-      type: Boolean,
-      default: false,
-    },
-    rememberToken: {
-      token: {
-        type: String,
-        default: null,
-      },
-      expiredDate: {
-        type: Date,
-        default: null,
-      },
     },
   },
   {
@@ -96,10 +80,14 @@ const riderSchema = new mongoose.Schema(
   }
 );
 
+riderSchema.pre(/^find/, function (next) {
+  this.populate("account", "-password");
+  next();
+});
+
 function validateRider(body) {
   const riderSchema = Joi.object({
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
+    name: Joi.string().required(),
     email: Joi.string().email().optional(),
     phoneNumber: Joi.string().required(),
     address: Joi.string().required(),
@@ -115,12 +103,31 @@ function validateRider(body) {
   return riderSchema.validate(body);
 }
 
-function validateUpdateRider(body) {
+function validateRiderSelf(body) {
   const riderSchema = Joi.object({
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
+    name: Joi.string().required(),
+    email: Joi.string().email().optional(),
+    phoneNumber: Joi.string().required(),
+    password: passwordComplexity(complexityOptions).required(),
+    confirmPassword: Joi.ref("password"),
     address: Joi.string().required(),
     DOB: Joi.date().required(),
+    proofOfIdentityExpireAt: Joi.date().optional(),
+    policyNumber: Joi.string().optional(),
+    plateNumber: Joi.string().optional(),
+    ecName: Joi.string().optional(),
+    ecPhone: Joi.string().optional(),
+    ecEmail: Joi.string().email().optional(),
+  }).with("password", "confirmPassword");
+
+  return riderSchema.validate(body);
+}
+
+function validateUpdateRider(body) {
+  const riderSchema = Joi.object({
+    name: Joi.string().optional(),
+    address: Joi.string().optional(),
+    DOB: Joi.date().optional(),
     proofOfIdentityExpireAt: Joi.date().optional(),
     policyNumber: Joi.string().optional(),
     plateNumber: Joi.string().optional(),
@@ -138,4 +145,5 @@ module.exports = {
   Rider,
   validateRider,
   validateUpdateRider,
+  validateRiderSelf,
 };

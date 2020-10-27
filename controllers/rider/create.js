@@ -22,9 +22,9 @@ exports.create = async (req, res) => {
 
     if (req.body.email) {
       // check if an existing rider has incoming email
-      const admins = await Rider.find({ email: req.body.email });
+      const riderCheck = await Rider.findOne({ email: req.body.email });
 
-      if (admins.length > 0) {
+      if (riderCheck) {
         JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
         return;
       }

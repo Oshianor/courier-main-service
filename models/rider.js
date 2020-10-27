@@ -72,6 +72,10 @@ const riderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
     phoneNumberVerified: {
       type: Boolean,
       default: false,

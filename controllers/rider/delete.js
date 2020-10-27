@@ -17,13 +17,15 @@ exports.destroy = async (req, res) => {
     }
 
     const riderId = req.params.riderId;
-    const rider = await Rider.findByIdAndDelete(riderId);
+    const rider = await Rider.findOne({ _id: riderId });
 
     if (!rider) {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       return;
     }
-    JsonResponse(res, 200, MSG_TYPES.DELETED, rider, null);
+    rider.deletedAt = Date.now();
+    await rider.save();
+    JsonResponse(res, 200, MSG_TYPES.DELETED, null, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

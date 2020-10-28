@@ -3,7 +3,7 @@ const instance_var = "PM2_APP_INSTANCE_ID"
 module.exports = {
   apps: [
     {
-      name: "account",
+      name: "exalt-logistics",
       script: "index.js",
       env: {
         NODE_ENV: "development",

@@ -73,6 +73,19 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    country: {
+      type: String,
+      index: true,
+      required: true,
+    },
+    state: {
+      type: String,
+      required: true,
+    },
+    countryCode: {
+      type: String,
+      required: true,
+    },
     tier: {
       type: ObjectId,
       ref: "Pricing",
@@ -151,6 +164,8 @@ function validateCompany(body) {
       .required(),
     RCNumber: Joi.string().label("RC Number").required(),
     TIN: Joi.string().label("T.I.N").required(),
+    country: Joi.string().label("Country").required(),
+    state: Joi.string().label("State").required(),
   });
 
   return schema.validate(body);
@@ -180,11 +195,18 @@ function validateVerifyCompany(body) {
 
 function validateUpdateCompany(body) {
   const schema = Joi.object({
-    name: Joi.string().required(),
-    contactName: Joi.string().required(),
-    contactPhoneNumber: Joi.string().required(),
-    RCnumber: Joi.string().optional(),
-    TIN: Joi.string().optional(),
+    name: Joi.string().label("Company Name").required(),
+    email: Joi.string().email().label("Email Address").max(50).required(),
+    address: Joi.string().label("Address").max(225).required(),
+    contactName: Joi.string().label("Contact Name").max(30).required(),
+    contactPhoneNumber: Joi.string()
+      .label("Contact Phone Number")
+      .max(11)
+      .required(),
+    RCNumber: Joi.string().label("RC Number").required(),
+    TIN: Joi.string().label("T.I.N").required(),
+    country: Joi.string().label("Country").required(),
+    state: Joi.string().label("State").required(),
   });
   return schema.validate(body);
 }

@@ -1,6 +1,6 @@
 {
 	application: {
-    port: 4000,
+    port: 6001,
 		jwt: {
 			key: "5eb90nWgiGBaf6c024d207",
 			expireDate: "20w"

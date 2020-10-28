@@ -25,6 +25,7 @@ app.use("/api/v1/user", user);
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/admin/pricing", pricing);
+app.use("/api/v1/admin/vehicle", vehicle);
 app.use("/api/v1/company", company);
 app.use(error);
 app.listen(port, () => console.log(`Listening on port ${port}...`));

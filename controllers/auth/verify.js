@@ -30,6 +30,7 @@ exports.company = async (req, res) => {
       emailVerified: true,
       rememberToken: null,
       password,
+      status: "active"
     });
 
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);

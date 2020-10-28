@@ -1,5 +1,5 @@
 const { JsonResponse } = require("../lib/apiResponse");
-const { MSG_TYPES } = require("../constant/msg");
+const { MSG_TYPES } = require("../constant/types");
 const ROLES = {
   SUPER_ADMIN: "super_admin",
   ADMIN: "admin",

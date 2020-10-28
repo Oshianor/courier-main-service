@@ -18,29 +18,15 @@ const complexityOptions = {
 
 const companySchema = new mongoose.Schema(
   {
+    account: {
+      type: ObjectId,
+      ref: "Account",
+    },
     publicToken: {
       type: String,
       required: true,
       index: true,
       unique: true,
-    },
-    name: {
-      type: String,
-      required: true,
-      maxlength: 50,
-    },
-    email: {
-      type: String,
-      required: true,
-      maxlength: 50,
-      index: true,
-    },
-    password: {
-      type: String,
-    },
-    address: {
-      type: String,
-      required: true,
     },
     contactName: {
       type: String,
@@ -91,32 +77,9 @@ const companySchema = new mongoose.Schema(
       ref: "Pricing",
       required: true,
     },
-    verified: {
-      type: Boolean,
-      default: false,
-    },
-    emailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    phoneNumberVerified: {
-      type: Boolean,
-      default: false,
-    },
     createdBy: {
       type: ObjectId,
       ref: "Admin",
-    },
-    rememberToken: {
-      token: {
-        type: String,
-        default: null,
-        maxlength: 50,
-      },
-      expiredDate: {
-        type: Date,
-        default: null,
-      },
     },
     totalRiders: {
       type: Number,
@@ -127,29 +90,28 @@ const companySchema = new mongoose.Schema(
     totalOrders: {
       type: Number,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedBy: {
+      type: mongoose.Types.ObjectId,
+      ref: "Account",
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-//validate company's password
-companySchema.methods.isValidPassword = async function (inputedPassword) {
-  let validPassword = await bcrypt.compare(inputedPassword, this.password);
-  return validPassword;
-};
-
-//sign token for this admin
-companySchema.methods.generateToken = function () {
-  return JWT.sign(
-    {
-      id: this._id,
-      email: this.email,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-    },
-    config.get("application.jwt.key")
-  );
-};
+companySchema.pre(/^find/, function (next) {
+  this.populate("account", "-password");
+  next();
+});
 
 // validate create company
 function validateCompany(body) {
@@ -176,18 +138,6 @@ function validateCompanyLogin(body) {
   const schema = Joi.object({
     email: Joi.string().email().max(50).required(),
     password: passwordComplexity(complexityOptions).required(),
-  });
-
-  return schema.validate(body);
-}
-
-// validate company verification
-function validateVerifyCompany(body) {
-  const schema = Joi.object({
-    email: Joi.string().email().max(50).required(),
-    token: Joi.string().max(50).required(),
-    password: passwordComplexity(complexityOptions).required(),
-    confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
   });
 
   return schema.validate(body);
@@ -225,7 +175,6 @@ module.exports = {
   Company,
   validateCompany,
   validateCompanyLogin,
-  validateVerifyCompany,
   validateUpdateCompany,
   validateStatusUpdate,
 };

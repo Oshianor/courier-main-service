@@ -43,8 +43,15 @@ const MSG_TYPES = Object.freeze({
   ACCOUNT_VERIFIED: "ACCOUNT_VERIFIED",
 });
 
+const ACCOUNT_TYPES = Object.freeze({
+  ADMIN: "admin",
+  COMPANY: "company",
+  RIDER: "rider",
+});
+
 module.exports = {
   MSG_ERRORS,
   MSG_SUCCESS,
   MSG_TYPES,
+  ACCOUNT_TYPES,
 };

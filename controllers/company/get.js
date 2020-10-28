@@ -1,6 +1,6 @@
-const Company = require("../../models/company");
+const { Company } = require("../../models/company");
 const { JsonResponse } = require("../../lib/apiResponse");
-const { MSG_TYPES } = require("../../constant/msg");
+const { MSG_TYPES } = require("../../constant/types");
 
 /**
  * Get One Company

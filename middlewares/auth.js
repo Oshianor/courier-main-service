@@ -1,8 +1,9 @@
 const jwt = require("jsonwebtoken");
 const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
-const { MSG_TYPES } = require("../constant/msg");
+const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const { Admin } = require("../models/admin");
+const { Account } = require("../models/account");
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
@@ -13,7 +14,7 @@ const ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
-    let admin = await Admin.findOne({ _id: req.user.id, status: "active" });
+    let admin = await Admin.findOne({ account: req.user.id});
     if (!admin) return JsonResponse(res, 401, "Unauthenticated", null, null);
 
     if (admin.role === ROLES.SUPER_ADMIN) {

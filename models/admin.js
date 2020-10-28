@@ -5,6 +5,7 @@ const Joi = require("joi");
 const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 const passwordComplexity = require("joi-password-complexity");
+const account = require("./account");
 
 const complexityOptions = {
   min: 6,
@@ -18,19 +19,9 @@ const complexityOptions = {
 
 const adminSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      maxlength: 30,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-    password: {
-      type: String,
+    account: {
+      type: ObjectId,
+      ref: "Account",
       required: true,
     },
     role: {
@@ -38,26 +29,10 @@ const adminSchema = new mongoose.Schema(
       required: true,
       enum: ["superAdmin", "admin", "accountant"],
     },
-    status: {
-      type: String,
-      enum: ["active", "inactive", "suspended"],
-      default: "active",
-    },
     createdBy: {
       type: ObjectId,
       ref: "Admin",
       default: null,
-      required: true,
-    },
-    rememberToken: {
-      token: {
-        type: String,
-        default: null,
-      },
-      expiredDate: {
-        type: Date,
-        default: null,
-      },
     },
   },
   {
@@ -65,41 +40,19 @@ const adminSchema = new mongoose.Schema(
   }
 );
 
-// hash passwords for new records before saving
-adminSchema.pre("save", async function (next) {
-  if (this.isNew) {
-    this.password = await bcrypt.hash(this.password, 13);
-  }
+adminSchema.pre(/^find/, function (next) {
+  this.populate("account", "-password");
   next();
 });
-
-//validate admin's password
-adminSchema.methods.isValidPassword = async function (inputedPassword) {
-  let validPassword = await bcrypt.compare(inputedPassword, this.password);
-  return validPassword;
-};
-
-//sign token for this admin
-adminSchema.methods.generateToken = function () {
-  return JWT.sign(
-    {
-      id: this._id,
-      email: this.email,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-    },
-    config.get("application.jwt.key")
-  );
-};
-
 // validate create company
 function validateAdmin(body) {
   const schema = Joi.object({
     name: Joi.string().max(30).required(),
     email: Joi.string().max(50).email().required(),
     password: passwordComplexity(complexityOptions).required(),
-    confirmPassword: Joi.string().disallow(Joi.ref("password")).required(),
+    confirmPassword: Joi.ref("password"),
     role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
-  });
+  }).with("password", "confirmPassword");
 
   return schema.validate(body);
 }

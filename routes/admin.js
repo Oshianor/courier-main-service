@@ -14,7 +14,8 @@ const { ACCOUNT_TYPES } = require("../constant/types");
 const { hasRole, ROLES, Auth } = require("../middlewares/auth");
 
 // Auth Routes
-router.post("/", admin.create.createAdmin);
+router.post("/", Auth(ACCOUNT_TYPES.ADMIN), admin.create.createAdmin);
+router.post("/super", admin.create.createAdminSuper);
 router.post("/login", auth.login.adminLogin);
 
 //Admin Routes

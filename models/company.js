@@ -21,6 +21,9 @@ const companySchema = new mongoose.Schema(
     account: {
       type: ObjectId,
       ref: "Account",
+      required: true,
+      unique: true,
+      index: true,
     },
     publicToken: {
       type: String,

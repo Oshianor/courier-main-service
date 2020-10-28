@@ -23,6 +23,8 @@ const adminSchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Account",
       required: true,
+      unique: true,
+      index: true
     },
     role: {
       type: String,
@@ -41,7 +43,7 @@ const adminSchema = new mongoose.Schema(
 );
 
 adminSchema.pre(/^find/, function (next) {
-  this.populate("account", "-password");
+  this.populate("account", "-password -rememberToken");
   next();
 });
 // validate create company

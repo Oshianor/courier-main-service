@@ -9,6 +9,7 @@ const router = express.Router();
 const admin = require("../controllers/admin");
 const company = require("../controllers/company");
 const auth = require("../controllers/auth");
+const { ACCOUNT_TYPES } = require("../constant/types");
 
 const { hasRole, ROLES, Auth } = require("../middlewares/auth");
 
@@ -17,20 +18,20 @@ router.post("/", admin.create.createAdmin);
 router.post("/login", auth.login.adminLogin);
 
 //Admin Routes
-router.get("/all", Auth, hasRole(["admin"]), admin.get.single);
-router.get("/current", Auth, admin.get.current);
+router.get("/all", Auth(ACCOUNT_TYPES.ADMIN), hasRole(["admin"]), admin.get.single);
+router.get("/current", Auth(ACCOUNT_TYPES.ADMIN), admin.get.current);
 
 // Company routes
-router.post("/companies", Auth, company.create.company);
+router.post("/companies", Auth(ACCOUNT_TYPES.ADMIN), company.create.company);
 
-router.get("/companies", Auth, company.get.all);
+router.get("/companies", Auth(ACCOUNT_TYPES.ADMIN), company.get.all);
 
-router.get("/companies/:companyId", Auth, company.get.single);
+router.get("/companies/:companyId",  Auth(ACCOUNT_TYPES.ADMIN), company.get.single);
 
-router.put("/companies/:companyId", Auth, company.update.updateSingle);
+router.put("/companies/:companyId",  Auth(ACCOUNT_TYPES.ADMIN), company.update.updateSingle);
 
-router.patch("/companies/:companyId/status", Auth, company.update.updateStatus);
+router.patch("/companies/:companyId/status",  Auth(ACCOUNT_TYPES.ADMIN), company.update.updateStatus);
 
-router.delete("/companies/:companyId", Auth, hasRole(), company.delete.destroy);
+router.delete("/companies/:companyId",  Auth(ACCOUNT_TYPES.ADMIN), hasRole(), company.delete.destroy);
 
 module.exports = router;

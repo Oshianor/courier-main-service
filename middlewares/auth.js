@@ -14,7 +14,7 @@ const ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
-    let admin = await Admin.findOne({ account: req.user.id});
+    let admin = await Admin.findOne({ account: req.user.id });
     if (!admin) return JsonResponse(res, 401, "Unauthenticated", null, null);
 
     if (admin.role === ROLES.SUPER_ADMIN) {
@@ -35,22 +35,27 @@ const hasRole = (roles = []) => {
 };
 
 // auth middleware
-const Auth = async (req, res, next) => {
-  const token = req.header("x-auth-token");
-  if (!token) return JsonResponse(res, 401, "ACCESS_DENID", null, null);
+const Auth = (accountType = ACCOUNT_TYPES.USER) => {
+  return async (req, res, next) => {
+    const token = req.header("x-auth-token");
+    if (!token) return JsonResponse(res, 401, "ACCESS_DENID", null, null);
 
-  try {
-    const decoded = jwt.verify(token, config.get("application.jwt.key"));
-    req.user = decoded;
+    try {
+      const decoded = jwt.verify(token, config.get("application.jwt.key"));
 
-    next();
-  } catch (ex) {
-    console.log(ex);
-    if (ex.name === "TokenExpiredError") {
-      return JsonResponse(res, 403, "SESSION_EXPIRED", null, null);
+      if (decoded.accountType !== accountType) {
+        return JsonResponse(res, 403, "ACCESS_DENID", null, null);
+      }
+      req.user = decoded;
+      next();
+    } catch (ex) {
+      console.log(ex);
+      if (ex.name === "TokenExpiredError") {
+        return JsonResponse(res, 403, "SESSION_EXPIRED", null, null);
+      }
+      res.status(406).send();
     }
-    res.status(406).send();
-  }
+  };
 };
 
 module.exports = {

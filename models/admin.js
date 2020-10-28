@@ -5,7 +5,6 @@ const Joi = require("joi");
 const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 const passwordComplexity = require("joi-password-complexity");
-const account = require("./account");
 
 const complexityOptions = {
   min: 6,

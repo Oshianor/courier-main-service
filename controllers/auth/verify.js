@@ -5,7 +5,7 @@ const config = require("config");
 const { MSG_TYPES } = require("../../constant/types");
 const { JsonResponse } = require("../../lib/apiResponse");
 
-exports.company = async (req, res) => {
+exports.account = async (req, res) => {
   try {
     const { error } = validateVerifyAccount(req.body);
 
@@ -32,7 +32,7 @@ exports.company = async (req, res) => {
       emailVerified: true,
       rememberToken: null,
       password,
-      status: "active"
+      status: "active",
     });
 
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);

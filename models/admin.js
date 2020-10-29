@@ -5,7 +5,6 @@ const Joi = require("joi");
 const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 const passwordComplexity = require("joi-password-complexity");
-const account = require("./account");
 
 const complexityOptions = {
   min: 6,
@@ -46,8 +45,8 @@ adminSchema.pre(/^find/, function (next) {
   this.populate("account", "-password -rememberToken");
   next();
 });
-// validate create company
-function validateAdmin(body) {
+// validate create super
+function validateAdminSuper(body) {
   const schema = Joi.object({
     name: Joi.string().max(30).required(),
     email: Joi.string().max(50).email().required(),
@@ -55,6 +54,17 @@ function validateAdmin(body) {
     confirmPassword: Joi.ref("password"),
     role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
   }).with("password", "confirmPassword");
+
+  return schema.validate(body);
+}
+
+// validate create company
+function validateAdmin(body) {
+  const schema = Joi.object({
+    name: Joi.string().max(30).required(),
+    email: Joi.string().max(50).email().required(),
+    role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
+  });
 
   return schema.validate(body);
 }
@@ -74,4 +84,5 @@ module.exports = {
   Admin,
   validateAdmin,
   validateAdminLogin,
+  validateAdminSuper,
 };

@@ -47,6 +47,7 @@ const ACCOUNT_TYPES = Object.freeze({
   ADMIN: "admin",
   COMPANY: "company",
   RIDER: "rider",
+  USER: "user",
 });
 
 module.exports = {

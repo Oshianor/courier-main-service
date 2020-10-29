@@ -18,6 +18,12 @@ const complexityOptions = {
 
 const UserSchema = new mongoose.Schema(
   {
+    parentId: {
+      type: ObjectId,
+      index: true,
+      required: true,
+      unique: true,
+    },
     email: {
       type: String,
       index: true,
@@ -25,23 +31,11 @@ const UserSchema = new mongoose.Schema(
       minlength: 5,
       maxlength: 50,
     },
-    emailVerified: {
-      type: Boolean,
-      default: false,
-      required: false,
-      index: true,
-    },
     phoneNumber: {
       type: String,
       maxlength: 225,
       index: true,
       required: true,
-    },
-    phoneNumberVerified: {
-      type: Boolean,
-      default: false,
-      required: false,
-      index: true,
     },
     firstName: {
       type: String,
@@ -50,17 +44,6 @@ const UserSchema = new mongoose.Schema(
     lastName: {
       type: String,
       maxlength: 15,
-    },
-    verified: {
-      type: Boolean,
-      default: false,
-      index: true,
-      required: true,
-    },
-    password: {
-      type: String,
-      maxlength: 225,
-      required: true,
     },
   },
   {

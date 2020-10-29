@@ -8,6 +8,8 @@ const { Verification } = require("../../templates");
 const moment = require("moment");
 const { v4: uuidv4 } = require("uuid");
 const { to } = require("await-to-js");
+const axios = require("axios");
+const config = require("config")
 
 /**
  * Create Company
@@ -26,10 +28,23 @@ exports.company = async (req, res) => {
       return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
     const pricing = await Pricing.findOne({ type: "freemium" });
-    if (!pricing) return JsonResponse(res, 404, MSG.FREEMIUM, null, null);
+    if (!pricing) return JsonResponse(res, 404, MSG_TYPES.FREEMIUM, null, null);
 
-    console.log(req.files);
+    let country;
+    try {
+      country = await axios.get(
+        `${config.get("application.baseUrl")}${config.get(
+          "application.api.getCountryByName"
+        )}/${req.body.country}`
+      );
+      req.body.countryCode = country.data.data.cc;
+    } catch (error) {
+       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+       return;
+    }
 
+
+    // console.log("req.files", req.files);
     if (req.files.rcDoc) {
       const rcDoc = await UploadFileFromBinary(
         req.files.rcDoc.data,
@@ -45,13 +60,15 @@ exports.company = async (req, res) => {
       req.body.logo = logo.Key;
     }
 
-
     //Save Data to bb
+    console.log("country", country);
+    
     const token = GenerateToken(50);
     req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
     req.body.createdBy = req.user.id;
     req.body.publicToken = uuidv4();
     req.body.tier = pricing;
+    req.body.country = country.data.data.name;
 
     req.body.type = ACCOUNT_TYPES.COMPANY;
     const account = await Account.create(req.body);

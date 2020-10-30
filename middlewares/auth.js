@@ -3,7 +3,7 @@ const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const { Admin } = require("../models/admin");
-const { Account } = require("../models/account");
+const Account = require("../services/accountService");
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
@@ -41,17 +41,17 @@ const Auth = (accountType = ACCOUNT_TYPES.USER) => {
     if (!token) return JsonResponse(res, 401, "ACCESS_DENID", null, null);
 
     try {
-      const decoded = jwt.verify(token, config.get("application.jwt.key"));
+      const decoded = await Account.verifyToken(token, accountType);
 
       if (decoded.accountType !== accountType) {
-        return JsonResponse(res, 403, "ACCESS_DENID", null, null);
+        return JsonResponse(res, 403, "ACCESS_DENIED", null, null);
       }
       req.user = decoded;
       next();
     } catch (ex) {
       console.log(ex);
-      if (ex.name === "TokenExpiredError") {
-        return JsonResponse(res, 403, "SESSION_EXPIRED", null, null);
+      if (ex.msg) {
+        return JsonResponse(res, 401, ex.msg, null, null);
       }
       res.status(406).send();
     }

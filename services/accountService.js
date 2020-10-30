@@ -72,3 +72,23 @@ exports.login = async (body) => {
     return { account: null, token: null };
   }
 };
+
+exports.verifyToken = async (token, accountType) => {
+  try {
+    const postData = {
+      accountType,
+    };
+    const response = await axios.post(
+      `${config.get("application.baseUrl")}/auth/token`,
+      postData,
+      {
+        headers: {
+          "x-auth-token": token,
+        },
+      }
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};

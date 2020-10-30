@@ -77,16 +77,6 @@ const companySchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Admin",
     },
-    rememberToken: {
-      token: {
-        type: String,
-        default: null,
-      },
-      expiredDate: {
-        type: Date,
-        default: null,
-      },
-    },
     totalRiders: {
       type: Number,
     },

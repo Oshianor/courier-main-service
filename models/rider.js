@@ -68,16 +68,6 @@ const riderSchema = new mongoose.Schema(
     ecEmail: {
       type: String,
     },
-    rememberToken: {
-      token: {
-        type: String,
-        default: null,
-      },
-      expiredDate: {
-        type: Date,
-        default: null,
-      },
-    },
     isDeleted: {
       type: Boolean,
       default: false,

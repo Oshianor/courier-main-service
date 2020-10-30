@@ -31,16 +31,6 @@ const adminSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    rememberToken: {
-      token: {
-        type: String,
-        default: null,
-      },
-      expiredDate: {
-        type: Date,
-        default: null,
-      },
-    },
     role: {
       type: String,
       required: true,
@@ -70,6 +60,9 @@ function validateAdminSuper(body) {
     password: passwordComplexity(complexityOptions).required(),
     confirmPassword: Joi.ref("password"),
     role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
+    country: Joi.string().max(30).required(),
+    platform: Joi.string().max(30).required(),
+    phoneNumber: Joi.string().max(30).required(),
   }).with("password", "confirmPassword");
 
   return schema.validate(body);

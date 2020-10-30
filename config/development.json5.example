@@ -30,6 +30,6 @@
     public: "pk_test_ad7a14206a8abc7",
   },
   api: {
-    base: "http://localhost:9090/api/v1",
+    base: "http://localhost:6000/api/v1",
   },
 }

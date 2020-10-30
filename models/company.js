@@ -18,6 +18,12 @@ const complexityOptions = {
 
 const companySchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
     account: {
       type: ObjectId,
       ref: "Account",
@@ -62,19 +68,6 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    country: {
-      type: String,
-      index: true,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
-    },
-    countryCode: {
-      type: String,
-      required: true,
-    },
     tier: {
       type: ObjectId,
       ref: "Pricing",
@@ -83,6 +76,16 @@ const companySchema = new mongoose.Schema(
     createdBy: {
       type: ObjectId,
       ref: "Admin",
+    },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
     },
     totalRiders: {
       type: Number,
@@ -131,6 +134,7 @@ function validateCompany(body) {
     TIN: Joi.string().label("T.I.N").required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
+    platform: Joi.string().label("Platform").required(),
   });
 
   return schema.validate(body);

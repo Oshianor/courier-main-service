@@ -1,5 +1,5 @@
 const { Company, validateCompany } = require("../../models/company");
-const { Account } = require("../../models/account");
+const Account = require("../../services/accountService");
 const { Pricing } = require("../../models/pricing");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
@@ -9,7 +9,7 @@ const moment = require("moment");
 const { v4: uuidv4 } = require("uuid");
 const { to } = require("await-to-js");
 const axios = require("axios");
-const config = require("config")
+const config = require("config");
 
 /**
  * Create Company
@@ -23,27 +23,20 @@ exports.company = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message, null, null);
 
     // check if an existing company  has incoming email
-    const accountCheck = await Account.findOne({ email: req.body.email });
+    const accountCheck = await Company.findOne({ email: req.body.email });
     if (accountCheck)
       return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
     const pricing = await Pricing.findOne({ type: "freemium" });
     if (!pricing) return JsonResponse(res, 404, MSG_TYPES.FREEMIUM, null, null);
 
-    let country;
-    try {
-      country = await axios.get(
-        `${config.get("application.baseUrl")}${config.get(
-          "application.api.getCountryByName"
-        )}/${req.body.country}`
-      );
-      req.body.countryCode = country.data.data.cc;
-    } catch (error) {
-       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-       return;
+    const countryCheck = await Account.getCountryByName(req.body.country);
+    if (!countryCheck) {
+      JsonResponse(res, 404, "Country Not Found", null, null);
+      return;
     }
 
-
+    // return;
     // console.log("req.files", req.files);
     if (req.files.rcDoc) {
       const rcDoc = await UploadFileFromBinary(
@@ -61,24 +54,20 @@ exports.company = async (req, res) => {
     }
 
     //Save Data to bb
-    console.log("country", country);
-    
+    // console.log("country", country.data);
+
     const token = GenerateToken(50);
     req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
     req.body.createdBy = req.user.id;
     req.body.publicToken = uuidv4();
     req.body.tier = pricing;
-    req.body.country = country.data.data.name;
-
+    // req.body.country = country.data.data.name;
+    req.body.phoneNumber = req.body.contactPhoneNumber;
     req.body.type = ACCOUNT_TYPES.COMPANY;
     const account = await Account.create(req.body);
     req.body.account = account._id;
-    const [err, newCompany] = await to(Company.create(req.body));
-    if (err) {
-      //on admin failure remove account
-      await Account.deleteOne({ email: req.body.email });
-      throw err;
-    }
+    const newCompany = await Company.create(req.body);
+
     const subject = "Welcome to Exalt Logistics";
     const html = Verification(token, req.body.email);
     Mailer(req.body.email, subject, html);

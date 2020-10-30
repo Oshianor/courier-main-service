@@ -18,12 +18,28 @@ const complexityOptions = {
 
 const adminSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
     account: {
       type: ObjectId,
       ref: "Account",
       required: true,
       unique: true,
-      index: true
+      index: true,
+    },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
     },
     role: {
       type: String,
@@ -45,6 +61,7 @@ adminSchema.pre(/^find/, function (next) {
   this.populate("account", "-password -rememberToken");
   next();
 });
+
 // validate create super
 function validateAdminSuper(body) {
   const schema = Joi.object({
@@ -64,6 +81,9 @@ function validateAdmin(body) {
     name: Joi.string().max(30).required(),
     email: Joi.string().max(50).email().required(),
     role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
+    country: Joi.string().max(30).required(),
+    platform: Joi.string().max(30).required(),
+    phoneNumber: Joi.string().max(30).required(),
   });
 
   return schema.validate(body);

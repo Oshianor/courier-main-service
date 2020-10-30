@@ -1,4 +1,5 @@
-const { Account, validateVerifyAccount } = require("../../models/account");
+const { validateVerifyAccount } = require("../../models/account");
+const Account = require("../../services/accountService");
 
 const bcrypt = require("bcrypt");
 const config = require("config");
@@ -9,31 +10,33 @@ exports.account = async (req, res) => {
   try {
     const { error } = validateVerifyAccount(req.body);
 
-    if (error)
+    if (error) {
       return JsonResponse(res, 400, error.details[0].message, null, null);
+    }
+    // const currentDate = new Date();
 
-    const currentDate = new Date();
+    // const account = await Account.findOne({
+    //   email: req.body.email,
+    //   "rememberToken.token": req.body.token,
+    //   verified: false,
+    //   emailVerified: false,
+    //   "rememberToken.expiredDate": { $gte: currentDate },
+    // });
 
-    const account = await Account.findOne({
-      email: req.body.email,
-      "rememberToken.token": req.body.token,
-      verified: false,
-      emailVerified: false,
-      "rememberToken.expiredDate": { $gte: currentDate },
-    });
+    // if (!account)
+    //   return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
 
-    if (!account)
-      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    // const password = await bcrypt.hash(req.body.password, 10);
 
-    const password = await bcrypt.hash(req.body.password, 10);
+    // await account.updateOne({
+    //   verified: true,
+    //   emailVerified: true,
+    //   rememberToken: null,
+    //   password,
+    //   status: "active",
+    // });
 
-    await account.updateOne({
-      verified: true,
-      emailVerified: true,
-      rememberToken: null,
-      password,
-      status: "active",
-    });
+    const account = await Account.verify(req.body);
 
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
   } catch (error) {

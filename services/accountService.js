@@ -35,3 +35,20 @@ exports.getCountryByName = async (name) => {
     return false;
   }
 };
+
+exports.verify = async (body) => {
+  try {
+    const postData = {
+      email: body.email,
+      token: body.token,
+      password: body.password,
+    };
+    const response = await axios.post(
+      `${config.get("application.baseUrl")}/auth/verify`,
+      postData
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};

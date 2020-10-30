@@ -68,9 +68,9 @@ exports.company = async (req, res) => {
     req.body.account = account._id;
     const newCompany = await Company.create(req.body);
 
-    // const subject = "Welcome to Exalt Logistics";
-    // const html = Verification(token, req.body.email);
-    // Mailer(req.body.email, subject, html);
+    const subject = "Welcome to Exalt Logistics";
+    const html = Verification(token, req.body.email);
+    Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
     return;

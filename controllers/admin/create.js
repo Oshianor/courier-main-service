@@ -4,7 +4,7 @@ const {
   validateAdmin,
   validateAdminSuper,
 } = require("../../models/admin");
-const { Account } = require("../../models/account");
+const Account = require("../../services/accountService");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { to } = require("await-to-js");
@@ -29,6 +29,15 @@ exports.createAdmin = async (req, res) => {
       JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
       return;
     }
+
+    const countryCheck = await Account.getCountryByName(req.body.country);
+
+    if (!countryCheck) {
+      JsonResponse(res, 404, "Country Not Found", null, null);
+      return;
+    }
+
+    console.log(countryCheck);
 
     const token = GenerateToken(50);
     req.body.rememberToken = {

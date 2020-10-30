@@ -51,7 +51,7 @@ exports.adminLogin = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message, null, null);
     }
 
-    const account = await Account.findOne({ email: req.body.email });
+    const account = await Admin.findOne({ email: req.body.email });
     if (!account) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }

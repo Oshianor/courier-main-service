@@ -15,6 +15,12 @@ const complexityOptions = {
 
 const riderSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
     account: {
       type: mongoose.Types.ObjectId,
       ref: "Account",
@@ -62,6 +68,16 @@ const riderSchema = new mongoose.Schema(
     ecEmail: {
       type: String,
     },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -98,6 +114,9 @@ function validateRider(body) {
     ecName: Joi.string().optional(),
     ecPhone: Joi.string().optional(),
     ecEmail: Joi.string().email().optional(),
+    country: Joi.string().label("Country").required(),
+    state: Joi.string().label("State").required(),
+    platform: Joi.string().label("Platform").required(),
   });
 
   return riderSchema.validate(body);

@@ -1,6 +1,6 @@
 const Joi = require("joi");
 const { Company } = require("../../models/company");
-const { Account } = require("../../models/account");
+const Account = require("../../services/accountService");
 const {
   Rider,
   validateRider,
@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
 
     if (req.body.email) {
       // check if an existing rider has incoming email
-      const accountCheck = await Account.findOne({ email: req.body.email });
+      const accountCheck = await Rider.findOne({ email: req.body.email });
 
       if (accountCheck) {
         JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
@@ -39,6 +39,12 @@ exports.create = async (req, res) => {
 
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
+      return;
+    }
+
+    const countryCheck = await Account.getCountryByName(req.body.country);
+    if (!countryCheck) {
+      JsonResponse(res, 404, "Country Not Found", null, null);
       return;
     }
 
@@ -70,12 +76,8 @@ exports.create = async (req, res) => {
     req.body.type = ACCOUNT_TYPES.RIDER;
     const account = await Account.create(data);
     req.body.account = account._id;
-    const [err, rider] = await to(Rider.create(data));
-    if (err) {
-      //on admin failure remove account
-      await Account.deleteOne({ email: req.body.email });
-      throw err;
-    }
+    const rider = await Rider.create(data);
+
     const subject = "Welcome to Exalt Logistics";
     const html = Verification(token, req.body.email);
     Mailer(req.body.email, subject, html);

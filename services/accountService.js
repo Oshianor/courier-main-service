@@ -8,7 +8,7 @@ exports.create = async (data) => {
       email: data.email,
       phoneNumber: data.phoneNumber,
       type: "Logistics",
-      // country: data.country,
+      country: data.country,
       platform: data.platform,
       password: data.password,
     };
@@ -26,11 +26,11 @@ exports.create = async (data) => {
 exports.getCountryByName = async (name) => {
   try {
     const { data } = await axios.get(
-      `${config.get("application.baseUrl")}/country/${name}`
+      `${config.get("application.baseUrl")}/country/name/${name}`
     );
     return true;
   } catch (error) {
-    console.log(error);
+    console.log(error.response.data);
     return false;
   }
 };

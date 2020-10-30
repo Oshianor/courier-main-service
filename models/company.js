@@ -18,6 +18,12 @@ const complexityOptions = {
 
 const companySchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
     account: {
       type: ObjectId,
       ref: "Account",
@@ -59,19 +65,6 @@ const companySchema = new mongoose.Schema(
       required: true,
     },
     logo: {
-      type: String,
-      required: true,
-    },
-    country: {
-      type: String,
-      index: true,
-      required: true,
-    },
-    state: {
-      type: String,
-      required: true,
-    },
-    countryCode: {
       type: String,
       required: true,
     },
@@ -131,6 +124,7 @@ function validateCompany(body) {
     TIN: Joi.string().label("T.I.N").required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
+    platform: Joi.string().label("Platform").required(),
   });
 
   return schema.validate(body);

@@ -18,12 +18,18 @@ const complexityOptions = {
 
 const adminSchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
     account: {
       type: ObjectId,
       ref: "Account",
       required: true,
       unique: true,
-      index: true
+      index: true,
     },
     role: {
       type: String,

@@ -6,7 +6,7 @@ const { MSG_TYPES } = require("../../constant/types");
 const { User, validateLogin } = require("../../models/users");
 const config = require("config");
 const bcrypt = require("bcrypt");
-const { Account } = require("../../models/account");
+const Account = require("../../services/accountService");
 const { Rider } = require("../../models/rider");
 
 exports.loginAsUser = async (req, res) => {
@@ -51,20 +51,24 @@ exports.adminLogin = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message, null, null);
     }
 
-    const account = await Admin.findOne({ email: req.body.email });
-    if (!account) {
+    const accountCheck = await Admin.findOne({ email: req.body.email });
+    if (!accountCheck) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }
-    if (!account.isValidPassword(req.body.password)) {
+    const { account, token } = await Account.login(req.body);
+
+    if (!account) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }
 
     if (account.status !== "active") {
       return JsonResponse(res, 401, account.status.toUpperCase(), null, null);
     }
-    let token = account.generateToken();
+    // return;
+    // let token = account.generateToken();
 
     const admin = await Admin.findOne({ account: account._id });
+    admin.account = account;
 
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
@@ -88,21 +92,24 @@ exports.companyLogin = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message, null, null);
     }
 
-    const account = await Account.findOne({ email: req.body.email });
+    const companyCheck = await Company.findOne({ email: req.body.email });
 
-    if (!account) {
+    if (!companyCheck) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }
-    if (!account.isValidPassword(req.body.password)) {
+
+    const { account, token } = await Account.login(req.body);
+
+    if (!account) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }
 
     if (account.status !== "active") {
       return JsonResponse(res, 401, account.status.toUpperCase(), null, null);
     }
-    let token = account.generateToken();
 
     const company = await Company.findOne({ account: account._id });
+    company.account = account;
 
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
@@ -125,27 +132,25 @@ exports.riderLogin = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message, null, null);
     }
 
-    const account = await Account.findOne({
-      email: req.body.email,
-      status: "active",
-    });
+    const riderCheck = await Rider.findOne({ email: req.body.email });
+
+    if (!riderCheck) {
+      return JsonResponse(res, 401, "Invalid Credentials!", null, null);
+    }
+    const { account, token } = await Account.login(req.body);
 
     if (!account) {
       return JsonResponse(res, 401, "Invalid Credentials!", null, null);
     }
-    if (!account.isValidPassword(req.body.password)) {
-      return JsonResponse(res, 401, "Invalid Credentials!", null, null);
-    }
-
     if (account.status !== "active") {
       return JsonResponse(res, 401, account.status.toUpperCase(), null, null);
     }
-    let token = account.generateToken();
 
-    const company = await Rider.findOne({ account: account._id });
+    const rider = await Rider.findOne({ account: account._id });
+    rider.account = account;
 
     res.header("x-auth-token", token);
-    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
+    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, rider, null);
   } catch (error) {
     console.log(error);
     return res.status(500).send("Something went wrong!");

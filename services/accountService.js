@@ -7,7 +7,8 @@ exports.create = async (data) => {
       name: data.name,
       email: data.email,
       phoneNumber: data.phoneNumber,
-      type: "Logistics",
+      service: "Logistics",
+      type: data.type,
       country: data.country,
       platform: data.platform,
       password: data.password,
@@ -32,5 +33,62 @@ exports.getCountryByName = async (name) => {
   } catch (error) {
     console.log(error.response.data);
     return false;
+  }
+};
+
+exports.verify = async (body) => {
+  try {
+    const postData = {
+      email: body.email,
+      token: body.token,
+      password: body.password,
+    };
+    const response = await axios.post(
+      `${config.get("application.baseUrl")}/auth/verify`,
+      postData
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};
+
+exports.login = async (body) => {
+  try {
+    const postData = {
+      email: body.email,
+      password: body.password,
+    };
+    const response = await axios.post(
+      `${config.get("application.baseUrl")}/auth/login`,
+      postData
+    );
+    return {
+      account: response.data.data,
+      token: response.headers["x-auth-token"],
+    };
+  } catch (error) {
+    console.log(error.response.data);
+    return { account: null, token: null };
+  }
+};
+
+exports.verifyToken = async (token, accountType) => {
+  try {
+    const postData = {
+      accountType,
+    };
+    const response = await axios.post(
+      `${config.get("application.baseUrl")}/auth/token`,
+      postData,
+      {
+        headers: {
+          "x-auth-token": token,
+        },
+      }
+    );
+    return response.data.data;
+  } catch (error) {
+    throw error.response.data;
   }
 };

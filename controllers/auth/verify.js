@@ -1,43 +1,52 @@
-const { validateVerifyAccount } = require("../../models/account");
-const Account = require("../../services/accountService");
+// const { validateVerifyAccount } = require("../../models/account");
+// const Account = require("../../services/accountService");
 
 const bcrypt = require("bcrypt");
 const config = require("config");
 const { MSG_TYPES } = require("../../constant/types");
 const { JsonResponse } = require("../../lib/apiResponse");
+const { Admin, validateVerifyAccount } = require("../../models/admin")
+const { Company } = require("../../models/company")
+const { Rider } = require("../../models/rider");
 
 exports.account = async (req, res) => {
   try {
     const { error } = validateVerifyAccount(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
 
-    if (error) {
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+    const currentDate = new Date();
+    const password = await bcrypt.hash(req.body.password, 10);
+
+    const dataReq = {
+      email: req.body.email,
+      "rememberToken.token": req.body.token,
+      verified: false,
+      emailVerified: false,
+      "rememberToken.expiredDate": { $gte: currentDate },
+    };
+
+    const dataUpdate = {
+      verified: true,
+      emailVerified: true,
+      rememberToken: null,
+      password,
+      status: "active",
+    };
+
+    if (req.body.type === "admin") {
+      const admin = await Admin.findOne(dataReq);
+      if (!admin) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      await admin.updateOne(dataUpdate);
+    } else if (req.body.type === "company") {
+      const company = await Company.findOne(dataReq);
+      if (!company) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      await company.updateOne(dataUpdate);
+    } else if (req.body.type === "rider") {
+      const rider = await Rider.findOne({...dataReq, verificationType: "email" });
+      if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      await rider.updateOne(dataUpdate);
     }
-    // const currentDate = new Date();
-
-    // const account = await Account.findOne({
-    //   email: req.body.email,
-    //   "rememberToken.token": req.body.token,
-    //   verified: false,
-    //   emailVerified: false,
-    //   "rememberToken.expiredDate": { $gte: currentDate },
-    // });
-
-    // if (!account)
-    //   return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-
-    // const password = await bcrypt.hash(req.body.password, 10);
-
-    // await account.updateOne({
-    //   verified: true,
-    //   emailVerified: true,
-    //   rememberToken: null,
-    //   password,
-    //   status: "active",
-    // });
-
-    const account = await Account.verify(req.body);
-
+    
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
   } catch (error) {
     console.log(error);

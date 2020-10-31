@@ -1,6 +1,6 @@
 const { Company, validateCompany } = require("../../models/company");
-const Account = require("../../services/accountService");
 const { Pricing } = require("../../models/pricing");
+const { Country } = require("../../models/countries");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
@@ -30,11 +30,13 @@ exports.company = async (req, res) => {
     const pricing = await Pricing.findOne({ type: "freemium" });
     if (!pricing) return JsonResponse(res, 404, MSG_TYPES.FREEMIUM, null, null);
 
-    const countryCheck = await Account.getCountryByName(req.body.country);
-    if (!countryCheck) {
-      JsonResponse(res, 404, "Country Not Found", null, null);
-      return;
-    }
+    const country = await Country.findOne({ name: req.body.country });
+    if (!country) return JsonResponse(res, 404, "Country Not Found", null, null);
+
+      // validate state
+    const state = country.states.filter((v, i) => v.name === req.body.state);
+    if (typeof state[0] === "undefined") return JsonResponse(res, 404, "State Not Found", null, null);
+
 
     // return;
     // console.log("req.files", req.files);
@@ -53,23 +55,16 @@ exports.company = async (req, res) => {
       req.body.logo = logo.Key;
     }
 
-    //Save Data to bb
-    // console.log("country", country.data);
-
-    const token = GenerateToken(50);
+    const token = GenerateToken(225);
     req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
     req.body.createdBy = req.user.id;
     req.body.publicToken = uuidv4();
     req.body.tier = pricing;
-    // req.body.country = country.data.data.name;
-    req.body.phoneNumber = req.body.contactPhoneNumber;
-    req.body.type = ACCOUNT_TYPES.COMPANY;
-    const account = await Account.create(req.body);
-    req.body.account = account._id;
-    const newCompany = await Company.create(req.body);
+    req.body.countryCode = country.cc;
+    await Company.create(req.body);
 
     const subject = "Welcome to Exalt Logistics";
-    const html = Verification(token, req.body.email);
+    const html = Verification(token, req.body.email, "company");
     Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);

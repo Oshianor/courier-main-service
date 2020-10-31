@@ -3,10 +3,11 @@ const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const { Admin } = require("../models/admin");
-const Account = require("../services/accountService");
+// const Account = require("../services/accountService");
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
+  ACCOUNTANT: "accountant"
 };
 
 /*
@@ -14,7 +15,7 @@ const ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
-    let admin = await Admin.findOne({ account: req.user.id });
+    let admin = await Admin.findOne({ _id: req.user.id, status: "active", verified: true });
     if (!admin) return JsonResponse(res, 401, "Unauthenticated", null, null);
 
     if (admin.role === ROLES.SUPER_ADMIN) {
@@ -35,27 +36,22 @@ const hasRole = (roles = []) => {
 };
 
 // auth middleware
-const Auth = (accountType = ACCOUNT_TYPES.USER) => {
-  return async (req, res, next) => {
-    const token = req.header("x-auth-token");
-    if (!token) return JsonResponse(res, 401, "ACCESS_DENID", null, null);
+const Auth = async (req, res, next) => {
+  const token = req.header("x-auth-token");
+  if (!token) return JsonResponse(res, 401, "ACCESS_DENID", null, null);
 
-    try {
-      const decoded = await Account.verifyToken(token, accountType);
+  try {
+    const decoded = jwt.verify(token, config.get("application.jwt.key"));
 
-      if (decoded.accountType !== accountType) {
-        return JsonResponse(res, 403, "ACCESS_DENIED", null, null);
-      }
-      req.user = decoded;
-      next();
-    } catch (ex) {
-      console.log(ex);
-      if (ex.msg) {
-        return JsonResponse(res, 401, ex.msg, null, null);
-      }
-      res.status(406).send();
+    req.user = decoded;
+    next();
+  } catch (ex) {
+    console.log(ex);
+    if (ex.msg) {
+      return JsonResponse(res, 401, ex.msg, null, null);
     }
-  };
+    res.status(406).send();
+  }
 };
 
 module.exports = {

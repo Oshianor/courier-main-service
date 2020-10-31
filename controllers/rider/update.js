@@ -6,6 +6,30 @@ const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary } = require("../../utils");
 
+
+
+/**
+ * Go online/offline
+ * @param {*} req
+ * @param {*} res
+ */
+exports.updateSingle = async (req, res) => {
+  try {
+    const company = await Company.findOne({ _id: req.user.companyId, verified: true, status: "active" });
+    if (!company) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
+
+    const rider = await Rider.findOne({ _id: req.user.id, verified: true, status: "active" })
+    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
+
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, rider, null);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+
 /**
  * Update Rider
  * @param {*} req

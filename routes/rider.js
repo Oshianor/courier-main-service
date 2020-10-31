@@ -7,7 +7,10 @@ const { Auth } = require("../middlewares/auth");
 const rider = require("../controllers/rider");
 
 // Rider routes
+// get my data
+router.get("/me", Auth, rider.get.me);
+// create an account from the app.
 router.post("/", rider.create.createSelf);
 
-router.post("/login", auth.login.riderLogin);
+
 module.exports = router;

@@ -3,13 +3,8 @@ const moment = require("moment")
 
 // https://github.com/usecanvas/email-templates
 
-exports.Verification = (token, email) => {
-  const link =
-    config.get("application.website") +
-    "/create-password?t=" +
-    token +
-    "&e=" +
-    email;
+exports.Verification = (token, email, type) => {
+  const link =`${config.get("application.website")}/create-password?t=${token}&e=${email}&type=${type}`;
   return `
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"
   style="width:100%;font-family:arial, 'helvetica neue', helvetica, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">

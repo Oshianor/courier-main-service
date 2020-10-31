@@ -1,11 +1,11 @@
 const Joi = require("joi");
 const { Company } = require("../../models/company");
-const Account = require("../../services/accountService");
 const {
   Rider,
   validateRider,
   validateRiderSelf,
 } = require("../../models/rider");
+const { Country } = require("../../models/countries");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { Verification } = require("../../templates");
@@ -20,66 +20,53 @@ const { to } = require("await-to-js");
 exports.create = async (req, res) => {
   try {
     const { error } = validateRider(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
 
-    if (error) {
-      JsonResponse(res, 400, error.details[0].message, null, null);
-      return;
-    }
+    const company = await Company.findOne({ _id: req.user.id, verified: true, status: "active" });
+    if (!company) return JsonResponse(res, 404, "Company Not Found!", null, null);
 
-    if (req.body.email) {
-      // check if an existing rider has incoming email
-      const accountCheck = await Rider.findOne({ email: req.body.email });
+    const rider = await Rider.findOne({ email: req.body.email });
+    if (rider) return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
-      if (accountCheck) {
-        JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-        return;
-      }
-    }
-    const company = await Company.findOne({ account: req.user.id });
+    // validate country
+    const country = await Country.findOne({ name: req.body.country });
+    if (!country) return JsonResponse(res, 404, "Country Not Found", null, null);
 
-    if (!company) {
-      JsonResponse(res, 404, "Company Not Found!", null, null);
-      return;
-    }
+    // validate state
+    const state = country.states.filter((v, i) => v.name === req.body.state);
+    if (typeof state[0] === "undefined") return JsonResponse(res, 404, "State Not Found", null, null);
 
-    const countryCheck = await Account.getCountryByName(req.body.country);
-    if (!countryCheck) {
-      JsonResponse(res, 404, "Country Not Found", null, null);
-      return;
-    }
-
-    const data = req.body;
-    data.company = company._id;
-
-    if (req.files.proofOfIdentity) {
-      const proofOfIdentity = await UploadFileFromBinary(
-        req.files.proofOfIdentity.data,
-        req.files.proofOfIdentity.name
+    if (req.files.POI) {
+      const POI = await UploadFileFromBinary(
+        req.files.POI.data,
+        req.files.POI.name
       );
-      data.proofOfIdentity = proofOfIdentity.Key;
+      req.body.POI = POI.Key;
     }
 
-    if (req.files.image) {
-      const image = await UploadFileFromBinary(
-        req.files.image.data,
-        req.files.image.name
+    if (req.files.img) {
+      const img = await UploadFileFromBinary(
+        req.files.img.data,
+        req.files.img.name
       );
-      data.image = image.Key;
+      req.body.img = img.Key;
     }
 
-    const token = GenerateToken(50);
-    data.rememberToken = {
+    const token = GenerateToken(225);
+    req.body.rememberToken = {
       token,
       expiredDate: moment().add(2, "days"),
     };
 
-    req.body.type = ACCOUNT_TYPES.RIDER;
-    const account = await Account.create(data);
-    req.body.account = account._id;
-    const rider = await Rider.create(data);
+    req.body.company = req.user.id;
+    req.body.countryCode = country.cc; // add country code.
+    req.body.createdBy = "company";
+    req.body.verificationType = "email";
+    req.body.companyRequest = "approved";
+    await Rider.create(req.body);
 
     const subject = "Welcome to Exalt Logistics";
-    const html = Verification(token, req.body.email);
+    const html = Verification(token, req.body.email, "rider");
     Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);

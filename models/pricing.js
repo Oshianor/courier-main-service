@@ -98,7 +98,7 @@ function validateUpdatePricing(data) {
   return Schema.validate(data);
 }
 
-const Pricing = mongoose.model("pricings", pricingSchema);
+const Pricing = mongoose.model("Pricing", pricingSchema);
 
 module.exports = {
   Pricing,

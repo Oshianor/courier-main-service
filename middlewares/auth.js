@@ -3,7 +3,7 @@ const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const { Admin } = require("../models/admin");
-// const Account = require("../services/accountService");
+const service = require("../services");
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
@@ -38,7 +38,7 @@ const hasRole = (roles = []) => {
 // auth middleware
 const Auth = async (req, res, next) => {
   const token = req.header("x-auth-token");
-  if (!token) return JsonResponse(res, 401, "ACCESS_DENID", null, null);
+  if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
 
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
@@ -54,8 +54,29 @@ const Auth = async (req, res, next) => {
   }
 };
 
+
+const UserAuth = async (req, res, next) => {
+  const token = req.header("x-auth-token");
+  if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+
+  try {
+    // call user account service to get details
+    const user = service.user.get(token);
+
+    req.user = user;
+    next();
+  } catch (ex) {
+    console.log(ex);
+    if (ex.msg) {
+      return JsonResponse(res, 401, ex.msg, null, null);
+    }
+    res.status(406).send();
+  }
+};
+
 module.exports = {
   Auth,
   hasRole,
   ROLES,
+  UserAuth,
 };

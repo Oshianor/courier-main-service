@@ -8,14 +8,6 @@ const entrySchema = mongoose.Schema({
     required: true,
     index: true,
   },
-  type: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
 });
 
 function validateVehicle(data) {
@@ -27,16 +19,8 @@ function validateVehicle(data) {
   return Schema.validate(data);
 }
 
-function validateUpdateVehicle(data) {
-  const Schema = Joi.object().keys({
-    type: Joi.string().max(30).label("Vehicle Type").optional(),
-    price: Joi.number().label("Vehicle Price").optional(),
-  });
 
-  return Schema.validate(data);
-}
-
-const Entry = mongoose.model("Vehicle", entrySchema);
+const Entry = mongoose.model("Entry", entrySchema);
 
 module.exports = {
   validateVehicle,

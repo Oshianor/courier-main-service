@@ -28,8 +28,5 @@
   paystack: {
     secret: "sk_test_44f0de5ab496afb",
     public: "pk_test_ad7a14206a8abc7",
-  },
-  api: {
-    base: "http://localhost:6000/api/v1",
-  },
+  }
 }

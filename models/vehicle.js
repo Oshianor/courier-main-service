@@ -2,21 +2,26 @@ const mongoose = require("mongoose");
 const Joi = require("joi");
 
 
-const vehicleSchema = mongoose.Schema({
-  ref: {
-    type: String,
-    required: true,
-    index: true,
+const vehicleSchema = mongoose.Schema(
+  {
+    ref: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    type: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
   },
-  type: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 function validateVehicle(data) {
   const Schema = Joi.object().keys({

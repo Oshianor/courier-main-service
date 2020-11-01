@@ -6,7 +6,7 @@ const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
 const { Verification } = require("../../templates");
 const moment = require("moment");
-const { v4: uuidv4 } = require("uuid");
+const nanoid = require("nanoid");
 const { to } = require("await-to-js");
 const axios = require("axios");
 const config = require("config");
@@ -58,7 +58,7 @@ exports.company = async (req, res) => {
     const token = GenerateToken(225);
     req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
     req.body.createdBy = req.user.id;
-    req.body.publicToken = uuidv4();
+    req.body.publicToken = nanoid(50);
     req.body.tier = pricing;
     req.body.countryCode = country.cc;
     await Company.create(req.body);

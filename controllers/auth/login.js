@@ -6,7 +6,6 @@ const { MSG_TYPES } = require("../../constant/types");
 const { User, validateLogin } = require("../../models/users");
 const config = require("config");
 const bcrypt = require("bcrypt");
-const Account = require("../../services/accountService");
 const { Rider, validateRiderLogin } = require("../../models/rider");
 
 /**

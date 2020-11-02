@@ -201,10 +201,12 @@ function validateRiderSelf(body) {
     address: Joi.string().max(225).required(),
     DOB: Joi.date().required(),
     POIExpiringDate: Joi.date().required(),
-    POI: Joi.string().required(),
     policyNumber: Joi.string().required(),
     plateNumber: Joi.string().max(15).required(),
     vehicle: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    company: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
     ECName: Joi.string().max(30).required(),

@@ -18,7 +18,10 @@ const UserSchema = new mongoose.Schema(
       maxlength: 50,
     },
     phoneNumber: String,
-    name: String
+    name: String,
+    country: String,
+    state: String,
+    countryCode: String,
   },
   {
     timestamps: true,

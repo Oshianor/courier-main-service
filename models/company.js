@@ -138,6 +138,11 @@ const companySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    recruitment: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
     isDeleted: {
       type: Boolean,
       default: false,

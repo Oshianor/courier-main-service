@@ -80,13 +80,7 @@ const riderSchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Company",
       required: true,
-    },
-    companyRequest: {
-      type: String,
-      required: true,
-      enum: ["pending", "declined", "approved"],
-      default: "approved",
-      index: true,
+      default: null
     },
     vehicle: {
       type: ObjectId,

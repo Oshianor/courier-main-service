@@ -6,12 +6,11 @@ const nanoid = require("nanoid")
 
 const orderSchema = mongoose.Schema(
   {
-    _id: {
-      type: String,
+    orderId: {
+      type: Number,
       required: true,
       index: true,
-      unique: true,
-      default: () => nanoid(10),
+      unique: true
     },
     entry: {
       type: ObjectId,
@@ -98,6 +97,33 @@ const orderSchema = mongoose.Schema(
     deliveryTime: {
       type: Date,
       required: true,
+    },
+    itemName: {
+      type: String,
+      required: true,
+    },
+    img: [
+      {
+        type: String,
+        ref: "User",
+        default: null,
+      },
+    ],
+    description: {
+      type: String,
+      default: "",
+      required: true,
+      maxLenght: 3000,
+    },
+    weight: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      default: 0.0,
     },
   },
   {

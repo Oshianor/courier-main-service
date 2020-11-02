@@ -144,8 +144,6 @@ const companySchema = new mongoose.Schema(
     },
     deletedBy: {
       type: ObjectId,
-      ref: "Account",
-      default: null,
     },
     deletedAt: {
       type: Date,
@@ -157,13 +155,12 @@ const companySchema = new mongoose.Schema(
   }
 );
 
-
 companySchema.methods.generateToken = function () {
   return Jwt.sign(
     {
       id: this._id,
       email: this.email,
-      type: "company"
+      type: "company",
     },
     config.get("application.jwt.key"),
     { expiresIn: "1w" }
@@ -213,11 +210,7 @@ function validateUpdateCompany(body) {
       .min(10)
       .max(10)
       .optional(),
-    phoneNumber: Joi.string()
-      .label("Phone Number")
-      .min(10)
-      .max(10)
-      .optional(),
+    phoneNumber: Joi.string().label("Phone Number").min(10).max(10).optional(),
     RCNumber: Joi.string().label("RC Number").optional(),
     TIN: Joi.string().label("T.I.N").optional(),
     country: Joi.string().label("Country").optional(),

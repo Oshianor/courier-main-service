@@ -28,16 +28,20 @@ exports.company = async (req, res) => {
     })
       .populate("vehicles")
       .populate("tier", "name type price transactionCost priority");
-    if (!company) return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
+    if (!company)
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
 
     // compare request password with the password saved on the database
-    let validPassword = await bcrypt.compare(req.body.password, company.password);
+    let validPassword = await bcrypt.compare(
+      req.body.password,
+      company.password
+    );
     if (!validPassword)
       return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID, null, null);
 
     const token = company.generateToken();
 
-    delete company.password;
+    company.password = 0;
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
     return;
@@ -92,7 +96,8 @@ exports.admin = async (req, res) => {
 exports.rider = async (req, res) => {
   try {
     const { error } = validateRiderLogin(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message, null, null);
 
     const rider = await Rider.findOne({
       email: req.body.email.toLowerCase(),

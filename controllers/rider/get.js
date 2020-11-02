@@ -129,3 +129,31 @@ exports.allByAdmin = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };
+
+exports.requests = async (req, res) => {
+  try {
+    const page =
+      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
+    const pageSize =
+      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
+    const skip = (page - 1) * pageSize;
+
+    const riders = await Rider.find({ companyRequest: "pending" })
+      .skip(skip)
+      .limit(pageSize)
+      .select("-password");
+    const total = await Rider.find({
+      companyRequest: "pending",
+    }).countDocuments();
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, meta);
+    return;
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};

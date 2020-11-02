@@ -12,5 +12,4 @@ router.get("/me", Auth, rider.get.me);
 // create an account from the app.
 router.post("/", rider.create.createSelf);
 
-
 module.exports = router;

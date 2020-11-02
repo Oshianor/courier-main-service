@@ -11,7 +11,7 @@ const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { Verification } = require("../../templates");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
 const moment = require("moment");
-const { to } = require("await-to-js");
+const bcrypt = require("bcrypt");
 /**
  * Create Rider
  * @param {*} req
@@ -107,61 +107,66 @@ exports.createSelf = async (req, res) => {
       return;
     }
 
-    if (req.body.email) {
-      // check if an existing rider has incoming email
-      const accountCheck = await Account.findOne({ email: req.body.email });
+    const company = await Company.findOne({
+      _id: req.body.company,
+      verified: true,
+      status: "active",
+    });
+    if (!company)
+      return JsonResponse(res, 404, "Company Not Found!", null, null);
+    const rider = await Rider.findOne({ email: req.body.email });
+    if (rider)
+      return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
 
-      if (accountCheck) {
-        JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-        return;
-      }
-    }
-    const data = req.body;
-    let company;
-    if (req.query.companyId) {
-      company = await Company.findOne({ account: req.query.companyId });
-
-      if (!company) {
-        JsonResponse(res, 404, "Company Not Found!", null, null);
-        return;
-      }
-      data.company = company._id;
+    const phoneCheck = await Rider.findOne({
+      phoneNumber: req.body.phoneNumber,
+    });
+    if (phoneCheck) {
+      JsonResponse(res, 400, `\"phoneNumber"\ already exists!`, null, null);
+      return;
     }
 
-    if (req.files.proofOfIdentity) {
-      const proofOfIdentity = await UploadFileFromBinary(
-        req.files.proofOfIdentity.data,
-        req.files.proofOfIdentity.name
+    // validate country
+    const country = await Country.findOne({ name: req.body.country });
+    if (!country)
+      return JsonResponse(res, 404, "Country Not Found", null, null);
+
+    // validate state
+    const state = country.states.filter((v, i) => v.name === req.body.state);
+    if (typeof state[0] === "undefined")
+      return JsonResponse(res, 404, "State Not Found", null, null);
+
+    if (req.files.POI) {
+      const POI = await UploadFileFromBinary(
+        req.files.POI.data,
+        req.files.POI.name
       );
-      data.proofOfIdentity = proofOfIdentity.Key;
+      req.body.POI = POI.Key;
     }
 
-    if (req.files.image) {
-      const image = await UploadFileFromBinary(
-        req.files.image.data,
-        req.files.image.name
+    if (req.files.img) {
+      const img = await UploadFileFromBinary(
+        req.files.img.data,
+        req.files.img.name
       );
-      data.image = image.Key;
+      req.body.img = img.Key;
     }
 
-    const token = GenerateToken(50);
-    data.rememberToken = {
+    const token = GenerateToken(225);
+    req.body.rememberToken = {
       token,
       expiredDate: moment().add(2, "days"),
     };
 
-    req.body.type = ACCOUNT_TYPES.RIDER;
-    const account = await Account.create(data);
-    req.body.account = account._id;
-    const [err, rider] = await to(Rider.create(data));
-    if (err) {
-      //on admin failure remove account
-      await Account.deleteOne({ email: req.body.email });
-      throw err;
-    }
-    const subject = "Welcome to Exalt Logistics";
-    const html = Verification(token, req.body.email);
-    Mailer(req.body.email, subject, html);
+    const password = await bcrypt.hash(req.body.password, 10);
+
+    req.body.password = password;
+    req.body.company = company.id;
+    req.body.countryCode = country.cc; // add country code.
+    req.body.createdBy = "self";
+    req.body.verificationType = "email";
+    req.body.companyRequest = "pending";
+    await Rider.create(req.body);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
   } catch (error) {

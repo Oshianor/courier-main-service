@@ -6,11 +6,7 @@ const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
 const { Verification } = require("../../templates");
 const moment = require("moment");
-const nanoid = require("nanoid");
-const { to } = require("await-to-js");
-const axios = require("axios");
-const config = require("config");
-
+const { nanoid } = require("nanoid");
 /**
  * Create Company
  * @param {*} req
@@ -31,12 +27,13 @@ exports.company = async (req, res) => {
     if (!pricing) return JsonResponse(res, 404, MSG_TYPES.FREEMIUM, null, null);
 
     const country = await Country.findOne({ name: req.body.country });
-    if (!country) return JsonResponse(res, 404, "Country Not Found", null, null);
+    if (!country)
+      return JsonResponse(res, 404, "Country Not Found", null, null);
 
-      // validate state
+    // validate state
     const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined") return JsonResponse(res, 404, "State Not Found", null, null);
-
+    if (typeof state[0] === "undefined")
+      return JsonResponse(res, 404, "State Not Found", null, null);
 
     // return;
     // console.log("req.files", req.files);

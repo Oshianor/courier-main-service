@@ -20,21 +20,38 @@ const { to } = require("await-to-js");
 exports.create = async (req, res) => {
   try {
     const { error } = validateRider(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message, null, null);
 
-    const company = await Company.findOne({ _id: req.user.id, verified: true, status: "active" });
-    if (!company) return JsonResponse(res, 404, "Company Not Found!", null, null);
+    const company = await Company.findOne({
+      _id: req.user.id,
+      verified: true,
+      status: "active",
+    });
+    if (!company)
+      return JsonResponse(res, 404, "Company Not Found!", null, null);
 
     const rider = await Rider.findOne({ email: req.body.email });
-    if (rider) return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
+    if (rider)
+      return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
+
+    const phoneCheck = await Rider.findOne({
+      phoneNumber: req.body.phoneNumber,
+    });
+    if (phoneCheck) {
+      JsonResponse(res, 400, `\"phoneNumber"\ already exists!`, null, null);
+      return;
+    }
 
     // validate country
     const country = await Country.findOne({ name: req.body.country });
-    if (!country) return JsonResponse(res, 404, "Country Not Found", null, null);
+    if (!country)
+      return JsonResponse(res, 404, "Country Not Found", null, null);
 
     // validate state
     const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined") return JsonResponse(res, 404, "State Not Found", null, null);
+    if (typeof state[0] === "undefined")
+      return JsonResponse(res, 404, "State Not Found", null, null);
 
     if (req.files.POI) {
       const POI = await UploadFileFromBinary(

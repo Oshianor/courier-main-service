@@ -3,7 +3,6 @@ const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 
-
 /**
  * Get Me
  * @param {*} req
@@ -25,8 +24,9 @@ exports.me = async (req, res) => {
       _id: rider.company,
       verified: true,
       status: "active",
-    })
-    if (!company) return JsonResponse(res, 404, "Company Not Found!", null, null);
+    });
+    if (!company)
+      return JsonResponse(res, 404, "Company Not Found!", null, null);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, null);
   } catch (error) {
@@ -35,8 +35,6 @@ exports.me = async (req, res) => {
   }
 };
 
-
-
 /**
  * Get One Rider
  * @param {*} req
@@ -44,8 +42,7 @@ exports.me = async (req, res) => {
  */
 exports.single = async (req, res) => {
   try {
-  
-    const company = await Company.findOne({ account: req.user.id });
+    const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
@@ -72,22 +69,35 @@ exports.single = async (req, res) => {
  */
 exports.all = async (req, res) => {
   try {
+    const page =
+      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
+    const pageSize =
+      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
+    const skip = (page - 1) * pageSize;
 
-    const company = await Company.findOne({ account: req.user.id });
+    const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;
     }
 
-    const riders = await Rider.find({ company: company.id });
+    const riders = await Rider.find({ company: company.id })
+      .skip(skip)
+      .limit(pageSize)
+      .select("-password");
+    const total = await Rider.find().countDocuments();
 
-    JsonResponse(res, 200, null, riders, null);
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, meta);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };
-
 
 /**
  * Get All Riders by Admin
@@ -96,11 +106,16 @@ exports.all = async (req, res) => {
  */
 exports.allByAdmin = async (req, res) => {
   try {
-    const page = typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize = typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
+    const page =
+      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
+    const pageSize =
+      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const riders = await Rider.find().skip(skip).limit(pageSize).select("-password");
+    const riders = await Rider.find()
+      .skip(skip)
+      .limit(pageSize)
+      .select("-password");
     const total = await Rider.find().countDocuments();
 
     const meta = {
@@ -108,7 +123,7 @@ exports.allByAdmin = async (req, res) => {
       pagination: { pageSize, page },
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, meta);
-    return
+    return;
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

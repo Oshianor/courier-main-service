@@ -10,7 +10,7 @@ const { MSG_TYPES } = require("../../constant/types");
  */
 exports.destroy = async (req, res) => {
   try {
-    const company = await Company.findOne({ account: req.user.id });
+    const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
       JsonResponse(res, 404, "Company Not Found!", null, null);
       return;

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Joi = require("joi");
 
 
-const vehicleSchema = mongoose.Schema(
+const DistancePriceSchema = mongoose.Schema(
   {
     country: {
       type: String,
@@ -13,14 +13,14 @@ const vehicleSchema = mongoose.Schema(
       type: String,
       index: true,
       required: true,
+      unique: true
     },
     price: {
-      type: String,
+      type: Number,
       required: true,
     },
-    format: {
+    unit: {
       type: String,
-      enum: ["km", "m"],
       required: true,
       default: "km",
     },
@@ -30,19 +30,19 @@ const vehicleSchema = mongoose.Schema(
   }
 );
 
-function validateUpdateVehicle(data) {
+function validateDistancePrice(data) {
   const Schema = Joi.object().keys({
-    type: Joi.string().max(30).label("Vehicle Type").optional(),
-    price: Joi.number().label("Vehicle Price").optional(),
+    country: Joi.string().label("Country").required(),
+    state: Joi.string().label("State").required(),
+    price: Joi.number().label("Distance Per Price").required()
   });
 
   return Schema.validate(data);
 }
 
-const Vehicle = mongoose.model("Vehicle", vehicleSchema);
+const DistancePrice = mongoose.model("DistancePrice", DistancePriceSchema);
 
 module.exports = {
-  validateVehicle,
-  validateUpdateVehicle,
-  Vehicle,
+  validateDistancePrice,
+  DistancePrice,
 };

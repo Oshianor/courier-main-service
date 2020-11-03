@@ -42,10 +42,6 @@ const pricingSchema = new mongoose.Schema(
       enum: ["NGN"],
       default: "NGN",
     },
-    symbol: {
-      type: String,
-      default: "₦",
-    },
     features: [
       {
         type: String,
@@ -67,7 +63,6 @@ function validatePricing(data) {
     transactionCost: Joi.number().min(0).label("Transaction Cost").required(),
     price: Joi.number().min(0).label("Price").required(),
     currency: Joi.string().min(0).label("Format").valid("NGN").required(),
-    symbol: Joi.string().min(0).label("Symbol").valid("₦").required(),
     type: Joi.string()
       .min(0)
       .label("Type")
@@ -87,7 +82,6 @@ function validateUpdatePricing(data) {
     transactionCost: Joi.number().min(0).label("Transaction Cost").optional(),
     price: Joi.number().min(0).label("Price").optional(),
     currency: Joi.string().min(0).label("Format").valid("NGN").optional(),
-    symbol: Joi.string().min(0).label("Symbol").valid("₦").optional(),
     type: Joi.string()
       .min(0)
       .label("Type")

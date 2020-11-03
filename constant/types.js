@@ -10,7 +10,7 @@ const MSG_ERRORS = Object.freeze({
   DEACTIVATED: "Your account isn't activate",
   PERMISSION: "You don't have enough permission to perform this action",
   SERVER_ERROR: "Server Error!",
-  FREEMIUM: "No Freemium pricing found.",
+  FREEMIUM: "No pricing found.",
 });
 
 const MSG_SUCCESS = Object.freeze({

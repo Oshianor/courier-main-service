@@ -24,7 +24,9 @@ router.get("/current", Auth, admin.get.current);
 
 // Company routes
 // create a company by an admin
-router.post("/companies", Auth, hasRole([ROLES.ADMIN]), company.create.company);
+router.post("/companies", 
+// Auth, hasRole([ROLES.ADMIN]), 
+company.create.company);
 
 router.get("/companies", Auth, company.get.all);
 

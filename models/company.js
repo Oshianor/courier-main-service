@@ -18,6 +18,16 @@ const complexityOptions = {
 
 const companySchema = new mongoose.Schema(
   {
+    type: {
+      type: String,
+      enum: ["HQ", "BR"],
+      default: "HQ",
+    },
+    organizer: {
+      type: ObjectId,
+      required: true,
+      index: true
+    },
     name: {
       type: String,
       maxlength: 30,
@@ -35,11 +45,12 @@ const companySchema = new mongoose.Schema(
       type: String,
       unique: true,
       index: true,
-      maxlength: 11,
+      maxlength: 10,
     },
     password: {
       type: String,
       maxlength: 225,
+      required: true,
     },
     country: {
       type: String,
@@ -63,6 +74,15 @@ const companySchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
+    verifiedBy: {
+      type: ObjectId,
+      ref: "Admin",
+      default: null,
+    },
     emailVerified: {
       type: Boolean,
       default: false,
@@ -82,13 +102,6 @@ const companySchema = new mongoose.Schema(
         type: Date,
         default: null,
       },
-    },
-    publicToken: {
-      type: String,
-      required: true,
-      index: true,
-      unique: true,
-      maxlength: 225,
     },
     contactName: {
       type: String,
@@ -122,10 +135,6 @@ const companySchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    createdBy: {
-      type: ObjectId,
-      ref: "Admin",
-    },
     totalRiders: {
       type: Number,
       default: 0,
@@ -141,14 +150,15 @@ const companySchema = new mongoose.Schema(
     recruitment: {
       type: Boolean,
       default: false,
-      index: true
+      index: true,
     },
-    isDeleted: {
+    deleted: {
       type: Boolean,
       default: false,
     },
     deletedBy: {
       type: ObjectId,
+      default: null,
     },
     deletedAt: {
       type: Date,
@@ -189,6 +199,9 @@ function validateCompany(body) {
     TIN: Joi.string().label("T.I.N").required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
+    tier: Joi.string().label("Pricing Plan").required(),
+    password: passwordComplexity(complexityOptions).label("Password").required(),
+    confirmPassword: passwordComplexity(complexityOptions).label("Confirm Password").valid(Joi.ref("password")).required(),
   });
 
   return schema.validate(body);

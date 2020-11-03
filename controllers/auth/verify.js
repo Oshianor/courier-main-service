@@ -6,7 +6,8 @@ const config = require("config");
 const { MSG_TYPES } = require("../../constant/types");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { Admin, validateVerifyAccount } = require("../../models/admin")
-const { Company } = require("../../models/company")
+const { Company, validateVerifyCompany } = require("../../models/company");
+const { Organizer } = require("../../models/organization");
 const { Rider } = require("../../models/rider");
 
 exports.account = async (req, res) => {
@@ -37,16 +38,47 @@ exports.account = async (req, res) => {
       const admin = await Admin.findOne(dataReq);
       if (!admin) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       await admin.updateOne(dataUpdate);
-    } else if (req.body.type === "company") {
-      const company = await Company.findOne(dataReq);
-      if (!company) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-      await company.updateOne(dataUpdate);
     } else if (req.body.type === "rider") {
       const rider = await Rider.findOne({...dataReq, verificationType: "email" });
       if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       await rider.updateOne(dataUpdate);
     }
     
+    JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
+  } catch (error) {
+    console.log(error);
+    return res.status(400).send("Something went wrong");
+  }
+};
+
+
+
+exports.company = async (req, res) => {
+  try {
+    const { error } = validateVerifyCompany(req.body);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message, null, null);
+
+    const currentDate = new Date();
+    const company = await Company.findOne({
+      email: req.body.email,
+      "rememberToken.token": req.body.token,
+      verified: false,
+      emailVerified: false,
+      "rememberToken.expiredDate": { $gte: currentDate },
+    });
+    if (!company) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+
+    await company.updateOne({
+      emailVerified: true,
+      rememberToken: null,
+      status: "active",
+    });
+
+    if (company.type === "HQ") {
+      await Organizer.updateOne({ _id: company.organizer }, { verified: true });
+    }
+
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
   } catch (error) {
     console.log(error);

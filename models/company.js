@@ -245,6 +245,19 @@ function validateStatusUpdate(body) {
   return schema.validate(body);
 }
 
+
+// validate company verification
+function validateVerifyCompany(body) {
+  const schema = Joi.object({
+    email: Joi.string().email().max(50).required(),
+    token: Joi.string().max(225).required(),
+    type: Joi.string().valid("company").required(),
+  });
+
+  return schema.validate(body);
+}
+
+
 const Company = mongoose.model("Company", companySchema);
 
 module.exports = {
@@ -253,4 +266,5 @@ module.exports = {
   validateCompanyLogin,
   validateUpdateCompany,
   validateStatusUpdate,
+  validateVerifyCompany,
 };

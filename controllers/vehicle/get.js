@@ -5,11 +5,6 @@ const { MSG_TYPES } = require("../../constant/types");
 
 exports.all = async (req, res) => {
   try {
-    // check if account exist
-    const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
-    if (!admin)
-      return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
-
     const vehicle = await Vehicle.find();
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle, null);

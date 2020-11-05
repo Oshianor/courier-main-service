@@ -36,6 +36,8 @@ router.delete("/companies/:companyId", Auth, hasRole(), company.delete.destroy);
 
 router.patch("/verify/company/:companyId", Auth, hasRole(ROLES.ADMIN), company.update.verification);
 
+router.get("/unverified/companies", Auth, hasRole(ROLES.ADMIN), company.get.allUnveried);
+
 // rider routes
 router.get("/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.get.allByAdmin);
 

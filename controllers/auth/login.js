@@ -41,7 +41,7 @@ exports.company = async (req, res) => {
 
     const token = company.generateToken();
 
-    company.password = 0;
+    delete company.password;
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
     return;
@@ -79,6 +79,7 @@ exports.admin = async (req, res) => {
 
     const token = admin.generateToken();
 
+    delete admin.password
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
     return;

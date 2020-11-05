@@ -23,20 +23,23 @@ exports.localEntry = async (req, res) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message, null, null);
 
-    // get all coords locations
-
+    // get all coords locations and sort them.
     const origins = [{ lat: req.body.latitude, lng: req.body.longitude }];
     const destinations = [];
+    let pos = 0;
     AsyncForEach(req.body.delivery, async (data, index, arr) => {
       console.log("arr.length", arr.length);
-      let pos = index + 1;
       console.log("pos", pos);
-      if (arr.length !== pos) {
+      pos = pos + 1;
+      const len = arr.length -1;
+      // don't push the last address
+      if (len !== pos) {
         origins.push({ lat: data.latitude, lng: data.longitude });
       }
       destinations.push({ lat: data.latitude, lng: data.longitude });
     });
 
+    // get
     const N = 5000;
     const distance = await client.distancematrix({
       params: {
@@ -44,16 +47,16 @@ exports.localEntry = async (req, res) => {
         destinations,
         key: config.get("googleMap.key"),
         travelMode: "DRIVING",
-        // transitOptions: TransitOptions,
         drivingOptions: {
           departureTime: new Date(Date.now() + N), // for the time N milliseconds from now.
           trafficModel: "optimistic",
         },
-        // unitSystem: UnitSystem,
-        // avoidHighways: Boolean,
         avoidTolls: false,
       },
     });
+
+
+
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, distance.data, null);
     return;

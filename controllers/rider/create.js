@@ -5,6 +5,7 @@ const {
   validateRider,
   validateRiderSelf,
 } = require("../../models/rider");
+const { RiderCompanyRequest } = require("../../models/riderCompanyRequest");
 const { Country } = require("../../models/countries");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
@@ -12,6 +13,7 @@ const { Verification } = require("../../templates");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
 const moment = require("moment");
 const bcrypt = require("bcrypt");
+const { relativeTimeRounding } = require("moment");
 /**
  * Create Rider
  * @param {*} req
@@ -165,10 +167,23 @@ exports.createSelf = async (req, res) => {
     req.body.countryCode = country.cc; // add country code.
     req.body.createdBy = "self";
     req.body.verificationType = "email";
-    req.body.companyRequest = "pending";
-    await Rider.create(req.body);
+    const newRider = new Rider(req.body);
+    newRider.save();
 
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
+    //send request
+    req.body.rider = newRider._id;
+    req.body.status = "pending";
+
+    const requestData = {
+      company: company.id,
+      rider: newRider._id,
+      status: "pending",
+    };
+
+    const request = new RiderCompanyRequest(requestData);
+    request.save();
+
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, {}, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

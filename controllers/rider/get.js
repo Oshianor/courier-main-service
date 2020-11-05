@@ -2,6 +2,7 @@ const { Company } = require("../../models/company");
 const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
+const { RiderCompanyRequest } = require("../../models/riderCompanyRequest");
 
 /**
  * Get Me
@@ -143,7 +144,9 @@ exports.requests = async (req, res) => {
       typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const riders = await Rider.find({ companyRequest: "pending" })
+    const riders = await RiderCompanyRequest.find({ status: "pending" })
+      .populate("rider")
+      .populate("company")
       .skip(skip)
       .limit(pageSize)
       .select("-password");

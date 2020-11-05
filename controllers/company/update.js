@@ -3,10 +3,14 @@ const {
   Company,
   validateUpdateCompany,
   validateStatusUpdate,
+  validateCompanyVerification,
 } = require("../../models/company");
+const { Organization } = require("../../models/organization")
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
-const { UploadFileFromBinary } = require("../../utils");
+const { UploadFileFromBinary, Mailer } = require("../../utils");
+const { Verification } = require("../../templates");
+
 
 /**
  * Update One Company
@@ -94,6 +98,65 @@ exports.updateStatus = async (req, res) => {
       req.body
     );
     JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+
+
+/**
+ * Admin verification for company account
+ * @param {*} req
+ * @param {*} res
+ */
+exports.verification = async (req, res) => {
+  try {
+    const { error } = validateCompanyVerification(req.body);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message, null, null);
+
+    const company = await Company.findOne({
+      _id: req.params.companyId,
+      verified: false,
+    });
+    if (!company)
+      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+
+    // check if the
+    if (req.body.status === "decline") {
+      if (company.type === "HQ") {
+        const organization = await Organization.findById(company.organization);
+
+        await organization.deleteOne();
+      }
+      await company.deleteOne();
+
+      JsonResponse(res, 200, "Account Successfully Deleted", null, null);
+      return;
+    }
+
+    await company.updateOne({
+      verified: true,
+      verifiedAt: new Date(),
+      verifiedBy: req.user.id,
+      status: "active",
+    });
+
+    if (company.type === "HQ") {
+      await Organization.updateOne(
+        { _id: company.organization },
+        { verified: true }
+      );
+    }
+
+    const subject = "Welcome! Account Approved.";
+    const html = Verification("111", company.email, "company");
+    Mailer(company.email, subject, html);
+
+    JsonResponse(res, 200, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
+    return;
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

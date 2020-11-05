@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
 const ObjectId = mongoose.Schema.Types.ObjectId;
-const nanoid = require("nanoid")
-
+const nanoid = require("nanoid");
 
 const orderSchema = mongoose.Schema(
   {
@@ -10,7 +9,7 @@ const orderSchema = mongoose.Schema(
       type: Number,
       required: true,
       index: true,
-      unique: true
+      unique: true,
     },
     entry: {
       type: ObjectId,
@@ -18,7 +17,6 @@ const orderSchema = mongoose.Schema(
       index: true,
       ref: "Entry",
     },
-    items: [{ type: ObjectId, ref: "Order", required: true }],
     company: {
       type: ObjectId,
       index: true,
@@ -64,20 +62,39 @@ const orderSchema = mongoose.Schema(
       type: Number,
       default: 0.0,
     },
-    latitude: {
+    deliveryLatitude: {
       type: Number,
       required: true,
       default: 0.0,
     },
-    longitude: {
+    deliveryLongitude: {
       type: Number,
       required: true,
       default: 0.0,
     },
-    address: {
+    deliveryAddress: {
       type: String,
       required: true,
       text: true,
+    },
+    pickupLatitude: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    pickupLongitude: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    pickupAddress: {
+      type: String,
+      required: true,
+      text: true,
+    },
+    tripDuration: {
+      type: Object,
+      default: {},
     },
     metaData: {
       type: Object,
@@ -105,16 +122,9 @@ const orderSchema = mongoose.Schema(
     img: [
       {
         type: String,
-        ref: "User",
         default: null,
       },
     ],
-    description: {
-      type: String,
-      default: "",
-      required: true,
-      maxLenght: 3000,
-    },
     weight: {
       type: Number,
       required: true,
@@ -130,9 +140,6 @@ const orderSchema = mongoose.Schema(
     timestamps: true,
   }
 );
-
-
-
 
 const Order = mongoose.model("Order", orderSchema);
 

@@ -8,8 +8,8 @@ const entrySchema = mongoose.Schema(
     sourceType: {
       // this is used to identify our post either for poll or for personal company request
       type: String,
-      enum: ["exaltEcommerce", "default", "thirdparty", "company"],
-      default: "default",
+      enum: ["exaltEcommerce", "poll", "company"],
+      default: "poll",
     },
     user: {
       type: ObjectId,
@@ -61,17 +61,17 @@ const entrySchema = mongoose.Schema(
       index: true,
       required: true,
     },
-    latitude: {
+    pickupLatitude: {
       type: Number,
       required: true,
       default: 0.0,
     },
-    longitude: {
+    pickupLongitude: {
       type: Number,
       required: true,
       default: 0.0,
     },
-    address: {
+    pickupAddress: {
       type: String,
       required: true,
       text: true,
@@ -96,6 +96,11 @@ const entrySchema = mongoose.Schema(
       required: true,
       index: true,
     },
+    countryCode: {
+      type: String,
+      required: true,
+      index: true,
+    },
     state: {
       type: String,
       required: true,
@@ -113,22 +118,45 @@ const entrySchema = mongoose.Schema(
   }
 );
 
-function validateEntry(data) {
+function validateLocalEntry(data) {
   const Schema = Joi.object().keys({
     email: Joi.string().email().max(50).label("Email").required(),
+    isUserDetails: Joi.bool().required(),
     name: Joi.string().label("Name").required(),
-    address: Joi.string().label("Address").required(),
     pickupTime: Joi.date().label("Pick Up Time").required(),
     latitude: Joi.number().label("Latitude").required(),
     longitude: Joi.number().label("Longitude").required(),
     description: Joi.string().label("Description").required(),
+    vehicle: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .label("Vehicle")
+      .required(),
+    country: Joi.string().label("Country").required(),
+    state: Joi.string().label("State").required(),
+    city: Joi.string().label("City").required(),
+    postCode: Joi.string().label("Post Code").required(),
     delivery: Joi.array().items({
       email: Joi.string().email().max(50).label("Email").required(),
+      isUserDetails: Joi.bool().required(),
       name: Joi.string().label("Name").required(),
-      address: Joi.string().label("Address").required(),
+      itemName: Joi.string().label("Item Name").required(),
+      itemType: Joi.string()
+        .label("Item Type")
+        .valid("Document", "Parcel")
+        .required(),
       deliveryTime: Joi.date().label("Delivery Time").required(),
       latitude: Joi.number().label("Latitude").required(),
       longitude: Joi.number().label("Longitude").required(),
+      // img: Joi.array()
+      //   .items(Joi.string().base64().label("Item Image").allow("").required())
+      //   .max(4)
+      //   .required(),
+      country: Joi.string().label("Country").required(),
+      state: Joi.string().label("State").required(),
+      city: Joi.string().label("City").required(),
+      postCode: Joi.string().label("Post Code").required(),
+      weight: Joi.number().label("Weight").required(),
+      quantity: Joi.number().label("Quantity").required(),
     }),
   });
 
@@ -139,6 +167,6 @@ function validateEntry(data) {
 const Entry = mongoose.model("Entry", entrySchema);
 
 module.exports = {
-  validateEntry,
+  validateLocalEntry,
   Entry,
 };

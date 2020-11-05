@@ -23,10 +23,11 @@ const companySchema = new mongoose.Schema(
       enum: ["HQ", "BR"],
       default: "HQ",
     },
-    organizer: {
+    organization: {
       type: ObjectId,
       required: true,
-      index: true
+      index: true,
+      ref: "Organization",
     },
     name: {
       type: String,
@@ -250,8 +251,17 @@ function validateStatusUpdate(body) {
 function validateVerifyCompany(body) {
   const schema = Joi.object({
     email: Joi.string().email().max(50).required(),
-    token: Joi.string().max(225).required(),
-    type: Joi.string().valid("company").required(),
+    token: Joi.string().max(225).required()
+  });
+
+  return schema.validate(body);
+}
+
+
+// validate company verification
+function validateCompanyVerification(body) {
+  const schema = Joi.object({
+    status: Joi.string().valid("approve", "decline").max(50).required(),
   });
 
   return schema.validate(body);
@@ -267,4 +277,5 @@ module.exports = {
   validateUpdateCompany,
   validateStatusUpdate,
   validateVerifyCompany,
+  validateCompanyVerification,
 };

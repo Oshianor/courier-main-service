@@ -22,12 +22,8 @@ router.post("/login", auth.login.admin);
 router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.single);
 router.get("/current", Auth, admin.get.current);
 
-// Company routes
-// create a company by an admin
-router.post("/companies", 
-// Auth, hasRole([ROLES.ADMIN]), 
-company.create.company);
 
+// Company routes
 router.get("/companies", Auth, company.get.all);
 
 router.get("/companies/:companyId", Auth, company.get.single);
@@ -38,6 +34,7 @@ router.patch("/companies/:companyId/status", Auth, company.update.updateStatus);
 
 router.delete("/companies/:companyId", Auth, hasRole(), company.delete.destroy);
 
+router.patch("/verify/company/:companyId", Auth, hasRole(ROLES.ADMIN), company.update.verification);
 
 // rider routes
 router.get("/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.get.allByAdmin);

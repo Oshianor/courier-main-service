@@ -1,5 +1,5 @@
 const { Company, validateCompany } = require("../../models/company");
-const { Organizer } = require("../../models/organization");
+const { Organization } = require("../../models/organization");
 const { Pricing } = require("../../models/pricing");
 const { Country } = require("../../models/countries");
 const { JsonResponse } = require("../../lib/apiResponse");
@@ -64,24 +64,17 @@ exports.company = async (req, res) => {
     req.body.tier = pricing;
     req.body.countryCode = country.cc;
     req.body.password = await bcrypt.hash(req.body.password, 10);
-    const organizer = new Organizer(req.body)
+    const organization = new Organization(req.body);
     const company = new Company(req.body)
 
-    // console.log("organizer", organizer);
-    // console.log("company", company);
-
-    // const organizer = await Organizer.create([req.body], { session: session });
-    // const company = await Company.create([req.body], { session: session });
-
-    company.organizer = organizer._id;
-    organizer.companyHQ = company._id;
-    organizer.companies = [company._id];
+    company.organization = organization._id;
+    organization.companyHQ = company._id;
+    organization.companies = [company._id];
     // organizer.companyBranches = [];
 
   
-    
     await company.save({ session: session });
-    await organizer.save({ session: session });
+    await organization.save({ session: session });
     await session.commitTransaction();
     session.endSession();
     
@@ -163,3 +156,10 @@ exports.branch = async (req, res) => {
     return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };
+
+
+    // console.log("organizer", organizer);
+    // console.log("company", company);
+
+    // const organizer = await Organizer.create([req.body], { session: session });
+    // const company = await Company.create([req.body], { session: session });

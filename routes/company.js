@@ -6,6 +6,11 @@ const { Auth } = require("../middlewares/auth");
 const rider = require("../controllers/rider");
 const { ACCOUNT_TYPES } = require("../constant/types");
 
+// company
+// create a company
+router.post("/", company.create.company);
+
+
 // company routes
 router.get("/me", Auth, company.get.me);
 

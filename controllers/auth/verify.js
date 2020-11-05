@@ -7,7 +7,7 @@ const { MSG_TYPES } = require("../../constant/types");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { Admin, validateVerifyAccount } = require("../../models/admin")
 const { Company, validateVerifyCompany } = require("../../models/company");
-const { Organizer } = require("../../models/organization");
+const { Organization } = require("../../models/organization");
 const { Rider } = require("../../models/rider");
 
 exports.account = async (req, res) => {
@@ -72,14 +72,12 @@ exports.company = async (req, res) => {
     await company.updateOne({
       emailVerified: true,
       rememberToken: null,
-      status: "active",
+      status: "inactive",
     });
 
-    if (company.type === "HQ") {
-      await Organizer.updateOne({ _id: company.organizer }, { verified: true });
-    }
+    
 
-    JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
+    JsonResponse(res, null, "Account successfully verified. Awaiting administrator verification.", null, null);
   } catch (error) {
     console.log(error);
     return res.status(400).send("Something went wrong");

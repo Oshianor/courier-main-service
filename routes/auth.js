@@ -8,5 +8,8 @@ router.post("/company", auth.login.company);
 router.post("/rider", auth.login.rider);
 // verify all accounts (admin, company, rider)
 router.post("/verify", auth.verify.account);
+// verify company account
+router.post("/verify/company", auth.verify.company);
+
 
 module.exports = router;

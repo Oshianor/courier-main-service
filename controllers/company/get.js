@@ -38,9 +38,10 @@ exports.me = async (req, res) => {
 exports.single = async (req, res) => {
   try {
     const companyId = req.params.companyId;
-    const company = await Company.findOne({ _id: companyId }).select(
-      "-password -rememberToken -deleted -deletedBy -deletedAt"
-    );
+    const company = await Company.findOne({ _id: companyId })
+      .select("-password -rememberToken -deleted -deletedBy -deletedAt")
+      .populate("vehicles")
+      .populate("tier", "name type price transactionCost priority");
 
     if (!company) {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);

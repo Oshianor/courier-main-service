@@ -5,7 +5,7 @@ const { Country } = require("../../models/countries");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
-const { UploadFileFromBinary, Mailer, asyncForEach } = require("../../utils");
+const { UploadFileFromBinary, Mailer, AsyncForEach } = require("../../utils");
 const { Verification } = require("../../templates");
 const moment = require("moment");
 const nanoid = require("nanoid");
@@ -27,7 +27,7 @@ exports.localEntry = async (req, res) => {
 
     const origins = [{ lat: req.body.latitude, lng: req.body.longitude }];
     const destinations = [];
-    asyncForEach(req.body.delivery, async (data, index, arr) => {
+    AsyncForEach(req.body.delivery, async (data, index, arr) => {
       console.log("arr.length", arr.length);
       let pos = index + 1;
       console.log("pos", pos);

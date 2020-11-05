@@ -29,5 +29,6 @@ router.delete("/riders/:riderId", Auth, rider.delete.destroy);
 
 // Riders Request
 router.get("/request/riders", Auth, rider.get.requests);
+router.put("/request/:requestId/respond", Auth, rider.update.respond);
 
 module.exports = router;

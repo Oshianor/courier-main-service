@@ -4,6 +4,10 @@ const { Rider, validateUpdateRider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary } = require("../../utils");
+const {
+  RiderCompanyRequest,
+  validateStatusUpdate,
+} = require("../../models/riderCompanyRequest");
 
 /**
  * Go online/offline
@@ -41,22 +45,21 @@ exports.updateSingle = async (req, res) => {
  */
 exports.respond = async (req, res) => {
   try {
-    const company = await Company.findOne({
-      _id: req.user.id,
-      verified: true,
-      status: "active",
+    const { error } = validateStatusUpdate(req.body);
+    if (error) {
+      return JsonResponse(res, 400, error.details[0].message, null, null);
+    }
+    const request = await RiderCompanyRequest.findOne({
+      _id: req.params.requestId,
     });
-    if (!company)
-      return JsonResponse(res, 404, "Company Not Found!", null, null);
+    if (!request)
+      return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
 
-    const rider = await Rider.findOne({ _id: req.params.riderId });
-    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
+    request.status = req.body.status;
 
-    rider.companyRequest = req.body.response;
+    request.save();
 
-    rider.save();
-
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, rider, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, request, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

@@ -6,6 +6,7 @@ const path = require("path");
 const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 const sgMail = require("@sendgrid/mail");
+const RandExp = require("randexp");
 
 const GenerateToken = (num) => {
   var text = "";
@@ -16,6 +17,12 @@ const GenerateToken = (num) => {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
 
   return text;
+};
+
+GenerateOTP = (num) => {
+  const OTPCode = new RandExp(`[0-9]{${num}}`).gen();
+
+  return OTPCode;
 };
 
 const Mailer = (
@@ -37,8 +44,6 @@ const Mailer = (
 
 const UploadFileFormLocal = async (file, churchId) => {
   try {
-    
-
     console.log("start");
 
     const params = {
@@ -76,6 +81,7 @@ const UploadFileFromBinary = async (fileInBanary, fileName) => {
 
 module.exports = {
   GenerateToken,
+  GenerateOTP,
   Mailer,
   UploadFileFormLocal,
   UploadFileFromBinary,

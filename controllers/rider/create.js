@@ -10,10 +10,18 @@ const { Country } = require("../../models/countries");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../../constant/types");
 const { Verification } = require("../../templates");
-const { UploadFileFromBinary, Mailer, GenerateToken } = require("../../utils");
+const {
+  UploadFileFromBinary,
+  Mailer,
+  GenerateToken,
+  GenerateOTP,
+} = require("../../utils");
 const moment = require("moment");
 const bcrypt = require("bcrypt");
 const { relativeTimeRounding } = require("moment");
+const service = require("../../services");
+const SendOTPCode = require("../../templates/otpCode");
+
 /**
  * Create Rider
  * @param {*} req
@@ -183,7 +191,17 @@ exports.createSelf = async (req, res) => {
     const request = new RiderCompanyRequest(requestData);
     request.save();
 
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, {}, null);
+    // send both email and sms for otp verification
+    const otp = GenerateOTP(4);
+    const body = `Welcome to Exalt Logistics App. Your OTP to perform this request is ${otp}. This code expires in 10mins`;
+    const to = `${newRider.countryCode}${newRider.phoneNumber}`;
+    service.termii.sendOTP(body, to);
+
+    const subject = "Account Verification Code";
+    const html = SendOTPCode(otp);
+    Mailer(newRider.email, subject, html);
+
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

@@ -15,7 +15,6 @@ exports.me = async (req, res) => {
       _id: req.user.id,
       verified: true,
       status: "active",
-      companyRequest: "approved",
     })
       .populate("vehicle")
       .select("-password");
@@ -49,7 +48,9 @@ exports.single = async (req, res) => {
       return;
     }
     const riderId = req.params.riderId;
-    const rider = await Rider.findOne({ _id: riderId });
+    const rider = await Rider.findOne({ _id: riderId })
+      .populate("company")
+      .select("-password");
 
     if (!rider) {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
@@ -82,9 +83,10 @@ exports.all = async (req, res) => {
       return;
     }
 
-    const riders = await Rider.find({ company: company.id })
+    const riders = await Rider.find({ company: company.id, deleted: false })
       .skip(skip)
       .limit(pageSize)
+      .populate("company")
       .select("-password");
     const total = await Rider.find().countDocuments();
 
@@ -116,6 +118,7 @@ exports.allByAdmin = async (req, res) => {
     const riders = await Rider.find()
       .skip(skip)
       .limit(pageSize)
+      .populate("company")
       .select("-password");
     const total = await Rider.find().countDocuments();
 

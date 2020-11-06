@@ -7,6 +7,7 @@ const { User, validateLogin } = require("../../models/users");
 const config = require("config");
 const bcrypt = require("bcrypt");
 const { Rider, validateRiderLogin } = require("../../models/rider");
+// const { io } = require("../../startup/socket");
 
 /**
  * Admin Login
@@ -30,6 +31,9 @@ exports.company = async (req, res) => {
       .populate("tier", "name type price transactionCost priority");
     if (!company)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
+    if (company.deleted) {
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+    }
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(
@@ -72,6 +76,10 @@ exports.admin = async (req, res) => {
     if (!admin)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
 
+    if (admin.deleted) {
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+    }
+
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, admin.password);
     if (!validPassword)
@@ -79,7 +87,7 @@ exports.admin = async (req, res) => {
 
     const token = admin.generateToken();
 
-    delete admin.password
+    delete admin.password;
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
     return;
@@ -104,12 +112,15 @@ exports.rider = async (req, res) => {
       email: req.body.email.toLowerCase(),
       verified: true,
       status: "active",
-      companyRequest: "approved",
     })
       // .populate("company", "name email")
       .populate("vehicle");
     if (!rider)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
+
+    if (rideer.deleted) {
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+    }
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, rider.password);

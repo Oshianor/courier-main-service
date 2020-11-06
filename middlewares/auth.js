@@ -8,7 +8,7 @@ const service = require("../services");
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
-  ACCOUNTANT: "accountant"
+  ACCOUNTANT: "accountant",
 };
 
 /*
@@ -16,7 +16,11 @@ const ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
-    let admin = await Admin.findOne({ _id: req.user.id, status: "active", verified: true });
+    let admin = await Admin.findOne({
+      _id: req.user.id,
+      status: "active",
+      verified: true,
+    });
     if (!admin) return JsonResponse(res, 401, "Unauthenticated", null, null);
 
     if (admin.role === ROLES.SUPER_ADMIN) {
@@ -39,7 +43,8 @@ const hasRole = (roles = []) => {
 // auth middleware
 const Auth = async (req, res, next) => {
   const token = req.header("x-auth-token");
-  if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+  if (!token)
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
 
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
@@ -55,10 +60,10 @@ const Auth = async (req, res, next) => {
   }
 };
 
-
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
-  if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+  if (!token)
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
 
   try {
     // call user account service to get details

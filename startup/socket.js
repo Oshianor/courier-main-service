@@ -8,12 +8,16 @@ io.on("connection", (s) => {
   console.error("socket.io connection");
 });
 
-var addedToPool = function () {
-  io.emit("me", { me: "ndiecodes" });
+const addedToPool = function (entry, order) {
+  console.log(entry);
+  console.log(order);
+  io.emit("newEntry", entry);
+  io.emit("newOrder", order);
+  //   io.emit("me", { me: "ndiecodes" });
 };
 
 //Assign the event handler to an event:
-eventEmitter.on("addedToPool", addedToPool);
+eventEmitter.on("newEntry", addedToPool);
 
 module.exports = {
   io,

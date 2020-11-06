@@ -7,7 +7,7 @@ const { DistancePrice } = require("../../models/distancePrice");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
-const { UploadFileFromBinary, Mailer, AsyncForEach } = require("../../utils");
+const { UploadFileFromBinary, Mailer, AsyncForEach, eventEmitter } = require("../../utils");
 const { Verification } = require("../../templates");
 const moment = require("moment");
 const config = require("config");
@@ -153,6 +153,10 @@ exports.localEntry = async (req, res) => {
     newEntry.orders = newOrder;
     req.body.orders = newEntry.orders;
     await newEntry.save({ session: session });
+
+
+    //emit event to trigger addToPool using websocket
+    eventEmitter.emit("newEntry", newEntry, newOrder);
 
     await session.commitTransaction();
     session.endSession();

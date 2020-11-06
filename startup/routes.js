@@ -1,4 +1,5 @@
 const config = require("config");
+const port = process.env.PORT || config.get("application.port");
 const express = require("express");
 const app = express();
 const cors = require("cors");
@@ -11,7 +12,6 @@ const pricing = require("../routes/pricing");
 const vehicle = require("../routes/vehicle");
 const company = require("../routes/company");
 const rider = require("../routes/rider");
-const port = process.env.PORT || config.get("application.port");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
@@ -30,4 +30,7 @@ app.use("/api/v1/admin/vehicle", vehicle);
 app.use("/api/v1/company", company);
 app.use("/api/v1/rider", rider);
 app.use(error);
-app.listen(port, () => console.log(`Listening on port ${port}...`));
+
+// app.listen(port, () => console.log(`Listening on port ${port}...`));
+
+module.exports = app;

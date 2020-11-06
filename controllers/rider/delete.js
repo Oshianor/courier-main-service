@@ -24,7 +24,7 @@ exports.destroy = async (req, res) => {
       return;
     }
     rider.deletedBy = req.user.id;
-    rider.isDeleted = true;
+    rider.deleted = true;
     rider.deletedAt = Date.now();
     await rider.save();
     JsonResponse(res, 200, MSG_TYPES.DELETED, null, null);

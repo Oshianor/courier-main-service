@@ -68,7 +68,7 @@ exports.all = async (req, res) => {
       typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const companies = await Company.find()
+    const companies = await Company.find({ deleted: false })
       .populate("vehicles")
       .select("-password -rememberToken -deleted -deletedBy -deletedAt")
       .populate("tier", "name type price transactionCost priority")
@@ -100,7 +100,7 @@ exports.allUnveried = async (req, res) => {
       typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const companies = await Company.find({ verified: false })
+    const companies = await Company.find({ verified: false, deleted: false })
       .select("-password -rememberToken -deleted -deletedBy -deletedAt")
       .populate("vehicles")
       .populate("tier", "name type price transactionCost priority")

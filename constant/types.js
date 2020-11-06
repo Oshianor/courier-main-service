@@ -11,6 +11,7 @@ const MSG_ERRORS = Object.freeze({
   PERMISSION: "You don't have enough permission to perform this action",
   SERVER_ERROR: "Server Error!",
   FREEMIUM: "No pricing found.",
+  ACCOUNT_DELETED: "Account no longer exists!",
 });
 
 const MSG_SUCCESS = Object.freeze({

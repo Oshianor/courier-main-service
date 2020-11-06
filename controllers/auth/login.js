@@ -1,14 +1,14 @@
-const Joi = require("joi");
+const config = require("config");
+const bcrypt = require("bcrypt");
 const { Admin, validateAdminLogin } = require("../../models/admin");
 const { Company, validateCompanyLogin } = require("../../models/company");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { User, validateLogin } = require("../../models/users");
-const config = require("config");
-const bcrypt = require("bcrypt");
 const { Rider, validateRiderLogin } = require("../../models/rider");
 // const { eventEmitter } = require("../../utils");
 // const { io } = require("../../startup/socket");
+
 
 /**
  * Admin Login
@@ -27,14 +27,12 @@ exports.company = async (req, res) => {
       email: req.body.email.toLowerCase(),
       verified: true,
       status: "active",
-    })
-      .populate("vehicles")
+      deleted: false,
+    }).populate("vehicles")
       .populate("tier", "name type price transactionCost priority");
     if (!company)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
-    if (company.deleted) {
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
-    }
+
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(

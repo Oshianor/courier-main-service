@@ -83,7 +83,7 @@ exports.all = async (req, res) => {
       return;
     }
 
-    const riders = await Rider.find({ company: company.id })
+    const riders = await Rider.find({ company: company.id, deleted: false })
       .skip(skip)
       .limit(pageSize)
       .populate("company")

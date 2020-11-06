@@ -7,6 +7,7 @@ const { User, validateLogin } = require("../../models/users");
 const config = require("config");
 const bcrypt = require("bcrypt");
 const { Rider, validateRiderLogin } = require("../../models/rider");
+// const { eventEmitter } = require("../../utils");
 // const { io } = require("../../startup/socket");
 
 /**

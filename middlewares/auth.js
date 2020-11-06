@@ -3,6 +3,7 @@ const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const { Admin } = require("../models/admin");
+const { User } = require("../models/users");
 const service = require("../services");
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
@@ -66,9 +67,18 @@ const UserAuth = async (req, res, next) => {
 
   try {
     // call user account service to get details
-    const user = service.user.get(token);
+    const userParent = await service.user.get(token);
 
-    req.user = user;
+    // console.log("userParent", userParent);
+
+    // const user = await User.findOne({ userId: userParent._id })
+    // if (!user) {
+    //   userParent.userId = userParent._id;
+    //   await User.create(userParent);
+    // }
+    req.user = userParent;
+    req.user.id = req.user._id;
+    delete req.user._id;
     next();
   } catch (ex) {
     console.log(ex);

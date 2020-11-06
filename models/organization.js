@@ -1,8 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const Joi = require("joi");
-const Jwt = require("jsonwebtoken");
-const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const organizerSchema = new mongoose.Schema(

@@ -13,16 +13,20 @@ const DistancePriceSchema = mongoose.Schema(
       type: String,
       index: true,
       required: true,
-      unique: true
+      unique: true,
     },
     price: {
       type: Number,
       required: true,
+      default: 0.0,
     },
     unit: {
       type: String,
-      required: true,
       default: "km",
+    },
+    currency: {
+      type: String,
+      default: "NGN",
     },
   },
   {
@@ -40,9 +44,19 @@ function validateDistancePrice(data) {
   return Schema.validate(data);
 }
 
+
+function validateUpdateDistancePrice(data) {
+  const Schema = Joi.object().keys({
+    price: Joi.number().label("Distance Per Price").required(),
+  });
+
+  return Schema.validate(data);
+}
+
 const DistancePrice = mongoose.model("DistancePrice", DistancePriceSchema);
 
 module.exports = {
   validateDistancePrice,
+  validateUpdateDistancePrice,
   DistancePrice,
 };

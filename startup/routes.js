@@ -10,6 +10,7 @@ const auth = require("../routes/auth");
 const admin = require("../routes/admin");
 const pricing = require("../routes/pricing");
 const vehicle = require("../routes/vehicle");
+const distancePrice = require("../routes/distancePrice");
 const company = require("../routes/company");
 const rider = require("../routes/rider");
 const corsOptions = {
@@ -22,12 +23,14 @@ app.use(express.json({ limit: "50mb", extended: true }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.static("public"));
 app.use(fileUpload());
-app.use("/api/v1/entry", entry);
-app.use("/api/v1/auth", auth);
+
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/admin/pricing", pricing);
 app.use("/api/v1/admin/vehicle", vehicle);
+app.use("/api/v1/admin/distance-price", distancePrice);
 app.use("/api/v1/company", company);
+app.use("/api/v1/entry", entry);
+app.use("/api/v1/auth", auth);
 app.use("/api/v1/rider", rider);
 app.use(error);
 

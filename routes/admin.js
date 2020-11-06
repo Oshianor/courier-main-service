@@ -10,6 +10,7 @@ const admin = require("../controllers/admin");
 const company = require("../controllers/company");
 const rider = require("../controllers/rider");
 const auth = require("../controllers/auth");
+const setting = require("../controllers/setting");
 const { ACCOUNT_TYPES } = require("../constant/types");
 
 const { hasRole, ROLES, Auth } = require("../middlewares/auth");
@@ -41,5 +42,11 @@ router.get("/unverified/companies", Auth, hasRole(ROLES.ADMIN), company.get.allU
 // rider routes
 router.get("/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.get.allByAdmin);
 
+
+// settings
+// get settings
+router.get("/setting", Auth, hasRole([ROLES.ADMIN]), setting.get.admin);
+// patch settings
+router.patch("/setting", Auth, hasRole([ROLES.ADMIN]), setting.update.admin);
 
 module.exports = router;

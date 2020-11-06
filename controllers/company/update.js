@@ -6,6 +6,7 @@ const {
   validateCompanyVerification,
 } = require("../../models/company");
 const { Organization } = require("../../models/organization")
+const { Setting } = require("../../models/settings");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { UploadFileFromBinary, Mailer } = require("../../utils");
@@ -155,6 +156,17 @@ exports.verification = async (req, res) => {
     const html = Verification("111", company.email, "company");
     Mailer(company.email, subject, html);
 
+    const newSetting = new Setting({
+      company: company._id,
+      organization: company.organization,
+      source: "company",
+      weightPrice: 0,
+      documentPrice: 0,
+      parcelPrice: 0,
+    });
+
+    await newSetting.save();
+    
     JsonResponse(res, 200, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
     return;
   } catch (error) {

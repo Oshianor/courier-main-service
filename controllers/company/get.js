@@ -39,7 +39,9 @@ exports.single = async (req, res) => {
   try {
     const companyId = req.params.companyId;
     const company = await Company.findOne({ _id: companyId })
-    .select("-password -rememberToken -deleted -deletedBy -deletedAt");
+      .select("-password -rememberToken -deleted -deletedBy -deletedAt")
+      .populate("vehicles")
+      .populate("tier", "name type price transactionCost priority");
 
     if (!company) {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
@@ -66,7 +68,7 @@ exports.all = async (req, res) => {
       typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const companies = await Company.find()
+    const companies = await Company.find({ deleted: false })
       .populate("vehicles")
       .select("-password -rememberToken -deleted -deletedBy -deletedAt")
       .populate("tier", "name type price transactionCost priority")
@@ -98,8 +100,10 @@ exports.allUnveried = async (req, res) => {
       typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const companies = await Company.find({ verified: false })
+    const companies = await Company.find({ verified: false, deleted: false })
       .select("-password -rememberToken -deleted -deletedBy -deletedAt")
+      .populate("vehicles")
+      .populate("tier", "name type price transactionCost priority")
       .skip(skip)
       .limit(pageSize);
     const total = await Company.find({ verified: false }).countDocuments();

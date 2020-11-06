@@ -13,6 +13,7 @@ const MSG_ERRORS = Object.freeze({
   FREEMIUM: "No pricing found.",
   FAILED_SUPPORT:
     "We currently don't have support for this location. Please contact our support for assistance",
+  ACCOUNT_DELETED: "Account no longer exists!",
 });
 
 const MSG_SUCCESS = Object.freeze({

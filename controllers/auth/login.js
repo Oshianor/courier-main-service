@@ -6,6 +6,8 @@ const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { User, validateLogin } = require("../../models/users");
 const { Rider, validateRiderLogin } = require("../../models/rider");
+// const { eventEmitter } = require("../../utils");
+// const { io } = require("../../startup/socket");
 
 
 /**

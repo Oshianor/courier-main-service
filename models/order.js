@@ -1,15 +1,16 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
 const ObjectId = mongoose.Schema.Types.ObjectId;
-const nanoid = require("nanoid");
+const {nanoid} = require("nanoid");
 
 const orderSchema = mongoose.Schema(
   {
     orderId: {
-      type: Number,
+      type: String,
       required: true,
       index: true,
       unique: true,
+      // default: nanoid(10)
     },
     entry: {
       type: ObjectId,
@@ -27,7 +28,7 @@ const orderSchema = mongoose.Schema(
       type: ObjectId,
       index: true,
       ref: "User",
-      default: null,
+      required: true,
     },
     rider: {
       type: ObjectId,
@@ -39,13 +40,30 @@ const orderSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
+    estimatedCostCurrency: {
+      type: String,
+      required: true,
+      default: "NGN",
+    },
     estimatedDistance: {
       type: Number,
       required: true,
     },
-    estimatedTime: {
+    estimatedDistanceUnit: {
+      type: String,
+      default: "kg",
+    },
+    // estimatedTime: {
+    //   type: Number,
+    //   required: true,
+    // },
+    estimatedTravelduration: {
       type: Number,
       required: true,
+    },
+    estimatedTraveldurationUnit: {
+      type: String,
+      default: "min",
     },
     status: {
       type: String,
@@ -92,10 +110,6 @@ const orderSchema = mongoose.Schema(
       required: true,
       text: true,
     },
-    tripDuration: {
-      type: Object,
-      default: {},
-    },
     metaData: {
       type: Object,
       default: {},
@@ -110,6 +124,26 @@ const orderSchema = mongoose.Schema(
       type: String,
       required: true,
       maxLenght: 30,
+    },
+    phoneNumber: {
+      type: String,
+      required: true,
+      maxLenght: 10,
+    },
+    country: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    countryCode: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    state: {
+      type: String,
+      required: true,
+      index: true,
     },
     deliveryTime: {
       type: Date,

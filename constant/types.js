@@ -11,6 +11,8 @@ const MSG_ERRORS = Object.freeze({
   PERMISSION: "You don't have enough permission to perform this action",
   SERVER_ERROR: "Server Error!",
   FREEMIUM: "No pricing found.",
+  FAILED_SUPPORT:
+    "We currently don't have support for this location. Please contact our support for assistance",
 });
 
 const MSG_SUCCESS = Object.freeze({
@@ -21,6 +23,7 @@ const MSG_SUCCESS = Object.freeze({
   CREATED: "Resource Created Successfully",
   FETCHED: "Resource Fetched Successfully",
   ACCOUNT_VERIFIED: "Account Successfully Verified",
+  ORDER_POSTED: "Order Successfully Posted",
 });
 
 const MSG_TYPES = Object.freeze({
@@ -41,6 +44,8 @@ const MSG_TYPES = Object.freeze({
   FETCHED: "FETCHED",
   FREEMIUM: "FREEMIUM",
   ACCOUNT_VERIFIED: "ACCOUNT_VERIFIED",
+  FAILED_SUPPORT: "FAILED_SUPPORT",
+  ORDER_POSTED: "ORDER_POSTED",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

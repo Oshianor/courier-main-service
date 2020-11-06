@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-
+const setting = require("../controllers/setting");
 const company = require("../controllers/company");
 const { Auth } = require("../middlewares/auth");
 const rider = require("../controllers/rider");
@@ -30,5 +30,12 @@ router.delete("/riders/:riderId", Auth, rider.delete.destroy);
 // Riders Request
 router.get("/request/riders", Auth, rider.get.requests);
 router.put("/request/:requestId/respond", Auth, rider.update.respond);
+
+
+// settings
+// get settings
+router.get("/setting", Auth, setting.get.company);
+// patch settings
+router.patch("/setting", Auth, setting.update.company);
 
 module.exports = router;

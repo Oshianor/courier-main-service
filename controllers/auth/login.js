@@ -7,7 +7,7 @@ const { User, validateLogin } = require("../../models/users");
 const config = require("config");
 const bcrypt = require("bcrypt");
 const { Rider, validateRiderLogin } = require("../../models/rider");
-// const { eventEmitter } = require("../../utils");
+const { eventEmitter } = require("../../utils");
 // const { io } = require("../../startup/socket");
 
 /**
@@ -63,6 +63,7 @@ exports.company = async (req, res) => {
  */
 exports.admin = async (req, res) => {
   try {
+    // eventEmitter.emit("addedToPool");
     const { error } = validateAdminLogin(req.body);
 
     if (error) {

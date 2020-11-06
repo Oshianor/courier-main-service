@@ -8,12 +8,12 @@ io.on("connection", (s) => {
   console.error("socket.io connection");
 });
 
-var myEventHandler = function () {
-  console.log("I hear a scream!");
+var addedToPool = function () {
+  io.emit("me", { me: "ndiecodes" });
 };
 
 //Assign the event handler to an event:
-eventEmitter.on("scream", myEventHandler);
+eventEmitter.on("addedToPool", addedToPool);
 
 module.exports = {
   io,

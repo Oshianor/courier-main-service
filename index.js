@@ -6,6 +6,6 @@ require("./startup/logger");
 require("./startup/db");
 require("./startup/routes");
 
-// const { http } = require("./startup/socket");
+const { http } = require("./startup/socket");
 
-// http.listen(port, () => console.error(`listening on http://localhost:${port}`));
+http.listen(port, () => console.error(`listening on http://localhost:${port}`));

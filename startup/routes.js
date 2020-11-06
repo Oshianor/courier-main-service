@@ -34,6 +34,6 @@ app.use("/api/v1/auth", auth);
 app.use("/api/v1/rider", rider);
 app.use(error);
 
-app.listen(port, () => console.log(`Listening on port ${port}...`));
+// app.listen(port, () => console.log(`Listening on port ${port}...`));
 
-// module.exports = app;
+module.exports = app;

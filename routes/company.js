@@ -4,7 +4,7 @@ const setting = require("../controllers/setting");
 const company = require("../controllers/company");
 const { Auth } = require("../middlewares/auth");
 const rider = require("../controllers/rider");
-const { ACCOUNT_TYPES } = require("../constant/types");
+const dp = require("../controllers/distancePrice");
 
 // company
 // create a company
@@ -37,5 +37,17 @@ router.put("/request/:requestId/respond", Auth, rider.update.respond);
 router.get("/setting", Auth, setting.get.company);
 // patch settings
 router.patch("/setting", Auth, setting.update.company);
+
+
+// distance pricing
+// add distance price by a company
+router.post("/distance-price", Auth, dp.create.company);
+// get all the distance price added
+router.get("/distance-price", Auth, dp.get.company);
+// update distance price for a location and vehicle
+router.patch("/distance-price/:dp", Auth, dp.update.company);
+// delete distance price for a location and vehicle
+router.delete("/distance-price/:dp", Auth, dp.delete.company);
+
 
 module.exports = router;

@@ -148,11 +148,7 @@ const companySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    recruitment: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
+    
     deleted: {
       type: Boolean,
       default: false,

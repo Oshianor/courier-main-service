@@ -37,6 +37,7 @@ const DistancePriceSchema = mongoose.Schema(
       type: ObjectId,
       index: true,
       required: true,
+      ref: "Vehicle",
     },
     price: {
       type: Number,

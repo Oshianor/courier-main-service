@@ -16,7 +16,10 @@ exports.admin = async (req, res) => {
     if (!admin)
       return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
 
-    const dp = await DistancePrice.find().skip(skip).limit(pageSize);
+    const dp = await DistancePrice.find()
+      .populate("vehicle")
+      .skip(skip)
+      .limit(pageSize);
     const total = await DistancePrice.find().countDocuments();
 
     const meta = {
@@ -54,6 +57,7 @@ exports.company = async (req, res) => {
       source: "company",
       company: req.user.id,
     })
+      .populate("vehicle")
       .skip(skip)
       .limit(pageSize);
     const total = await DistancePrice.find({

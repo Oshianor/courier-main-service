@@ -36,6 +36,11 @@ const entrySchema = mongoose.Schema(
       ref: "Transaction",
       default: null,
     },
+    paymentMode: {
+      type: String,
+      enum: ["card", "bank", "cash"],
+      default: "cash",
+    },
     status: {
       type: String,
       enum: ["pending", "accepted", "cancelled"],

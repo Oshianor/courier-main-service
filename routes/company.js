@@ -38,7 +38,6 @@ router.get("/setting", Auth, setting.get.company);
 // patch settings
 router.patch("/setting", Auth, setting.update.company);
 
-
 // distance pricing
 // add distance price by a company
 router.post("/distance-price", Auth, dp.create.company);
@@ -48,6 +47,7 @@ router.get("/distance-price", Auth, dp.get.company);
 router.patch("/distance-price/:dp", Auth, dp.update.company);
 // delete distance price for a location and vehicle
 router.delete("/distance-price/:dp", Auth, dp.delete.company);
+
 
 
 module.exports = router;

@@ -38,4 +38,6 @@ router.get("/setting", Auth, setting.get.company);
 // patch settings
 router.patch("/setting", Auth, setting.update.company);
 
+
+
 module.exports = router;

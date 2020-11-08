@@ -156,7 +156,9 @@ exports.localEntry = async (req, res) => {
 
 
     //emit event to trigger addToPool using websocket
-    eventEmitter.emit("newEntry", newEntry, newOrder);
+    eventEmitter.emit("NEW_ENTRY", newEntry);
+
+    console.log(newEntry)
 
     await session.commitTransaction();
     session.endSession();

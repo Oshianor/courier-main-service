@@ -36,7 +36,7 @@ const adminSchema = new mongoose.Schema(
       unique: true,
       index: true,
       required: true,
-      maxlength: 10
+      maxlength: 10,
     },
     password: {
       type: String,
@@ -53,6 +53,9 @@ const adminSchema = new mongoose.Schema(
     state: {
       type: String,
       required: true,
+    },
+    address: {
+      type: String,
     },
     status: {
       type: String,
@@ -94,12 +97,27 @@ const adminSchema = new mongoose.Schema(
       ref: "Admin",
       default: null,
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedBy: {
+      type: ObjectId,
+      default: null,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
-
 
 //sign token for this admin
 adminSchema.methods.generateToken = function () {
@@ -123,6 +141,25 @@ function validateAdmin(body) {
     country: Joi.string().max(30).required(),
     state: Joi.string().max(50).required(),
     phoneNumber: Joi.string().min(10).max(10).required(),
+  });
+
+  return schema.validate(body);
+}
+
+function validateUpdateAdmin(body) {
+  const schema = Joi.object({
+    name: Joi.string().max(30).optional(),
+    address: Joi.string().optional(),
+  });
+
+  return schema.validate(body);
+}
+
+function validatePassword(body) {
+  const schema = Joi.object({
+    oldPassword: Joi.string().max(225).required(),
+    password: passwordComplexity(complexityOptions).required(),
+    confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
   });
 
   return schema.validate(body);
@@ -157,4 +194,6 @@ module.exports = {
   validateAdmin,
   validateAdminLogin,
   validateVerifyAccount,
+  validateUpdateAdmin,
+  validatePassword,
 };

@@ -24,6 +24,8 @@ router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.single);
 router.get("/current", Auth, admin.get.current);
 
 
+
+
 // Company routes
 router.get("/companies", Auth, company.get.all);
 
@@ -52,5 +54,13 @@ router.get("/rider/:rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), admi
 router.get("/setting", Auth, hasRole([ROLES.ADMIN]), setting.get.admin);
 // patch settings
 router.patch("/setting", Auth, hasRole([ROLES.ADMIN]), setting.update.admin);
+
+
+// Admin Updates
+router.put("/update", Auth, admin.update.current);
+router.patch("/password", Auth, admin.update.password);
+router.patch("/:adminId/disable", Auth, hasRole(), admin.update.disable);
+router.patch("/:adminId/enable", Auth, hasRole(), admin.update.enable);
+router.delete("/:adminId", Auth, hasRole(), admin.delete.destroy);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const { Company } = require("../../models/company");
+const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 

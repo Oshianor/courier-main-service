@@ -65,7 +65,7 @@ exports.single = async (req, res) => {
 };
 
 /**
- * Get All Riders
+ * Get All Riders by a company
  * @param {*} req
  * @param {*} res
  */
@@ -86,9 +86,12 @@ exports.all = async (req, res) => {
     const riders = await Rider.find({ company: company.id, deleted: false })
       .skip(skip)
       .limit(pageSize)
-      .populate("company")
-      .select("-password");
-    const total = await Rider.find().countDocuments();
+      .populate("company", "name address state country logo")
+      .select("-password -rememberToken");
+    const total = await Rider.find({
+      company: company.id,
+      deleted: false,
+    }).countDocuments();
 
     const meta = {
       total,
@@ -118,8 +121,8 @@ exports.allByAdmin = async (req, res) => {
     const riders = await Rider.find()
       .skip(skip)
       .limit(pageSize)
-      .populate("company")
-      .select("-password");
+      .populate("company", "name address state country logo")
+      .select("-password -rememberToken");
     const total = await Rider.find().countDocuments();
 
     const meta = {
@@ -148,8 +151,8 @@ exports.requests = async (req, res) => {
     const skip = (page - 1) * pageSize;
 
     const riders = await RiderCompanyRequest.find({ status: "pending" })
-      .populate("rider")
-      .populate("company")
+      .populate("rider", "name email address state country img onlineStatus")
+      .populate("company", "name email address state country logo")
       .skip(skip)
       .limit(pageSize)
       .select("-password");

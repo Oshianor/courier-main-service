@@ -246,6 +246,14 @@ function validateRiderLogin(body) {
   return adminSchema.validate(body);
 }
 
+function validateRiderStatus(body) {
+  const adminSchema = Joi.object({
+    status: Joi.string().valid("active", "suspended").required(),
+  });
+
+  return adminSchema.validate(body);
+}
+
 const Rider = mongoose.model("Rider", riderSchema);
 
 module.exports = {
@@ -254,4 +262,5 @@ module.exports = {
   validateUpdateRider,
   validateRiderSelf,
   validateRiderLogin,
+  validateRiderStatus,
 };

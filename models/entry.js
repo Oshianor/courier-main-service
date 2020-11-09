@@ -5,7 +5,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const entrySchema = mongoose.Schema(
   {
-    sourceType: {
+    source: {
       // this is used to identify our post either for poll or for personal company request
       type: String,
       enum: ["exaltEcommerce", "pool", "company"],
@@ -36,7 +36,7 @@ const entrySchema = mongoose.Schema(
       ref: "Transaction",
       default: null,
     },
-    paymentMode: {
+    paymantMethod: {
       type: String,
       enum: ["card", "bank", "cash"],
       default: "cash",
@@ -135,10 +135,10 @@ const entrySchema = mongoose.Schema(
 function validateLocalEntry(data) {
   const Schema = Joi.object().keys({
     email: Joi.string().email().max(50).label("Email").required(),
-    isUserDetails: Joi.bool().required(),
+    paymantMethod: Joi.string().label("Payment Method").valid("card", "cash", "bank").required(),
     itemType: Joi.string()
       .label("Item Type")
-      .valid("Document", "Parcel")
+      .valid("Document", "Parcel", "Edible")
       .required(),
     name: Joi.string().label("Name").required(),
     pickupTime: Joi.date().label("Pick Up Time").required(),

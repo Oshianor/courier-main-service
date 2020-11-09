@@ -7,7 +7,6 @@ const { paginate } = require("../../utils");
 
 exports.byCompany = async (req, res) => {
   try {
-    console.log(req.user);
     const company = await Company.findOne({
       _id: req.user.id,
     });
@@ -18,7 +17,7 @@ exports.byCompany = async (req, res) => {
     const { page, pageSize, skip } = paginate(req);
 
     const entries = await Entry.find({
-      sourceType: "pool",
+      source: "pool",
       state: company.state,
     })
       .skip(skip)
@@ -27,7 +26,7 @@ exports.byCompany = async (req, res) => {
       .select("-metaData");
 
     const total = await Entry.find({
-      sourceType: "pool",
+      source: "pool",
       state: company.state,
     }).countDocuments();
 
@@ -35,7 +34,6 @@ exports.byCompany = async (req, res) => {
       total,
       pagination: { pageSize, page },
     };
-
     JsonResponse(res, 200, MSG_TYPES.FETCHED, entries, meta);
     return;
   } catch (error) {

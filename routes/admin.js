@@ -41,6 +41,10 @@ router.get("/unverified/companies", Auth, hasRole(ROLES.ADMIN), company.get.allU
 
 // rider routes
 router.get("/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.get.allByAdmin);
+// get all riders for a company
+router.get("/:company/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), admin.get.allRider);
+// get a single rider
+router.get("/rider/:rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), admin.get.singleRider);
 
 
 // settings

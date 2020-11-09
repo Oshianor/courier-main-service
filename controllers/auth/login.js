@@ -9,7 +9,6 @@ const { Rider, validateRiderLogin } = require("../../models/rider");
 // const { eventEmitter } = require("../../utils");
 // const { io } = require("../../startup/socket");
 
-
 /**
  * Admin Login
  * @param {*} req
@@ -26,13 +25,19 @@ exports.company = async (req, res) => {
     const company = await Company.findOne({
       email: req.body.email.toLowerCase(),
       verified: true,
-      status: "active",
-      deleted: false,
-    }).populate("vehicles")
+    })
+      .populate("vehicles")
       .populate("tier", "name type price transactionCost priority");
     if (!company)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
 
+    if (company.deleted) {
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+    }
+
+    if (company.status === "suspended") {
+      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
+    }
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(
@@ -70,13 +75,16 @@ exports.admin = async (req, res) => {
     const admin = await Admin.findOne({
       email: req.body.email.toLowerCase(),
       verified: true,
-      status: "active",
     });
     if (!admin)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
 
     if (admin.deleted) {
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+    }
+
+    if (admin.status === "suspended") {
+      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
     }
 
     // compare request password with the password saved on the database
@@ -110,15 +118,18 @@ exports.rider = async (req, res) => {
     const rider = await Rider.findOne({
       email: req.body.email.toLowerCase(),
       verified: true,
-      status: "active",
     })
       // .populate("company", "name email")
       .populate("vehicle");
     if (!rider)
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
 
-    if (rideer.deleted) {
+    if (rider.deleted) {
       return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+    }
+
+    if (rider.status === "suspended") {
+      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
     }
 
     // compare request password with the password saved on the database

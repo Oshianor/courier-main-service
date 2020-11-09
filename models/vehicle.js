@@ -13,11 +13,6 @@ const vehicleSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    price: {
-      type: Number,
-      required: true,
-      default: 0.0
-    },
   },
   {
     timestamps: true,
@@ -27,7 +22,6 @@ const vehicleSchema = mongoose.Schema(
 function validateVehicle(data) {
   const Schema = Joi.object().keys({
     type: Joi.string().max(30).label("Vehicle Type").required(),
-    price: Joi.number().label("Vehicle Price").required(),
   });
 
   return Schema.validate(data);
@@ -36,7 +30,6 @@ function validateVehicle(data) {
 function validateUpdateVehicle(data) {
   const Schema = Joi.object().keys({
     type: Joi.string().max(30).label("Vehicle Type").optional(),
-    price: Joi.number().label("Vehicle Price").optional(),
   });
 
   return Schema.validate(data);

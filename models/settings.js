@@ -54,6 +54,11 @@ const SettingSchema = mongoose.Schema(
       type: String,
       default: "NGN",
     },
+    recruitment: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,

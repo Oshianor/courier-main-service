@@ -7,7 +7,6 @@ const { paginate } = require("../../utils");
 
 exports.byCompany = async (req, res) => {
   try {
-    console.log(req.user);
     const company = await Company.findOne({
       _id: req.user.id,
     });
@@ -23,7 +22,6 @@ exports.byCompany = async (req, res) => {
     })
       .skip(skip)
       .limit(pageSize)
-      .populate("orders")
       .select("-metaData");
 
     const total = await Entry.find({
@@ -40,6 +38,25 @@ exports.byCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return;
+  }
+};
+
+exports.singleEntry = async (req, res) => {
+  try {
+    const entry = await Entry.findOne({ _id: req.params.id })
+      .populate("orders")
+      .select("-metaData");
+
+    if (!entry) {
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      return;
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entry, null);
+    return;
+  } catch (error) {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
     return;
   }

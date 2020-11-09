@@ -3,6 +3,7 @@ const MSG_ERRORS = Object.freeze({
   ACCOUNT_INVALID: "Invalid email or password",
   SUSPENDED: "Account is suspended!",
   INACTIVE: "Account is inactive!",
+  DISABLED: "Account is disabled!",
   NOT_FOUND: "Not Found",
   UPLOAD_IMAGE: "Image upload is required.",
   ACCESS_DENIED: "Access denied.",
@@ -14,6 +15,7 @@ const MSG_ERRORS = Object.freeze({
   FAILED_SUPPORT:
     "We currently don't have support for this location. Please contact our support for assistance",
   ACCOUNT_DELETED: "Account no longer exists!",
+  INVALID_PASSWORD: "Invalid Password",
 });
 
 const MSG_SUCCESS = Object.freeze({
@@ -48,6 +50,8 @@ const MSG_TYPES = Object.freeze({
   ACCOUNT_VERIFIED: "ACCOUNT_VERIFIED",
   FAILED_SUPPORT: "FAILED_SUPPORT",
   ORDER_POSTED: "ORDER_POSTED",
+  INVALID_PASSWORD: "INVALID_PASSWORD",
+  DISABLED: "DISABLED",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

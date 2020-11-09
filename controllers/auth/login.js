@@ -87,6 +87,10 @@ exports.admin = async (req, res) => {
       return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
     }
 
+    if (admin.disabled) {
+      return JsonResponse(res, 401, MSG_TYPES.DISABLED, null, null);
+    }
+
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, admin.password);
     if (!validPassword)

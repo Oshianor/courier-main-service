@@ -10,7 +10,7 @@ const { MSG_TYPES } = require("../../constant/types");
  */
 exports.all = async (req, res) => {
   try {
-    const admins = await Admin.find({ deleted: false || undefined });
+    const admins = await Admin.find({ deleted: false });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, admins, null);
   } catch (err) {

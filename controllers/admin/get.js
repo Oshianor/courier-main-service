@@ -8,11 +8,11 @@ const { MSG_TYPES } = require("../../constant/types");
  * @param {*} req
  * @param {*} res
  */
-exports.single = async (req, res) => {
+exports.all = async (req, res) => {
   try {
-    const admins = await Admin.find({});
+    const admins = await Admin.find({ deleted: false || undefined });
 
-    JsonResponse(res, 200, null, admins, null);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, admins, null);
   } catch (err) {
     console.log(err);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
@@ -34,8 +34,6 @@ exports.current = async (req, res) => {
   }
 };
 
-
-
 /**
  * Get All rider for a company
  * @param {*} req
@@ -54,7 +52,9 @@ exports.allRider = async (req, res) => {
       .populate("vehicles")
       .skip(skip)
       .limit(pageSize);
-    const total = await Rider.find({ company: req.params.company }).countDocuments();
+    const total = await Rider.find({
+      company: req.params.company,
+    }).countDocuments();
 
     const meta = {
       total,
@@ -66,7 +66,6 @@ exports.allRider = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };
-
 
 /**
  * Get a single rider by an admin

@@ -71,13 +71,15 @@ const UserAuth = async (req, res, next) => {
 
     // console.log("userParent", userParent);
 
-    // const user = await User.findOne({ userId: userParent._id })
-    // if (!user) {
-    //   userParent.userId = userParent._id;
-    //   await User.create(userParent);
-    // }
+    const user = await User.findOne({ userId: userParent._id })
+    if (!user) {
+      userParent.userId = userParent._id;
+      await User.create(userParent);
+    }
+
     req.user = userParent;
     req.user.id = req.user._id;
+    req.token = token;
     delete req.user._id;
     next();
   } catch (ex) {

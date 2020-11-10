@@ -57,6 +57,7 @@ const riderSchema = new mongoose.Schema(
       type: String,
       enum: ["active", "inactive", "suspended"],
       default: "inactive",
+      index: true
     },
     verified: {
       type: Boolean,
@@ -80,7 +81,7 @@ const riderSchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Company",
       required: true,
-      default: null
+      default: null,
     },
     vehicle: {
       type: ObjectId,
@@ -102,6 +103,15 @@ const riderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
       index: true,
+      required: true,
+    },
+    latitude: {
+      type: Number,
+      default: 0.0,
+    },
+    longitude: {
+      type: Number,
+      default: 0.0,
     },
     tripStatus: {
       type: Boolean,

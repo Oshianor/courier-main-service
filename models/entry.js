@@ -36,15 +36,19 @@ const entrySchema = mongoose.Schema(
       ref: "Transaction",
       default: null,
     },
-    paymantMethod: {
-      type: String,
-      enum: ["card", "bank", "cash"],
-      default: "cash",
-    },
     status: {
       type: String,
-      enum: ["pending", "accepted", "cancelled"],
-      default: "pending",
+      enum: ["request", "pending", "accepted", "cancelled"],
+      default: "request",
+      index: true,
+    },
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+    acceptedAt: {
+      type: Date,
+      default: null,
     },
     email: {
       type: String,
@@ -135,7 +139,6 @@ const entrySchema = mongoose.Schema(
 function validateLocalEntry(data) {
   const Schema = Joi.object().keys({
     email: Joi.string().email().max(50).label("Email").required(),
-    paymantMethod: Joi.string().label("Payment Method").valid("card", "cash", "bank").required(),
     itemType: Joi.string()
       .label("Item Type")
       .valid("Document", "Parcel", "Edible")

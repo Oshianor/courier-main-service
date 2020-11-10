@@ -20,7 +20,7 @@ router.post("/", Auth, admin.create.createAdmin);
 router.post("/login", auth.login.admin);
 
 //Admin Routes
-router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.single);
+router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.all);
 router.get("/current", Auth, admin.get.current);
 
 

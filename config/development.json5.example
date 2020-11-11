@@ -31,5 +31,10 @@
   },
   googleMap: {
     key: "QVRVMTX43sm_Ic"
-  }
+  },
+    api: {
+    key: "supersecret",
+    base: "http://localhost:6000/api/v1",
+    getCountryByName: "/country",
+  },
 }

@@ -150,7 +150,7 @@ exports.requests = async (req, res) => {
       typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
     const skip = (page - 1) * pageSize;
 
-    const riders = await RiderCompanyRequest.find({ status: "pending" })
+    const riders = await RiderCompanyRequest.find({ status: "pending", company: req.user.id })
       .populate("rider", "name email address state country img onlineStatus")
       .populate("company", "name email address state country logo")
       .skip(skip)

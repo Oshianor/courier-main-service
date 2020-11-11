@@ -171,12 +171,12 @@ exports.createSelf = async (req, res) => {
     const password = await bcrypt.hash(req.body.password, 10);
 
     req.body.password = password;
-    req.body.company = company.id;
     req.body.countryCode = country.cc; // add country code.
     req.body.createdBy = "self";
     req.body.verificationType = "email";
+    delete req.body.company;
     const newRider = new Rider(req.body);
-    newRider.save();
+    await newRider.save();
 
     //send request
     req.body.rider = newRider._id;
@@ -189,7 +189,7 @@ exports.createSelf = async (req, res) => {
     };
 
     const request = new RiderCompanyRequest(requestData);
-    request.save();
+    await request.save();
 
     // send both email and sms for otp verification
     const otp = GenerateOTP(4);

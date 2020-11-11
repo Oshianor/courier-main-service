@@ -4,6 +4,7 @@ const {
   Rider,
   validateUpdateRider,
   validateRiderStatus,
+  validateRiderLocation,
 } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
@@ -83,6 +84,27 @@ exports.status = async (req, res) => {
     // to disable a rider account we need to know if they 
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, rider, null);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+
+
+/**
+ * Update rider location
+ * @param {*} req
+ * @param {*} res
+ */
+exports.location = async (req, res) => {
+  try {
+    const { error } = validateRiderLocation(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
+      
+    await Rider.updateOne({ _id: req.user.id }, req.body)
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

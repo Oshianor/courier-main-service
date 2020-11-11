@@ -39,7 +39,7 @@ exports.account = async (req, res) => {
       if (!admin) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       await admin.updateOne(dataUpdate);
     } else if (req.body.type === "rider") {
-      const rider = await Rider.findOne({...dataReq, verificationType: "email" });
+      const rider = await Rider.findOne(dataReq);
       if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       await rider.updateOne(dataUpdate);
     }

@@ -13,5 +13,7 @@ router.get("/me", Auth, rider.get.me);
 router.post("/", rider.create.createSelf);
 // update rider location
 router.patch("/location", Auth, rider.update.location);
+// go online/offline
+router.patch("/online", Auth, rider.update.online);
 
 module.exports = router;

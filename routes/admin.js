@@ -47,6 +47,8 @@ router.get("/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.get.a
 router.get("/:company/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), admin.get.allRider);
 // get a single rider
 router.get("/rider/:rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), admin.get.singleRider);
+// suspend a rider account
+router.get("/rider/:rider/status", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.update.status);
 
 
 // settings

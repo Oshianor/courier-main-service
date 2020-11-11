@@ -263,6 +263,7 @@ function validateRiderStatus(body) {
   return schema.validate(body);
 }
 
+
 function validateRiderLocation(body) {
   const schema = Joi.object({
     longitude: Joi.number().required(),

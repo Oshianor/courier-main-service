@@ -171,13 +171,11 @@ exports.createSelf = async (req, res) => {
     };
 
     // const password = await bcrypt.hash(req.body.password, 10);
-
     // req.body.password = password;
     req.body.countryCode = country.cc; // add country code.
     req.body.createdBy = "self";
     req.body.company = null;
     const newRider = new Rider(req.body);
-
 
     const request = new RiderCompanyRequest({
       company: company.id,

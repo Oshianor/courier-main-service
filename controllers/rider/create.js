@@ -21,7 +21,6 @@ const bcrypt = require("bcrypt");
 const service = require("../../services");
 const SendOTPCode = require("../../templates/otpCode");
 
-
 /**
  * Create Rider
  * @param {*} req
@@ -124,7 +123,6 @@ exports.createSelf = async (req, res) => {
     });
     if (!company)
       return JsonResponse(res, 404, "Company Not Found!", null, null);
-    
 
     const rider = await Rider.findOne({ email: req.body.email });
     if (rider)
@@ -185,13 +183,12 @@ exports.createSelf = async (req, res) => {
     await request.save();
     await newRider.save();
 
-    
     const subject = "Welcome to Exalt Logistics";
     const html = Verification(token, req.body.email, "rider");
     Mailer(req.body.email, subject, html);
-
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
-    return
+    newRider.rememberToken = null;
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, newRider, null);
+    return;
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

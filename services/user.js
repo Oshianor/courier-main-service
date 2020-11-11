@@ -1,7 +1,6 @@
 const config = require("config");
 const axios = require("axios");
 
-
 exports.get = async (token) => {
   try {
     const response = await axios.get(
@@ -18,6 +17,37 @@ exports.get = async (token) => {
   }
 };
 
+exports.getAllUsers = async (params) => {
+  try {
+    const response = await axios.get(
+      `${config.get("application.baseUrl")}/user/all`,
+      {
+        params,
+        headers: {
+          "api-key": config.get("api.key"),
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};
+exports.getSingleUser = async (id) => {
+  try {
+    const response = await axios.get(
+      `${config.get("application.baseUrl")}/user/${id}`,
+      {
+        headers: {
+          "api-key": config.get("api.key"),
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};
 
 exports.getCard = async (token, cardId) => {
   try {

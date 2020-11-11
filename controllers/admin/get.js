@@ -2,6 +2,8 @@ const { Rider } = require("../../models/rider");
 const { Admin } = require("../../models/admin");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
+const services = require("../../services");
+const { paginate } = require("../../utils");
 
 /**
  * Get Single
@@ -79,6 +81,30 @@ exports.singleRider = async (req, res) => {
       .populate("vehicles");
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, null);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+exports.allUsers = async (req, res) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+
+    const data = await services.user.getAllUsers({ page, pageSize });
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, data.meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+exports.singleUser = async (req, res) => {
+  try {
+    const data = await services.user.getSingleUser(req.params.userId);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, null);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

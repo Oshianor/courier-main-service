@@ -80,7 +80,7 @@ const riderSchema = new mongoose.Schema(
     company: {
       type: ObjectId,
       ref: "Company",
-      required: true,
+      // required: true,
       default: null,
     },
     vehicle: {
@@ -93,12 +93,12 @@ const riderSchema = new mongoose.Schema(
       default: "company",
       enum: ["company", "self"],
     },
-    verificationType: {
-      type: String,
-      required: true,
-      default: "email",
-      enum: ["email", "otp"],
-    },
+    // verificationType: {
+    //   type: String,
+    //   required: true,
+    //   default: "email",
+    //   enum: ["email", "otp"],
+    // },
     onlineStatus: {
       type: Boolean,
       default: false,
@@ -145,12 +145,12 @@ const riderSchema = new mongoose.Schema(
       ref: "Admin",
       default: null,
     },
-    OTPCode: {
-      type: String,
-      maxlength: 4,
-      default: null,
-    },
-    OTPExpiredDate: { type: Date, default: null },
+    // OTPCode: {
+    //   type: String,
+    //   maxlength: 4,
+    //   default: null,
+    // },
+    // OTPExpiredDate: { type: Date, default: null },
     rememberToken: {
       token: {
         type: String,
@@ -224,8 +224,8 @@ function validateRiderSelf(body) {
     ECEmail: Joi.string().email().max(50).required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
-    password: passwordComplexity(complexityOptions).required(),
-    confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+    // password: passwordComplexity(complexityOptions).required(),
+    // confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
   });
 
   return schema.validate(body);
@@ -248,20 +248,29 @@ function validateUpdateRider(body) {
 }
 
 function validateRiderLogin(body) {
-  const adminSchema = Joi.object({
+  const schema = Joi.object({
     email: Joi.string().required(),
     password: Joi.string().required(),
   });
 
-  return adminSchema.validate(body);
+  return schema.validate(body);
 }
 
 function validateRiderStatus(body) {
-  const adminSchema = Joi.object({
+  const schema = Joi.object({
     status: Joi.string().valid("active", "suspended").required(),
   });
 
-  return adminSchema.validate(body);
+  return schema.validate(body);
+}
+
+function validateRiderLocation(body) {
+  const schema = Joi.object({
+    longitude: Joi.number().required(),
+    latitude: Joi.number().required(),
+  });
+
+  return schema.validate(body);
 }
 
 const Rider = mongoose.model("Rider", riderSchema);
@@ -273,4 +282,5 @@ module.exports = {
   validateRiderSelf,
   validateRiderLogin,
   validateRiderStatus,
+  validateRiderLocation,
 };

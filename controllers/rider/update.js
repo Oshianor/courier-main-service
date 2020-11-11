@@ -60,9 +60,16 @@ exports.respond = async (req, res) => {
     if (!request)
       return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
 
+    const rider = await Rider.findOne({ _id: request.rider });
+
+    if (req.body.status === "approved") {
+      rider.company = request.company;
+      await rider.save();
+    }
+
     request.status = req.body.status;
 
-    request.save();
+    await request.save();
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, request, null);
   } catch (error) {
@@ -79,9 +86,10 @@ exports.respond = async (req, res) => {
 exports.status = async (req, res) => {
   try {
     const { error } = validateRiderStatus(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
-      
-    // to disable a rider account we need to know if they 
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message, null, null);
+
+    // to disable a rider account we need to know if they
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, rider, null);
   } catch (error) {

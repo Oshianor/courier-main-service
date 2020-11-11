@@ -5,10 +5,8 @@ const { UserAuth, Auth } = require("../middlewares/auth");
 
 // Create entry
 router.post("/", UserAuth, entry.create.localEntry);
-
 // approve an entry for different payment method
 router.post("/confirm", UserAuth, entry.create.transaction);
-
 // rider confirm cash payment
 router.patch("/cash/payment", UserAuth, entry.create.riderConfirmPayment);
 

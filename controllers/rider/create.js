@@ -18,9 +18,9 @@ const {
 } = require("../../utils");
 const moment = require("moment");
 const bcrypt = require("bcrypt");
-const { relativeTimeRounding } = require("moment");
 const service = require("../../services");
 const SendOTPCode = require("../../templates/otpCode");
+
 
 /**
  * Create Rider
@@ -88,7 +88,7 @@ exports.create = async (req, res) => {
     req.body.company = req.user.id;
     req.body.countryCode = country.cc; // add country code.
     req.body.createdBy = "company";
-    req.body.verificationType = "email";
+    // req.body.verificationType = "email";
     req.body.companyRequest = "approved";
     await Rider.create(req.body);
 
@@ -124,6 +124,8 @@ exports.createSelf = async (req, res) => {
     });
     if (!company)
       return JsonResponse(res, 404, "Company Not Found!", null, null);
+    
+
     const rider = await Rider.findOne({ email: req.body.email });
     if (rider)
       return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
@@ -168,40 +170,28 @@ exports.createSelf = async (req, res) => {
       expiredDate: moment().add(2, "days"),
     };
 
-    const password = await bcrypt.hash(req.body.password, 10);
-
-    req.body.password = password;
+    // const password = await bcrypt.hash(req.body.password, 10);
+    // req.body.password = password;
     req.body.countryCode = country.cc; // add country code.
     req.body.createdBy = "self";
-    req.body.verificationType = "email";
-    delete req.body.company;
+    req.body.company = null;
     const newRider = new Rider(req.body);
-    await newRider.save();
 
-    //send request
-    req.body.rider = newRider._id;
-    req.body.status = "pending";
-
-    const requestData = {
+    const request = new RiderCompanyRequest({
       company: company.id,
       rider: newRider._id,
       status: "pending",
-    };
-
-    const request = new RiderCompanyRequest(requestData);
+    });
     await request.save();
+    await newRider.save();
 
-    // send both email and sms for otp verification
-    const otp = GenerateOTP(4);
-    const body = `Welcome to Exalt Logistics App. Your OTP to perform this request is ${otp}. This code expires in 10mins`;
-    const to = `${newRider.countryCode}${newRider.phoneNumber}`;
-    service.termii.sendOTP(body, to);
-
-    const subject = "Account Verification Code";
-    const html = SendOTPCode(otp);
-    Mailer(newRider.email, subject, html);
+    
+    const subject = "Welcome to Exalt Logistics";
+    const html = Verification(token, req.body.email, "rider");
+    Mailer(req.body.email, subject, html);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
+    return
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

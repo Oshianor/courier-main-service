@@ -20,6 +20,8 @@ exports.me = async (req, res) => {
       .select("-password");
     if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
 
+    if (!rider.company) return JsonResponse(res, 404, "Company Not Found!", null, null);
+    
     const company = await Company.findOne({
       _id: rider.company,
       verified: true,

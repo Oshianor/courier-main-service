@@ -61,9 +61,10 @@ exports.respond = async (req, res) => {
 
     const rider = await Rider.findOne({ _id: request.rider });
 
-    rider.company = request.company;
-
-    await rider.save();
+    if (req.body.status === "approved") {
+      rider.company = request.company;
+      await rider.save();
+    }
 
     request.status = req.body.status;
 

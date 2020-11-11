@@ -54,6 +54,15 @@ const SettingSchema = mongoose.Schema(
       type: String,
       default: "NGN",
     },
+    ediblePrice: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    edibleCurrency: {
+      type: String,
+      default: "NGN",
+    },
     recruitment: {
       type: Boolean,
       default: false,
@@ -70,6 +79,8 @@ function validateSettings(data) {
     weightPrice: Joi.number().label("Weight Price").required(),
     documentPrice: Joi.number().label("Document Price").required(),
     parcelPrice: Joi.number().label("Parcel Price").required(),
+    ediblePrice: Joi.number().label("Edible Price").required(),
+    recruitment: Joi.boolean().required(),
   });
 
   return Schema.validate(data);
@@ -81,6 +92,8 @@ function validateUpdateSettings(data) {
     weightPrice: Joi.number().label("Weight Price").optional(),
     documentPrice: Joi.number().label("Document Price").optional(),
     parcelPrice: Joi.number().label("Parcel Price").optional(),
+    ediblePrice: Joi.number().label("Edible Price").optional(),
+    recruitment: Joi.boolean().optional(),
   });
 
   return Schema.validate(data);

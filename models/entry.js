@@ -38,7 +38,14 @@ const entrySchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["request", "pending", "accepted", "cancelled"],
+      enum: [
+        "request",
+        "pending",
+        "companyAccepted",
+        "driverAccepted",
+        "completed",
+        "cancelled",
+      ],
       default: "request",
       index: true,
     },
@@ -46,7 +53,11 @@ const entrySchema = mongoose.Schema(
       type: Date,
       default: null,
     },
-    acceptedAt: {
+    companyAcceptedAt: {
+      type: Date,
+      default: null,
+    },
+    driverAcceptedAt: {
       type: Date,
       default: null,
     },

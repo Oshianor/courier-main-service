@@ -197,8 +197,16 @@ function validateCompany(body) {
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
     tier: Joi.string().label("Pricing Plan").required(),
-    password: passwordComplexity(complexityOptions).label("Password").required(),
-    confirmPassword: passwordComplexity(complexityOptions).label("Confirm Password").valid(Joi.ref("password")).required(),
+    vehicles: Joi.array()
+      .items(Joi.string().regex(/^[0-9a-fA-F]{24}$/).required())
+      .required(),
+    password: passwordComplexity(complexityOptions)
+      .label("Password")
+      .required(),
+    confirmPassword: passwordComplexity(complexityOptions)
+      .label("Confirm Password")
+      .valid(Joi.ref("password"))
+      .required(),
   });
 
   return schema.validate(body);

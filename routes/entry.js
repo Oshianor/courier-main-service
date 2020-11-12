@@ -13,5 +13,10 @@ router.patch("/cash/payment", UserAuth, entry.create.riderConfirmPayment);
 router.get("/pool", Auth, entry.get.byCompany);
 
 router.get("/:id", Auth, entry.get.singleEntry);
+// compnay accept entry
+router.patch("/company/accept/:entry", Auth, entry.update.companyAcceptEntry);
+// compnay accept entry
+router.get("/company/online/:entry", Auth, entry.get.allOnlineRiderCompanyEntry);
+
 
 module.exports = router;

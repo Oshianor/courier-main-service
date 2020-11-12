@@ -63,6 +63,15 @@ const SettingSchema = mongoose.Schema(
       type: String,
       default: "NGN",
     },
+    baseFare: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    baseFareCurrency: {
+      type: String,
+      default: "NGN",
+    },
     recruitment: {
       type: Boolean,
       default: false,
@@ -80,6 +89,7 @@ function validateSettings(data) {
     documentPrice: Joi.number().label("Document Price").required(),
     parcelPrice: Joi.number().label("Parcel Price").required(),
     ediblePrice: Joi.number().label("Edible Price").required(),
+    baseFare: Joi.number().label("Base Fare").required(),
     recruitment: Joi.boolean().required(),
   });
 
@@ -93,6 +103,7 @@ function validateUpdateSettings(data) {
     documentPrice: Joi.number().label("Document Price").optional(),
     parcelPrice: Joi.number().label("Parcel Price").optional(),
     ediblePrice: Joi.number().label("Edible Price").optional(),
+    baseFare: Joi.number().label("Base Fare").optional(),
     recruitment: Joi.boolean().optional(),
   });
 

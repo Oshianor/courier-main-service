@@ -1,9 +1,12 @@
 const instance_var = "PM2_APP_INSTANCE_ID"
+const { name } = require("./package.json");
+const log_date_format = "YYYY-MM-DD HH:mm Z";
 
 module.exports = {
   apps: [
     {
-      name: "exalt-logistics",
+      namespace: name,
+      name: `${name}`,
       script: "index.js",
       env: {
         NODE_ENV: "development",
@@ -20,6 +23,7 @@ module.exports = {
         followSymlinks: false,
       },
       instance_var,
+      log_date_format,
     },
   ],
 };

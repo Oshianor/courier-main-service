@@ -5,15 +5,16 @@ var io = require("socket.io")(http);
 const { eventEmitter } = require("../utils");
 const { isValidSocketAuth } = require("../middlewares/auth");
 
-// middleware
+// auth middleware
 io.use((socket, next) => {
-  let token = socket.handshake.query.token;
+  let { token, type } = socket.handshake.query;
   const user = isValidSocketAuth(token);
+
   if (user) {
     socket.user = user;
     return next();
   }
-  console.log("Authentication Error");
+  // console.log("Authentication Error");
   return next(new Error("authentication error"));
 });
 

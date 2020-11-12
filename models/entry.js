@@ -39,12 +39,13 @@ const entrySchema = mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "request",
-        "pending",
-        "companyAccepted",
-        "driverAccepted",
-        "completed",
-        "cancelled",
+        "request", // when the request is made without payment method added
+        "pending", // when it's in the pool await company
+        "companyAccepted", // when a company accepts the order
+        "driverAccepted", // when a driver accepts the order
+        "onGoing", // when atleast order is in pickup or delivery
+        "completed", // when all orders are conpleted.
+        "cancelled", // when the order is cancelled
       ],
       default: "request",
       index: true,

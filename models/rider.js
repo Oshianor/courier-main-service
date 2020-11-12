@@ -130,7 +130,7 @@ const riderSchema = new mongoose.Schema(
     ECName: String, //emergency contact name
     ECPhone: String,
     ECEmail: String,
-    isDeleted: {
+    deleted: {
       type: Boolean,
       default: false,
       index: true,

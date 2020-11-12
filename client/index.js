@@ -1,9 +1,13 @@
 const io = require("socket.io-client");
-// const port = process.env.PORT || 4000;
+const port = process.env.PORT || 4000;
 
-const ioClient = io.connect("https://dev.api.logistics.churchesapp.com");
+// const ioClient = io.connect("https://dev.api.logistics.churchesapp.com");
 
-// const ioClient = io.connect(`http://localhost:${port}`);
+const ioClient = io.connect(`http://localhost:${port}`, {
+  query: {
+    token: "ndie",
+  },
+});
 
 ioClient.on("connect", () => console.info("connected"));
 

@@ -4,8 +4,25 @@ var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 const { eventEmitter } = require("../utils");
 
+function isValid(token) {
+  if (token === "ndie") {
+    return true;
+  }
+  return false;
+}
+// middleware
+io.use((socket, next) => {
+  let token = socket.handshake.query.token;
+  if (isValid(token)) {
+    return next();
+  }
+  console.log("Authentication Error");
+  return next(new Error("authentication error"));
+});
+
 io.on("connection", (s) => {
-  console.error("socket.io connection");
+  console.log(s);
+  console.log("socket.io connection");
 });
 
 const addedToPool = function (entry) {

@@ -3,25 +3,22 @@ const app = require("./routes");
 var http = require("http").createServer(app);
 var io = require("socket.io")(http);
 const { eventEmitter } = require("../utils");
+const { isValidSocketAuth } = require("../middlewares/auth");
 
-function isValid(token) {
-  if (token === "ndie") {
-    return true;
-  }
-  return false;
-}
 // middleware
 io.use((socket, next) => {
   let token = socket.handshake.query.token;
-  if (isValid(token)) {
+  const user = isValidSocketAuth(token);
+  if (user) {
+    socket.user = user;
     return next();
   }
   console.log("Authentication Error");
   return next(new Error("authentication error"));
 });
 
-io.on("connection", (s) => {
-  console.log(s);
+io.on("connection", (socket) => {
+  // console.log(socket.user);
   console.log("socket.io connection");
 });
 

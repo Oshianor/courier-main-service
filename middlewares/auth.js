@@ -60,6 +60,18 @@ const Auth = async (req, res, next) => {
   }
 };
 
+const isValidSocketAuth = (token) => {
+  if (!token) return false;
+
+  try {
+    const decoded = jwt.verify(token, config.get("application.jwt.key"));
+
+    return decoded;
+  } catch (ex) {
+    return false;
+  }
+};
+
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token)
@@ -71,7 +83,7 @@ const UserAuth = async (req, res, next) => {
 
     // console.log("userParent", userParent);
 
-    const user = await User.findOne({ userId: userParent._id })
+    const user = await User.findOne({ userId: userParent._id });
     if (!user) {
       userParent.userId = userParent._id;
       await User.create(userParent);
@@ -96,4 +108,5 @@ module.exports = {
   hasRole,
   ROLES,
   UserAuth,
+  isValidSocketAuth,
 };

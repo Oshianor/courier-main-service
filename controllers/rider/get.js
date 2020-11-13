@@ -4,6 +4,7 @@ const { Entry } = require("../../models/entry");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { RiderCompanyRequest } = require("../../models/riderCompanyRequest");
+const { paginate } = require("../../utils");
 
 /**
  * Get Me
@@ -21,8 +22,9 @@ exports.me = async (req, res) => {
       .select("-password");
     if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
 
-    if (!rider.company) return JsonResponse(res, 404, "Company Not Found!", null, null);
-    
+    if (!rider.company)
+      return JsonResponse(res, 404, "Company Not Found!", null, null);
+
     const company = await Company.findOne({
       _id: rider.company,
       verified: true,
@@ -74,11 +76,7 @@ exports.single = async (req, res) => {
  */
 exports.all = async (req, res) => {
   try {
-    const page =
-      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize =
-      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
-    const skip = (page - 1) * pageSize;
+    const { page, pageSize, skip } = paginate(req);
 
     const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
@@ -115,11 +113,7 @@ exports.all = async (req, res) => {
  */
 exports.allByAdmin = async (req, res) => {
   try {
-    const page =
-      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize =
-      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
-    const skip = (page - 1) * pageSize;
+    const { page, pageSize, skip } = paginate(req);
 
     const riders = await Rider.find()
       .skip(skip)
@@ -147,13 +141,12 @@ exports.allByAdmin = async (req, res) => {
  */
 exports.requests = async (req, res) => {
   try {
-    const page =
-      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize =
-      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
-    const skip = (page - 1) * pageSize;
+    const { page, pageSize, skip } = paginate(req);
 
-    const riders = await RiderCompanyRequest.find({ status: "pending", company: req.user.id })
+    const riders = await RiderCompanyRequest.find({
+      status: "pending",
+      company: req.user.id,
+    })
       .populate("rider", "name email address state country img onlineStatus")
       .populate("company", "name email address state country logo")
       .skip(skip)

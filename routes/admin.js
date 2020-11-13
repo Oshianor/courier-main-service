@@ -10,6 +10,7 @@ const admin = require("../controllers/admin");
 const company = require("../controllers/company");
 const rider = require("../controllers/rider");
 const auth = require("../controllers/auth");
+const transaction = require("../controllers/transaction");
 const setting = require("../controllers/setting");
 const transaction = require("../controllers/transaction");
 const { ACCOUNT_TYPES } = require("../constant/types");
@@ -24,9 +25,9 @@ router.post("/login", auth.login.admin);
 router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.all);
 router.get("/current", Auth, admin.get.current);
 
-
 router.get('/transactions', Auth, hasRole([ROLES.ADMIN]), transaction.get.allByAdmin)
 router.get('/transactions/:id', Auth, hasRole([ROLES.ADMIN]), transaction.get.single)
+
 
 // Company routes
 router.get("/companies", Auth, company.get.all);

@@ -23,7 +23,8 @@ router.post("/login", auth.login.admin);
 router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.all);
 router.get("/current", Auth, admin.get.current);
 
-
+router.get('/transactions', Auth, hasRole([ROLES.ADMIN]), transaction.get.allByAdmin)
+router.get('/transactions/:id', Auth, hasRole([ROLES.ADMIN]), transaction.get.single)
 
 
 // Company routes

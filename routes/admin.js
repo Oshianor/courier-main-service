@@ -10,6 +10,7 @@ const admin = require("../controllers/admin");
 const company = require("../controllers/company");
 const rider = require("../controllers/rider");
 const auth = require("../controllers/auth");
+const transaction = require("../controllers/transaction");
 const setting = require("../controllers/setting");
 const { ACCOUNT_TYPES } = require("../constant/types");
 

@@ -6,7 +6,7 @@ const services = require("../../services");
 const { paginate } = require("../../utils");
 
 /**
- * Get Single
+ * Get All
  * @param {*} req
  * @param {*} res
  */
@@ -43,12 +43,8 @@ exports.current = async (req, res) => {
  */
 exports.allRider = async (req, res) => {
   try {
-    const page =
-      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize =
-      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
-    const skip = (page - 1) * pageSize;
-
+    const { page, pageSize, skip } = paginate(req);
+    
     const rider = await Rider.find({ company: req.params.company })
       .select("-password -rememberToken")
       .populate("vehicles")

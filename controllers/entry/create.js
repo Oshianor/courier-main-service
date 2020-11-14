@@ -11,7 +11,7 @@ const {
   validateTransactionStatus,
 } = require("../../models/transaction");
 const { Client } = require("@googlemaps/google-maps-services-js");
-const { JsonResponse } = require("../../lib/apiResponse");
+const { JsonResponse, SocketResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const {
   UploadFileFromBinary,
@@ -25,6 +25,9 @@ const moment = require("moment");
 const config = require("config");
 const { nanoid } = require("nanoid");
 const mongoose = require("mongoose");
+const io = require("socket.io");
+const { SERVER_EVENTS } = require("../../constant/events");
+const { Pricing } = require("../../models/pricing");
 const client = new Client({});
 const paystack = require("paystack")(config.get("paystack.secret"));
 
@@ -221,8 +224,8 @@ exports.transaction = async (req, res) => {
       const trans = await paystack.transaction.charge({
         reference: nanoid(20),
         authorization_code: card.token,
-        email: req.user.email,
-        // email: "abundance@gmail.com",
+        // email: req.user.email,
+        email: "abundance@gmail.com",
         amount: entry.TEC,
       });
 
@@ -266,10 +269,24 @@ exports.transaction = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // //emit event to trigger addToPool using websocket
-    // eventEmitter.emit("NEW_ENTRY", entry);
+    // // get the io object ref
+    // const io = req.app.get("sio");
 
-    // console.log(entry);
+    // // find the hi
+    // const pricing = await Pricing.find().sort({ priority: -1 }).limit(1); 
+    // console.log("pricing", pricing);
+    // let clearTimer;
+    // await AsyncForEach(pricing, async (data, index, arr) => {
+    //   const timeout = [0, 300000, 600000];
+    //   clearTimer = setTimeout(() => {
+    //     io.to(String(data.priority)).emit(
+    //       SERVER_EVENTS.NEW_ENTRY,
+    //       SocketResponse(false, "ok", entry)
+    //     );
+    //   }, timeout[index]); 
+    // });
+
+    // clearTimeout(clearTimer)
 
     JsonResponse(res, 201, msgRES, null, null);
     return;

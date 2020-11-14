@@ -6,20 +6,24 @@ const { Order } = require("../../models/order");
 const { MSG_TYPES } = require("../../constant/types");
 const { paginate } = require("../../utils");
 
+
+/**
+ * get entries by a company
+ * @param {*} req
+ * @param {*} res
+ */
 exports.byCompany = async (req, res) => {
   try {
-    const company = await Company.findOne({
-      _id: req.user.id,
-    });
-    if (!company)
-      return JsonResponse(res, 404, "Company Not Found!", null, null);
-
     //get pagination value
     const { page, pageSize, skip } = paginate(req);
+
+    const company = await Company.findOne({ _id: req.user.id, $or: [{ status: "active" }, { status: "inactive" }], verified: true });
+    if (!company) JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
 
     const entries = await Entry.find({
       source: "pool",
       state: company.state,
+      // company: null
     })
       .skip(skip)
       .limit(pageSize)
@@ -42,6 +46,7 @@ exports.byCompany = async (req, res) => {
     return;
   }
 };
+
 
 exports.singleEntry = async (req, res) => {
   try {

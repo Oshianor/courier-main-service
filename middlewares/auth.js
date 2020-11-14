@@ -60,15 +60,28 @@ const Auth = async (req, res, next) => {
   }
 };
 
-const isValidSocketAuth = (token) => {
-  if (!token) return false;
-
+const SocketAuth = (socket, next) => {
   try {
+    const token = socket.handshake.query.token ?? "";
+    const type = socket.handshake.query.type ?? "";
+
+    console.log("token", token);
+    console.log("type", type);
+
+    if (token === "") throw new Error("Auth token is required");
+    if (type === "") throw new Error("Account type is required");
+
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
 
-    return decoded;
+    socket.user = {
+      ...decoded,
+      type,
+    };
+    next();
   } catch (ex) {
-    return false;
+    console.log("error", ex);
+
+    next(new Error("Auth token is required"));
   }
 };
 
@@ -108,5 +121,5 @@ module.exports = {
   hasRole,
   ROLES,
   UserAuth,
-  isValidSocketAuth,
+  SocketAuth,
 };

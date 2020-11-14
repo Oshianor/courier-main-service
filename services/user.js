@@ -4,7 +4,7 @@ const axios = require("axios");
 exports.get = async (token) => {
   try {
     const response = await axios.get(
-      `${config.get("application.baseUrl")}/user`,
+      `${config.get("api.base")}/user`,
       {
         headers: {
           "x-auth-token": token,
@@ -20,7 +20,7 @@ exports.get = async (token) => {
 exports.getAllUsers = async (params) => {
   try {
     const response = await axios.get(
-      `${config.get("application.baseUrl")}/user/all`,
+      `${config.get("api.base")}/user/all`,
       {
         params,
         headers: {
@@ -36,7 +36,7 @@ exports.getAllUsers = async (params) => {
 exports.getSingleUser = async (id) => {
   try {
     const response = await axios.get(
-      `${config.get("application.baseUrl")}/user/${id}`,
+      `${config.get("api.base")}/user/${id}`,
       {
         headers: {
           "api-key": config.get("api.key"),
@@ -52,7 +52,7 @@ exports.getSingleUser = async (id) => {
 exports.getCard = async (token, cardId) => {
   try {
     const response = await axios.get(
-      `${config.get("application.baseUrl")}/card/${cardId}`,
+      `${config.get("api.base")}/card/${cardId}`,
       {
         headers: {
           "x-auth-token": token,

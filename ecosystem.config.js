@@ -27,6 +27,3 @@ module.exports = {
     },
   ],
 };
-
-
-// cron_restart: "0 0 * * *",

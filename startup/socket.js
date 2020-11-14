@@ -1,41 +1,44 @@
 const app = require("./routes");
 const http = require("http").createServer(app);
+const redisAdapter = require("socket.io-redis");
+const { SocketAuth } = require("../middlewares/auth");
+const { SERVER_EVENTS } = require("../constant/events");
+const { Entry } = require("../models/entry")
+const handler = require("../socket");
 const io = require("socket.io")(http, {
   path: "/sio",
   transports: ["websocket"],
 });
-// const { eventEmitter } = require("../utils");
-// const { isValidSocketAuth } = require("../middlewares/auth");
+io.adapter(redisAdapter({ host: "localhost", port: 6379 }));
 
-// // auth middleware
-// io.use((socket, next) => {
-//   let { token, type } = socket.handshake.query;
-//   const user = isValidSocketAuth(token);
 
-//   if (user) {
-//     socket.user = user;
-//     return next();
-//   }
-//   // console.log("Authentication Error");
-//   return next(new Error("authentication error"));
-// });
 
-io.on("connection", (socket) => {
-  // console.log(socket.user);
+// const entryChangeStream = Entry.watch();
+
+// const options = { fullDocument: "updateLookup" };
+// entryChangeStream.on(
+//   "change",
+//   (change) => {
+//     console.log(change); // You could parse out the needed info and send only that data.
+//     io.emit(SERVER_EVENTS.NEW_ENTRY, change);
+//   },
+//   options
+// ); 
+
+io.use(SocketAuth);
+io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
+  console.log("socket.user", socket.user);
   console.log("socket.io connection");
+  // handler.entry.pool(socket);
+  socket.emit(SERVER_EVENTS.LISTEN_POOL, await handler.entry.pool(socket));
 });
 
-// const addedToPool = function (entry) {
-//   console.log(entry);
-//   console.log(order);
-//   io.emit("NEW_ENTRY", entry);
-//   //   io.emit("me", { me: "ndiecodes" });
-// };
 
-// //Assign the event handler to an event:
-// eventEmitter.on("NEW_ENTRY", addedToPool);
+
+
 
 module.exports = {
   io,
   http,
+  app,
 };

@@ -5,7 +5,10 @@ const SERVER_EVENTS = Object.freeze({
   LISTEN_POOL: "listenPool",
 
   // when payment has been approved for an order
-  NEW_ENTRY: "newEntry"
+  NEW_ENTRY: "newEntry",
+
+  // When a company has accepted the order
+  ENTRY_ACCEPTED: "entryAccepted",
 });
 
 

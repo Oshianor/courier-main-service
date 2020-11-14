@@ -1,5 +1,6 @@
 const { Company } = require("../../models/company");
 const { Rider } = require("../../models/rider");
+const { Setting } = require("../../models/settings");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
 const { paginate } = require("../../utils");
@@ -106,6 +107,33 @@ exports.allUnveried = async (req, res) => {
       pagination: { pageSize, page },
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, companies, meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  }
+};
+
+
+/**
+ * Get Recruiting Company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.recruiting = async (req, res) => {
+  try {
+    const settings = await Setting.find({ recruitment: true, source: "company" });
+
+    const companyIds = settings.filter((v, i) => { return v._id });
+    
+    const companies = await Company.find({ verified: false, deleted: false })
+      .select("-password -rememberToken -deleted -deletedBy -deletedAt")
+      .populate("vehicles")
+      .populate("tier", "name type price transactionCost priority")
+      .skip(skip)
+      .limit(pageSize);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, companies, null);
+    return
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);

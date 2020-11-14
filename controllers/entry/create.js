@@ -202,6 +202,7 @@ exports.localEntry = async (req, res) => {
  * @param {*} res
  */
 exports.transaction = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const { error } = validateTransaction(req.body);
     if (error)
@@ -252,7 +253,7 @@ exports.transaction = async (req, res) => {
     }
 
     // start our transaction
-    const session = await mongoose.startSession();
+    
     session.startTransaction();
 
     const newTransaction = new Transaction(req.body);
@@ -266,29 +267,11 @@ exports.transaction = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    // // get the io object ref
-    // const io = req.app.get("sio");
-
-    // // find the hi
-    // const pricing = await Pricing.find().sort({ priority: -1 }).limit(1); 
-    // console.log("pricing", pricing);
-    // let clearTimer;
-    // await AsyncForEach(pricing, async (data, index, arr) => {
-    //   const timeout = [0, 300000, 600000];
-    //   clearTimer = setTimeout(() => {
-    //     io.to(String(data.priority)).emit(
-    //       SERVER_EVENTS.NEW_ENTRY,
-    //       SocketResponse(false, "ok", entry)
-    //     );
-    //   }, timeout[index]); 
-    // });
-
-    // clearTimeout(clearTimer)
-
     JsonResponse(res, 201, msgRES, null, null);
     return;
   } catch (error) {
     console.log(error);
+    await session.abortTransaction();
     return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };

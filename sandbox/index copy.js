@@ -1,6 +1,6 @@
 require("winston-mongodb");
-require("./startup/aws");
-require("./startup/logger");
+require("../startup/aws");
+require("../startup/logger");
 const config = require("config");
 const port = process.env.PORT || config.get("application.port");
 const mongoose = require('mongoose');
@@ -10,18 +10,18 @@ const http = require("http").createServer(app);
 const cors = require("cors");
 const redisAdapter = require("socket.io-redis");
 const fileUpload = require("express-fileupload");
-const { SocketAuth } = require("./middlewares/auth");
-const error = require("./middlewares/error");
-const entry = require("./routes/entry");
-const auth = require("./routes/auth");
-const admin = require("./routes/admin");
-const pricing = require("./routes/pricing");
-const vehicle = require("./routes/vehicle");
-const distancePrice = require("./routes/distancePrice");
-const company = require("./routes/company");
-const rider = require("./routes/rider");
-const { SERVER_EVENTS } = require("./constant/events");
-const handler = require("./socket")
+const { SocketAuth } = require("../middlewares/auth");
+const error = require("../middlewares/error");
+const entry = require("../routes/entry");
+const auth = require("../routes/auth");
+const admin = require("../routes/admin");
+const pricing = require("../routes/pricing");
+const vehicle = require("../routes/vehicle");
+const distancePrice = require("../routes/distancePrice");
+const company = require("../routes/company");
+const rider = require("../routes/rider");
+const { SERVER_EVENTS } = require("../constant/events");
+const handler = require("../socket")
 const io = require("socket.io")(http, {
   path: "/sio",
   transports: ["websocket"],

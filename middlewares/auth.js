@@ -65,8 +65,8 @@ const SocketAuth = (socket, next) => {
     const token = socket.handshake.query.token ?? "";
     const type = socket.handshake.query.type ?? "";
 
-    console.log("token", token);
-    console.log("type", type);
+    // console.log("token", token);
+    // console.log("type", type);
 
     if (token === "") throw new Error("Auth token is required");
     if (type === "") throw new Error("Account type is required");

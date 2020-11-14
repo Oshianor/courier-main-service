@@ -12,7 +12,6 @@ const rider = require("../controllers/rider");
 const auth = require("../controllers/auth");
 const transaction = require("../controllers/transaction");
 const setting = require("../controllers/setting");
-const transaction = require("../controllers/transaction");
 const { ACCOUNT_TYPES } = require("../constant/types");
 
 const { hasRole, ROLES, Auth } = require("../middlewares/auth");

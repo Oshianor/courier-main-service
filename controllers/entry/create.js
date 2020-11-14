@@ -37,6 +37,8 @@ const paystack = require("paystack")(config.get("paystack.secret"));
  * @param {*} res
  */
 exports.localEntry = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
     const { error } = validateLocalEntry(req.body);
     if (error)
@@ -167,7 +169,6 @@ exports.localEntry = async (req, res) => {
     // console.log("req.body", req.body);
 
     // start our mongoDb transaction
-    const session = await mongoose.startSession();
     session.startTransaction();
 
     const newEntry = new Entry(req.body);
@@ -183,17 +184,13 @@ exports.localEntry = async (req, res) => {
     req.body.orders = newEntry.orders;
     await newEntry.save({ session: session });
 
-    //emit event to trigger addToPool using websocket
-    // eventEmitter.emit("NEW_ENTRY", newEntry);
-
-    // console.log(newEntry)
-
     await session.commitTransaction();
     session.endSession();
 
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry, null);
     return;
   } catch (error) {
+    await session.abortTransaction();
     console.log(error);
     return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }

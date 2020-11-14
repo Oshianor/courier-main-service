@@ -2,7 +2,7 @@ const { Company } = require("../../models/company");
 const { Rider } = require("../../models/rider");
 const { JsonResponse } = require("../../lib/apiResponse");
 const { MSG_TYPES } = require("../../constant/types");
-
+const { paginate } = require("../../utils");
 /**
  * Get me
  * @param {*} req
@@ -63,11 +63,7 @@ exports.single = async (req, res) => {
  */
 exports.all = async (req, res) => {
   try {
-    const page =
-      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize =
-      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
-    const skip = (page - 1) * pageSize;
+    const { page, pageSize, skip } = paginate(req);
 
     const companies = await Company.find({ deleted: false })
       .populate("vehicles")
@@ -95,11 +91,7 @@ exports.all = async (req, res) => {
  */
 exports.allUnveried = async (req, res) => {
   try {
-    const page =
-      typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
-    const pageSize =
-      typeof req.query.pageSize !== "undefined" ? Math.abs(req.query.page) : 50;
-    const skip = (page - 1) * pageSize;
+    const { page, pageSize, skip } = paginate(req);
 
     const companies = await Company.find({ verified: false, deleted: false })
       .select("-password -rememberToken -deleted -deletedBy -deletedAt")

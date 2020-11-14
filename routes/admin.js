@@ -10,6 +10,7 @@ const admin = require("../controllers/admin");
 const company = require("../controllers/company");
 const rider = require("../controllers/rider");
 const auth = require("../controllers/auth");
+const transaction = require("../controllers/transaction");
 const setting = require("../controllers/setting");
 const { ACCOUNT_TYPES } = require("../constant/types");
 
@@ -23,7 +24,8 @@ router.post("/login", auth.login.admin);
 router.get("/all", Auth, hasRole([ROLES.ADMIN]), admin.get.all);
 router.get("/current", Auth, admin.get.current);
 
-
+router.get('/transactions', Auth, hasRole([ROLES.ADMIN]), transaction.get.allByAdmin)
+router.get('/transactions/:id', Auth, hasRole([ROLES.ADMIN]), transaction.get.single)
 
 
 // Company routes
@@ -49,6 +51,7 @@ router.get("/:company/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), ad
 router.get("/rider/:rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), admin.get.singleRider);
 // suspend a rider account
 router.patch("/rider/:rider/status", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), rider.update.status);
+
 
 
 // settings

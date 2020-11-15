@@ -106,11 +106,17 @@ exports.localEntry = async (req, res) => {
     req.body.TEC = 0;
     req.body.user = req.user.id;
     req.body.pickupAddress = data.origin_addresses[0];
-    req.body.metaData = data;
+    req.body.metaData = {
+      distance: data,
+      distancePrice,
+      setting,
+    };
     // get item type price
     let itemTypePrice = 0;
     if (req.body.itemType === "Document") {
       itemTypePrice = setting.documentPrice;
+    } else if (req.body.itemType === "Edible") {
+      itemTypePrice = setting.ediblePrice;
     } else {
       itemTypePrice = setting.parcelPrice;
     }
@@ -145,16 +151,18 @@ exports.localEntry = async (req, res) => {
 
           // estimated cost
           // calculate the km travelled for each trip multiplied by our price per km
-          const km = singleDistance * parseFloat(distancePrice.price);
+          const km = parseFloat(singleDistance) * parseFloat(distancePrice.price);
           // calculate the weight of each order for each trip multiplied by our price per weight
-          const weight =
-            req.body.delivery[elemIndex].weight * setting.weightPrice;
+          const weight = parseFloat(req.body.delivery[elemIndex].weight) * parseFloat(setting.weightPrice);
           const amount =
-            parseFloat(km) + parseFloat(weight) + parseFloat(itemTypePrice);
+            parseFloat(km) +
+            parseFloat(weight) +
+            parseFloat(itemTypePrice) +
+            parseFloat(setting.baseFare);
 
           // set price for each order
-          req.body.delivery[elemIndex].estimatedCost =
-            parseFloat(km) + parseFloat(weight);
+          req.body.delivery[elemIndex].estimatedCost = parseFloat(amount);
+            // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
 
           // set total price for the entry
           req.body.TEC = req.body.TEC + parseFloat(amount);

@@ -4,16 +4,20 @@
 
 const express = require("express");
 const router = express.Router();
-const pricing = require("../controllers/pricing");
+const controller = require("../controllers");
 const { hasRole, ROLES, Auth } = require("../middlewares/auth");
-const { ACCOUNT_TYPES } = require("../constant/types");
 
 // create pricing
-router.post("/", Auth, hasRole([ROLES.SUPER_ADMIN]), pricing.create.pricing);
+router.post("/", Auth, hasRole([ROLES.SUPER_ADMIN]), controller.pricing.create);
 // get all pricing plan
-router.get("/", Auth, hasRole([ROLES.SUPER_ADMIN]), pricing.get.all);
+router.get("/", Auth, hasRole([ROLES.SUPER_ADMIN]), controller.pricing.all);
 // update a single pricing document
-router.put("/:pricingId", Auth, hasRole([ROLES.SUPER_ADMIN]), pricing.update.pricing);
+router.put(
+  "/:pricingId",
+  Auth,
+  hasRole([ROLES.SUPER_ADMIN]),
+  controller.pricing.update
+);
 
 
 

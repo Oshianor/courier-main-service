@@ -105,8 +105,6 @@ exports.updateStatus = async (req, res) => {
   }
 };
 
-
-
 /**
  * Admin verification for company account
  * @param {*} req

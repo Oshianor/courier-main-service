@@ -4,15 +4,20 @@
 
 const express = require("express");
 const router = express.Router();
-const vehicle = require("../controllers/vehicle");
+const controller = require("../controllers");
 const { hasRole, ROLES, Auth } = require("../middlewares/auth");
 
 // create vehicle
-router.post("/", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), vehicle.create.vehicle);
+router.post("/", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.vehicle.vehicle);
 // get all vehicle 
-router.get("/", vehicle.get.all);
+router.get("/", controller.vehicle.all);
 // update a single vehicle document
-router.put("/:vehicleId", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), vehicle.update.vehicle);
+router.put(
+  "/:vehicleId",
+  Auth,
+  hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]),
+  controller.vehicle.updateVehicle
+);
 
 
 

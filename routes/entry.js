@@ -1,22 +1,22 @@
 const express = require("express");
 const router = express.Router();
-const entry = require("../controllers/entry");
+const controller = require("../controllers");
 const { UserAuth, Auth } = require("../middlewares/auth");
 
 // Create entry
-router.post("/", UserAuth, entry.create.localEntry);
+router.post("/", UserAuth, controller.entry.localEntry);
 // approve an entry for different payment method
-router.post("/confirm", UserAuth, entry.create.transaction);
+router.post("/confirm", UserAuth, controller.entry.transaction);
 // rider confirm cash payment
-router.patch("/cash/payment", UserAuth, entry.create.riderConfirmPayment);
+router.patch("/cash/payment", UserAuth, controller.entry.riderConfirmPayment);
 
-router.get("/pool", Auth, entry.get.byCompany);
+router.get("/pool", Auth, controller.entry.byCompany);
 
-router.get("/:id", Auth, entry.get.singleEntry);
+router.get("/:id", Auth, controller.entry.singleEntry);
 // compnay accept entry
-router.patch("/company/accept/:entry", Auth, entry.update.companyAcceptEntry);
+router.patch("/company/accept/:entry", Auth, controller.entry.companyAcceptEntry);
 // compnay accept entry
-router.get("/company/online/:entry", Auth, entry.get.allOnlineRiderCompanyEntry);
+router.get("/company/online/:entry", Auth, controller.entry.allOnlineRiderCompanyEntry);
 
 
 module.exports = router;

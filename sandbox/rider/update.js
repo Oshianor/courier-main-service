@@ -116,8 +116,6 @@ exports.status = async (req, res) => {
   }
 };
 
-
-
 /**
  * SRider goline and offline
  * @param {*} req
@@ -168,8 +166,6 @@ exports.online = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
   }
 };
-
-
 
 /**
  * Update rider location

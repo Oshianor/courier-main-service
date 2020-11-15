@@ -3,7 +3,8 @@ const { Admin } = require("../../models/admin");
 const { DistancePrice } = require("../../models/distancePrice");
 const { MSG_TYPES } = require("../../constant/types");
 const { Company } = require("../../models/company");
-  ``
+
+
 exports.admin = async (req, res) => {
   try {
     const page =

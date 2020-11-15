@@ -27,6 +27,7 @@ const MSG_SUCCESS = Object.freeze({
   FETCHED: "Resource Fetched Successfully",
   ACCOUNT_VERIFIED: "Account Successfully Verified",
   ORDER_POSTED: "Order Successfully Posted",
+  AWAIT_ADMIN: "Account successfully verified. Awaiting administrator verification."
 });
 
 const MSG_TYPES = Object.freeze({
@@ -53,6 +54,7 @@ const MSG_TYPES = Object.freeze({
   INVALID_PASSWORD: "INVALID_PASSWORD",
   DISABLED: "DISABLED",
   ACCOUNT_DELETED: "ACCOUNT_DELETED",
+  AWAIT_ADMIN: "AWAIT_ADMIN",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

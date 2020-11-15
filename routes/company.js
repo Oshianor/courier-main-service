@@ -13,6 +13,8 @@ router.post("/", company.create.company);
 
 // company routes
 router.get("/me", Auth, company.get.me);
+// recruiting companies
+router.get("/recruiting", company.get.recruiting);
 
 // Rider routes
 router.post("/riders", Auth, rider.create.create);

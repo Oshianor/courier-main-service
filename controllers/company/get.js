@@ -121,16 +121,22 @@ exports.allUnveried = async (req, res) => {
  */
 exports.recruiting = async (req, res) => {
   try {
-    const settings = await Setting.find({ recruitment: true, source: "company" });
+    const settings = await Setting.find({
+      recruitment: true,
+      source: "company",
+    });
 
-    const companyIds = settings.filter((v, i) => { return v._id });
-    
-    const companies = await Company.find({ verified: false, deleted: false })
-      .select("-password -rememberToken -deleted -deletedBy -deletedAt")
-      .populate("vehicles")
-      .populate("tier", "name type price transactionCost priority")
-      .skip(skip)
-      .limit(pageSize);
+    console.log("settings", settings);
+
+    const companyIds = settings.map((v, i) => { return v.company });
+    console.log("companyIds", companyIds);
+
+    const companies = await Company.find({
+      _id: { $in: companyIds },
+      verified: true,
+      deleted: false,
+    })
+      .select("name state country")
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, companies, null);
     return

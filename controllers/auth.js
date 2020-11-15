@@ -1,12 +1,11 @@
 const config = require("config");
+const objectPath = require("object-path");
 const bcrypt = require("bcrypt");
 const { Admin, validateAdminLogin } = require("../models/admin");
 const { Company, validateCompanyLogin } = require("../models/company");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-// const { User } = require("../models/users");
 const { Rider, validateRiderLogin } = require("../models/rider");
-// const { Organization } = require("../models/organization");
 
 /**
  * Admin Login
@@ -48,7 +47,9 @@ exports.companyLogin = async (req, res) => {
 
     const token = company.generateToken();
 
-    delete company.password;
+    console.log("company", company);
+    
+    objectPath.empty(company, "password");
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
     return;

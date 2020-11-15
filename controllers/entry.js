@@ -2,6 +2,7 @@ const config = require("config");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const mongoose = require("mongoose");
 const moment = require("moment");
+const objectPath = require("object-path");
 const service = require("../services");
 const { Company } = require("../models/company");
 const { Entry, validateLocalEntry } = require("../models/entry");
@@ -191,6 +192,7 @@ exports.localEntry = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    objectPath.del(newEntry, "orders");
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry, null);
     return;
   } catch (error) {

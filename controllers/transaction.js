@@ -1,4 +1,4 @@
-const { Transaction } = require("../models/transaction");
+const Transaction = require("../models/transaction");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");

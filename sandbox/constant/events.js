@@ -9,12 +9,6 @@ const SERVER_EVENTS = Object.freeze({
 
   // When a company has accepted the order
   ENTRY_ACCEPTED: "entryAccepted",
-
-  // When an order is assgned to a rider
-  ASSIGN_ENTRY: "assignEntry",
-
-  // driver location in realtime
-  DRIVER_LOCATION: "driverLocation"
 });
 
 

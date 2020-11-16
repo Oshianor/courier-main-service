@@ -1,28 +1,32 @@
-const bcrypt = require("bcrypt");
 const moment = require("moment");
-const mongoose = require("mongoose");
-const {
-  Company,
-  validateUpdateCompany,
-  validateStatusUpdate,
-  validateCompanyVerification,
-} = require("../models/company");
-const { Organization } = require("../models/organization");
-const { Pricing } = require("../models/pricing");
-const { Vehicle } = require("../models/vehicle");
-const { Country } = require("../models/countries");
+const Company = require("../models/company");
+const Organization = require("../models/organization");
+const Pricing = require("../models/pricing");
+const Setting = require("../models/settings");
+const Country = require("../models/countries");
+const CountryService = require("../services/country");
+const VehicleService = require("../services/vehicle");
+const CompanyService = require("../services/company");
+const { Container } = require("typedi");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { nanoid } = require("nanoid");
-const { Rider } = require("../models/rider");
-const { Setting } = require("../models/settings");
 const template = require("../templates");
+const {
+  validateUpdateCompany,
+  validateStatusUpdate,
+  validateCompanyVerification,
+  validateCompany
+} = require("../request/company");
 const {
   UploadFileFromBinary,
   Mailer,
   GenerateToken,
   paginate,
 } = require("../utils");
+const countryInstance = Container.get(CountryService);
+const vehicleInstance = Container.get(VehicleService);
+const companyInstance = Container.get(CompanyService);
 
 /**
  * Create Company
@@ -33,87 +37,24 @@ exports.company = async (req, res) => {
   try {
     req.body.vehicles = req.body.vehicles.split(",");
     const { error } = validateCompany(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    // check if an existing company  has incoming email
-    const accountCheck = await Company.findOne({
-      $or: [{ email: req.body.email }, { phoneNumber: req.body.phoneNumber }],
-    });
-    if (accountCheck)
-      return JsonResponse(
-        res,
-        400,
-        `\"email"\ or \"Phone Number"\ already exists!`,
-        null,
-        null
-      );
+    await companyInstance.get({$or: [{ email: req.body.email }, { phoneNumber: req.body.phoneNumber }]});
 
-    const pricing = await Pricing.findOne({ _id: req.body.tier });
-    if (!pricing) return JsonResponse(res, 404, MSG_TYPES.FREEMIUM, null, null);
-
-    const country = await Country.findOne({ name: req.body.country });
-    if (!country)
-      return JsonResponse(res, 404, "Country Not Found", null, null);
-
-    // validate state
-    const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined")
-      return JsonResponse(res, 404, "State Not Found", null, null);
-
-    const vehicle = await Vehicle.find({
-      _id: { $in: req.body.vehicles },
-    }).countDocuments();
-    if (vehicle !== req.body.vehicles.length)
-      return JsonResponse(res, 404, "Please provide vehicles", null, null);
-
-    // return;
-    // console.log("req.files", req.files);
-    if (req.files.rcDoc) {
-      const rcDoc = await UploadFileFromBinary(
-        req.files.rcDoc.data,
-        req.files.rcDoc.name
-      );
-      req.body.rcDoc = rcDoc.Key;
-    }
-    if (req.files.logo) {
-      const logo = await UploadFileFromBinary(
-        req.files.logo.data,
-        req.files.logo.name
-      );
-      req.body.logo = logo.Key;
-    }
-
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    const token = GenerateToken(225);
-    req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
-    req.body.publicToken = nanoid(50);
-    req.body.tier = pricing;
+    // validate country service
+    const country = await countryInstance.getCountryAndState(req.body.country,req.body.state);
     req.body.countryCode = country.cc;
-    req.body.password = await bcrypt.hash(req.body.password, 10);
-    const organization = new Organization(req.body);
-    const company = new Company(req.body);
 
-    company.organization = organization._id;
-    organization.companyHQ = company._id;
-    organization.companies = [company._id];
-    // organizer.companyBranches = [];
+    // validate the array for supported vehicle list
+    await vehicleInstance.validateAllVehiclesFromList(req.body.vehicles);
 
-    await company.save({ session: session });
-    await organization.save({ session: session });
-    await session.commitTransaction();
-    session.endSession();
+    await companyInstance.create(req.body, req.files);
 
-    const subject = "Welcome to Exalt Logistics";
-    const html = template.Verification(token, req.body.email, "company");
-    Mailer(req.body.email, subject, html);
-
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, error.code, error.msg);
   }
 };
 
@@ -124,61 +65,11 @@ exports.company = async (req, res) => {
  */
 exports.branch = async (req, res) => {
   try {
-    const { error } = validateCompany(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
-
-    // check if an existing company  has incoming email
-    const accountCheck = await Company.findOne({ email: req.body.email });
-    if (accountCheck)
-      return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-
-    const pricing = await Pricing.findOne({ type: "freemium" });
-    if (!pricing) return JsonResponse(res, 404, MSG_TYPES.FREEMIUM, null, null);
-
-    const country = await Country.findOne({ name: req.body.country });
-    if (!country)
-      return JsonResponse(res, 404, "Country Not Found", null, null);
-
-    // validate state
-    const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined")
-      return JsonResponse(res, 404, "State Not Found", null, null);
-
-    // return;
-    // console.log("req.files", req.files);
-    if (req.files.rcDoc) {
-      const rcDoc = await UploadFileFromBinary(
-        req.files.rcDoc.data,
-        req.files.rcDoc.name
-      );
-      req.body.rcDoc = rcDoc.Key;
-    }
-    if (req.files.logo) {
-      const logo = await UploadFileFromBinary(
-        req.files.logo.data,
-        req.files.logo.name
-      );
-      req.body.logo = logo.Key;
-    }
-
-    const token = GenerateToken(225);
-    req.body.rememberToken = { token, expiredDate: moment().add(2, "days") };
-    req.body.createdBy = req.user.id;
-    req.body.publicToken = nanoid(50);
-    req.body.tier = pricing;
-    req.body.countryCode = country.cc;
-    await Company.create(req.body);
-
-    const subject = "Welcome to Exalt Logistics";
-    const html = template.Verification(token, req.body.email, "company");
-    Mailer(req.body.email, subject, html);
-
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
+    
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, error.code, error.msg);
   }
 };
 
@@ -199,14 +90,14 @@ exports.me = async (req, res) => {
       .populate("tier", "name type price transactionCost priority");
 
     if (!company) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, company, null);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -224,14 +115,14 @@ exports.single = async (req, res) => {
       .populate("tier", "name type price transactionCost priority");
 
     if (!company) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, company, null);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -259,7 +150,7 @@ exports.all = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, companies, meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -287,7 +178,7 @@ exports.allUnveried = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, companies, meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -305,21 +196,22 @@ exports.recruiting = async (req, res) => {
 
     console.log("settings", settings);
 
-    const companyIds = settings.map((v, i) => { return v.company });
+    const companyIds = settings.map((v, i) => {
+      return v.company;
+    });
     console.log("companyIds", companyIds);
 
     const companies = await Company.find({
       _id: { $in: companyIds },
       verified: true,
       deleted: false,
-    })
-      .select("name state country")
+    }).select("name state country");
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, companies, null);
-    return
+    return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -333,21 +225,21 @@ exports.updateSingle = async (req, res) => {
     const { error } = validateUpdateCompany(req.body);
 
     if (error) {
-      JsonResponse(res, 400, error.details[0].message, null, null);
+      JsonResponse(res, 400, error.details[0].message);
       return;
     }
 
     if (req.body.country) {
       const country = await Country.findOne({ name: req.body.country });
       if (!country)
-        return JsonResponse(res, 404, "Country Not Found", null, null);
+        return JsonResponse(res, 404, "Country Not Found");
     }
 
     // validate state
     if (req.body.state) {
       const state = country.states.filter((v, i) => v.name === req.body.state);
       if (typeof state[0] === "undefined")
-        return JsonResponse(res, 404, "State Not Found", null, null);
+        return JsonResponse(res, 404, "State Not Found");
     }
 
     const data = req.body;
@@ -373,7 +265,7 @@ exports.updateSingle = async (req, res) => {
     const company = await Company.findOne({ _id: companyId });
 
     if (!company) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
     const updatedCompany = await Company.findByIdAndUpdate(companyId, data, {
@@ -383,7 +275,7 @@ exports.updateSingle = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedCompany, null);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -396,22 +288,22 @@ exports.updateStatus = async (req, res) => {
   try {
     const { error } = validateStatusUpdate(req.body);
     if (error) {
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
     }
     const companyId = req.params.companyId;
     const company = await Company.findOne({ _id: companyId });
     if (!company) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
     const account = await Company.findOneAndUpdate(
       { _id: companyId },
       req.body
     );
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -424,14 +316,14 @@ exports.verification = async (req, res) => {
   try {
     const { error } = validateCompanyVerification(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
     const company = await Company.findOne({
       _id: req.params.companyId,
       verified: false,
     });
     if (!company)
-      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     // check if the
     if (req.body.status === "decline") {
@@ -442,7 +334,7 @@ exports.verification = async (req, res) => {
       }
       await company.deleteOne();
 
-      JsonResponse(res, 200, "Account Successfully Deleted", null, null);
+      JsonResponse(res, 200, "Account Successfully Deleted");
       return;
     }
 
@@ -474,12 +366,12 @@ exports.verification = async (req, res) => {
     });
 
     await newSetting.save();
-    
-    JsonResponse(res, 200, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
+
+    JsonResponse(res, 200, MSG_TYPES.ACCOUNT_VERIFIED);
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -494,16 +386,16 @@ exports.destroy = async (req, res) => {
     const company = await Company.findById(companyId);
 
     if (!company) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
     company.deletedBy = req.user.id;
     company.deleted = true;
     company.deletedAt = Date.now();
     await company.save();
-    JsonResponse(res, 200, MSG_TYPES.DELETED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };

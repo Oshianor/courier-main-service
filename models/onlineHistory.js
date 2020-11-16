@@ -23,6 +23,4 @@ const riderSchema = new mongoose.Schema(
 
 const OnlineHistory = mongoose.model("OnlineHistory", riderSchema);
 
-module.exports = {
-  OnlineHistory,
-};
+module.exports = OnlineHistory;

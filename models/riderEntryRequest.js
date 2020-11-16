@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
-const Joi = require("joi");
 
 const RiderEntryRequestSchema = new mongoose.Schema(
   {
@@ -40,15 +39,4 @@ const RiderEntryRequest = mongoose.model(
   RiderEntryRequestSchema
 );
 
-function validateStatusUpdate(body) {
-  const schema = Joi.object({
-    status: Joi.string().required().valid("pending", "approved", "declined"),
-  });
-
-  return schema.validate(body);
-}
-
-module.exports = {
-  RiderEntryRequest,
-  validateStatusUpdate,
-};
+module.exports = RiderEntryRequest;

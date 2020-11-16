@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const Joi = require("joi");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
 
@@ -58,41 +57,6 @@ const DistancePriceSchema = mongoose.Schema(
   }
 );
 
-function validateDistancePrice(data) {
-  const Schema = Joi.object().keys({
-    country: Joi.string().label("Country").required(),
-    state: Joi.string().label("State").required(),
-    vehicle: Joi.string().regex(/^[0-9a-fA-F]{24}$/).label("Vehicle").required(),
-    price: Joi.number().label("Distance Per Price").required()
-  });
-
-  return Schema.validate(data);
-}
-
-
-function validateDistancePriceCompany(data) {
-  const Schema = Joi.object().keys({
-    vehicle: Joi.string().regex(/^[0-9a-fA-F]{24}$/).label("Vehicle").required(),
-    price: Joi.number().label("Distance Per Price").required(),
-  });
-
-  return Schema.validate(data);
-}
-
-
-function validateUpdateDistancePrice(data) {
-  const Schema = Joi.object().keys({
-    price: Joi.number().label("Distance Per Price").required(),
-  });
-
-  return Schema.validate(data);
-}
-
 const DistancePrice = mongoose.model("DistancePrice", DistancePriceSchema);
 
-module.exports = {  
-  validateDistancePrice,
-  validateUpdateDistancePrice,
-  validateDistancePriceCompany,
-  DistancePrice,
-};
+module.exports = DistancePrice;

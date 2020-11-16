@@ -1,8 +1,10 @@
 const config = require("config");
-const { JsonResponse } = require("../lib/apiResponse");
-const { Admin } = require("../models/admin");
-const { Pricing, validatePricing } = require("../models/pricing");
+const Admin = require("../models/admin");
+const Pricing = require("../models/pricing");
+const { validatePricing } = require("../request/pricing");
 const { MSG_TYPES } = require("../constant/types");
+const { JsonResponse } = require("../lib/apiResponse");
+
 
 exports.create = async (req, res) => {
   try {

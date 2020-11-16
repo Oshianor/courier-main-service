@@ -1,12 +1,15 @@
 const config = require("config");
 const objectPath = require("object-path");
 const bcrypt = require("bcrypt");
+const Company = require("../models/company");
+const Rider = require("../models/rider");
 const Admin = require("../models/admin");
 const { validateAdminLogin } = require("../request/admin");
-const { Company, validateCompanyLogin } = require("../models/company");
+const { validateCompanyLogin } = require("../request/company");
+const { validateRiderLogin } = require("../request/rider");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { Rider, validateRiderLogin } = require("../models/rider");
+
 
 /**
  * Admin Login
@@ -18,7 +21,7 @@ exports.companyLogin = async (req, res) => {
     const { error } = validateCompanyLogin(req.body);
 
     if (error) {
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
     }
 
     const company = await Company.findOne({
@@ -28,14 +31,14 @@ exports.companyLogin = async (req, res) => {
       .populate("vehicles")
       .populate("tier", "name type price transactionCost priority");
     if (!company)
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID);
 
     if (company.deleted) {
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED);
     }
 
     if (company.status === "suspended") {
-      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED);
     }
 
     // compare request password with the password saved on the database
@@ -44,7 +47,7 @@ exports.companyLogin = async (req, res) => {
       company.password
     );
     if (!validPassword)
-      return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID, null, null);
+      return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID);
 
     const token = company.generateToken();
 
@@ -56,7 +59,7 @@ exports.companyLogin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -70,32 +73,33 @@ exports.adminLogin = async (req, res) => {
     const { error } = validateAdminLogin(req.body);
 
     if (error) {
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
     }
 
     const admin = await Admin.findOne({
       email: req.body.email.toLowerCase(),
       verified: true,
+      status: "active"
     });
     if (!admin)
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID);
 
     if (admin.deleted) {
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED);
     }
 
     if (admin.status === "suspended") {
-      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED);
     }
 
-    if (admin.disabled) {
-      return JsonResponse(res, 401, MSG_TYPES.DISABLED, null, null);
-    }
+    // if (admin.disabled) {
+    //   return JsonResponse(res, 401, MSG_TYPES.DISABLED);
+    // }
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, admin.password);
     if (!validPassword)
-      return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID, null, null);
+      return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID);
 
     const token = admin.generateToken();
 
@@ -105,7 +109,7 @@ exports.adminLogin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -118,7 +122,7 @@ exports.riderLogin = async (req, res) => {
   try {
     const { error } = validateRiderLogin(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
     const rider = await Rider.findOne({
       email: req.body.email.toLowerCase(),
@@ -127,20 +131,20 @@ exports.riderLogin = async (req, res) => {
       // .populate("company", "name email")
       .populate("vehicle");
     if (!rider)
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_INVALID);
 
     if (rider.deleted) {
-      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.ACCOUNT_DELETED);
     }
 
     if (rider.status === "suspended") {
-      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED, null, null);
+      return JsonResponse(res, 401, MSG_TYPES.SUSPENDED);
     }
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, rider.password);
     if (!validPassword)
-      return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID, null, null);
+      return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID);
 
     const token = rider.generateToken();
 
@@ -150,7 +154,7 @@ exports.riderLogin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -163,7 +167,7 @@ exports.accountVerify = async (req, res) => {
   try {
     const { error } = validateVerifyAccount(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
     const currentDate = new Date();
     const password = await bcrypt.hash(req.body.password, 10);
@@ -187,16 +191,16 @@ exports.accountVerify = async (req, res) => {
     if (req.body.type === "admin") {
       const admin = await Admin.findOne(dataReq);
       if (!admin)
-        return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+        return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       await admin.updateOne(dataUpdate);
     } else if (req.body.type === "rider") {
       const rider = await Rider.findOne(dataReq);
       if (!rider)
-        return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+        return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       await rider.updateOne(dataUpdate);
     }
 
-    JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED, null, null);
+    JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED);
   } catch (error) {
     console.log(error);
     return res.status(400).send("Something went wrong");
@@ -212,7 +216,7 @@ exports.companyVerify = async (req, res) => {
   try {
     const { error } = validateVerifyCompany(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
     const currentDate = new Date();
     const company = await Company.findOne({
@@ -223,7 +227,7 @@ exports.companyVerify = async (req, res) => {
       "rememberToken.expiredDate": { $gte: currentDate },
     });
     if (!company)
-      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     await company.updateOne({
       emailVerified: true,

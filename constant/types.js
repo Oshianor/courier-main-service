@@ -1,4 +1,14 @@
-const MSG_ERRORS = Object.freeze({
+const MSG_TYPES = Object.freeze({
+  ACCOUNT_CREATED: "Account Successfully Created.",
+  LOGGED_IN: "Successfully logged in",
+  DELETED: "Resource Deleted Successfully",
+  UPDATED: "Resource Updated Successfully",
+  CREATED: "Resource Created Successfully",
+  FETCHED: "Resource Fetched Successfully",
+  ACCOUNT_VERIFIED: "Account Successfully Verified",
+  ORDER_POSTED: "Order Successfully Posted",
+  AWAIT_ADMIN:
+    "Account successfully verified. Awaiting administrator verification.",
   ACCOUNT_EXIST: "Account already exist.",
   ACCOUNT_INVALID: "Invalid email or password",
   SUSPENDED: "Account is suspended!",
@@ -18,45 +28,6 @@ const MSG_ERRORS = Object.freeze({
   INVALID_PASSWORD: "Invalid Password",
 });
 
-const MSG_SUCCESS = Object.freeze({
-  ACCOUNT_CREATED: "Account Successfully Created.",
-  LOGGED_IN: "Successfully logged in",
-  DELETED: "Resource Deleted Successfully",
-  UPDATED: "Resource Updated Successfully",
-  CREATED: "Resource Created Successfully",
-  FETCHED: "Resource Fetched Successfully",
-  ACCOUNT_VERIFIED: "Account Successfully Verified",
-  ORDER_POSTED: "Order Successfully Posted",
-  AWAIT_ADMIN: "Account successfully verified. Awaiting administrator verification."
-});
-
-const MSG_TYPES = Object.freeze({
-  ACCOUNT_EXIST: "ACCOUNT_EXIST",
-  ACCOUNT_CREATED: "ACCOUNT_CREATED",
-  ACCOUNT_INVALID: "ACCOUNT_INVALID",
-  NOT_FOUND: "NOT_FOUND",
-  UPLOAD_IMAGE: "UPLOAD_IMAGE",
-  LOGGED_IN: "LOGGED_IN",
-  ACCESS_DENIED: "ACCESS_DENIED",
-  SESSION_EXPIRED: "SESSION_EXPIRED",
-  DEACTIVATED: "DEACTIVATED",
-  PERMISSION: "PERMISSION",
-  DELETED: "DELETED",
-  UPDATED: "UPDATED",
-  SUSPENDED: "SUSPENDED",
-  SERVER_ERROR: "SERVER_ERROR",
-  CREATED: "CREATED",
-  FETCHED: "FETCHED",
-  FREEMIUM: "FREEMIUM",
-  ACCOUNT_VERIFIED: "ACCOUNT_VERIFIED",
-  FAILED_SUPPORT: "FAILED_SUPPORT",
-  ORDER_POSTED: "ORDER_POSTED",
-  INVALID_PASSWORD: "INVALID_PASSWORD",
-  DISABLED: "DISABLED",
-  ACCOUNT_DELETED: "ACCOUNT_DELETED",
-  AWAIT_ADMIN: "AWAIT_ADMIN",
-});
-
 const ACCOUNT_TYPES = Object.freeze({
   ADMIN: "admin",
   COMPANY: "company",
@@ -65,8 +36,6 @@ const ACCOUNT_TYPES = Object.freeze({
 });
 
 module.exports = {
-  MSG_ERRORS,
-  MSG_SUCCESS,
   MSG_TYPES,
   ACCOUNT_TYPES,
 };

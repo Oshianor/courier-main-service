@@ -1,7 +1,10 @@
 const winston = require('winston');
+const { JsonResponse } = require('../lib/apiResponse');
+
 
 module.exports = function (err, req, res, next) {
   winston.error(err.message, err);
+  console.log("err ==> ", new Date().getUTCDate(), "<===>", err);
   
-  res.status(500).send("Something went wrong!.", err.message);
+  return JsonResponse(res, 500, "Something went wrong!.");
 }

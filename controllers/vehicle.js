@@ -1,8 +1,9 @@
-const config = require("config");
-const { JsonResponse } = require("../lib/apiResponse");
-const { Admin } = require("../models/admin");
-const { Vehicle, validateVehicle } = require("../models/vehicle");
+const Admin = require("../models/admin");
+const Vehicle = require("../models/vehicle");
+const { validateVehicle } = require("../request/vehicle");
 const { MSG_TYPES } = require("../constant/types");
+const { JsonResponse } = require("../lib/apiResponse");
+
 
 exports.vehicle = async (req, res) => {
   try {

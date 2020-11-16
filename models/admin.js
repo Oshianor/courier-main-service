@@ -97,10 +97,6 @@ const adminSchema = new mongoose.Schema(
       ref: "Admin",
       default: null,
     },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
     deleted: {
       type: Boolean,
       default: false,

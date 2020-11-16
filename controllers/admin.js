@@ -1,21 +1,25 @@
 const bcrypt = require("bcrypt");
-const moment = require("moment");
-const Admin = require("../models/admin");
-const { validateAdmin, validatePassword } = require("../request/admin");
+const AdminModel = require("../models/admin");
+const user = require("../services/user");
+const UserService = require("../services/user");
+const CountryService = require("../services/country");
+const RiderModel = require("../models/rider");
+const AdminService = require("../services/admin");
+const {
+  validateAdmin,
+  validatePassword,
+  validateUpdateAdmin,
+} = require("../request/admin");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { Mailer, GenerateToken } = require("../utils");
-const { Verification } = require("../templates");
-const { Country } = require("../models/countries");
-const { Rider } = require("../models/rider");
 const { paginate } = require("../utils");
-const user = require("../services/user");
-const countryService = require("../services/country");
-const adminService = require("../services/admin");
-const {Container} = require("typedi");
+const { Container } = require("typedi");
+const adminInstance = Container.get(AdminService);
+const userInstance = Container.get(UserService);
+const countryInstance = Container.get(CountryService);
 
 /**
- * Create Admin
+ * Create AdminModel
  * @param {*} req
  * @param {*} res
  */
@@ -23,24 +27,24 @@ exports.createAdmin = async (req, res) => {
   try {
     const { error } = validateAdmin(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
-    const countryInstance = Container.get(countryService);
-    const adminInstance = Container.get(adminService);
-    
-    const country = await countryInstance.getCountryAndState(req.body.country, req.body.state);
+    // instantiate a class
+    // const countryInstance = Container.get(CountryService);
+    // const adminInstance = Container.get(AdminService);
+
+    const country = await countryInstance.getCountryAndState(
+      req.body.country,
+      req.body.state
+    );
     req.body.countryCode = country.cc;
-    const admin = await adminInstance.createAdmin(req.body, req.user);
+    await adminInstance.createAdmin(req.body, req.user);
 
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
     return;
   } catch (error) {
     console.log(error);
-    if (!error.code) {
-      JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
-      return
-    }
-    JsonResponse(res, error.code, error.msg, null, null);
+    JsonResponse(res, error.code, error.msg);
     return;
   }
 };
@@ -52,27 +56,35 @@ exports.createAdmin = async (req, res) => {
  */
 exports.all = async (req, res) => {
   try {
-    const admins = await Admin.find({ deleted: false });
+    // const adminInstance = Container.get(AdminService);
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, admins, null);
+    const admin = await adminInstance.getAll({ deleted: false });
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
+    return;
   } catch (err) {
-    console.log(err);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, err.code, err.msg);
+    return;
   }
 };
 
 /**
- * Get Current Authenticated Admin
+ * Get Current Authenticated AdminModel
  * @param {*} req
  * @param {*} res
  */
-exports.current = async (req, res) => {
+exports.me = async (req, res) => {
   try {
-    const admin = await Admin.findOne({ account: req.user.id });
-    JsonResponse(res, 200, null, admin, null);
+    // get the admin class
+    // const adminInstance = Container.get(AdminService);
+
+    const admin = await adminInstance.get({ _id: req.user.id });
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
   } catch (err) {
     console.log(err);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, err.code, err.msg);
+    return;
   }
 };
 
@@ -84,13 +96,13 @@ exports.current = async (req, res) => {
 exports.allRider = async (req, res) => {
   try {
     const { page, pageSize, skip } = paginate(req);
-    
-    const rider = await Rider.find({ company: req.params.company })
+
+    const rider = await RiderModel.find({ company: req.params.company })
       .select("-password -rememberToken")
       .populate("vehicles")
       .skip(skip)
       .limit(pageSize);
-    const total = await Rider.find({
+    const total = await RiderModel.find({
       company: req.params.company,
     }).countDocuments();
 
@@ -101,7 +113,7 @@ exports.allRider = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -112,14 +124,14 @@ exports.allRider = async (req, res) => {
  */
 exports.singleRider = async (req, res) => {
   try {
-    const rider = await Rider.findOne({ _id: req.params.rider })
+    const rider = await RiderModel.findOne({ _id: req.params.rider })
       .select("-password -rememberToken")
       .populate("vehicles");
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, null);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -132,12 +144,12 @@ exports.allUsers = async (req, res) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
-    const data = await user.getAllUsers({ page, pageSize });
+    const data = await userInstance.getAllUsers({ page, pageSize });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, data.meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -148,37 +160,32 @@ exports.allUsers = async (req, res) => {
  */
 exports.singleUser = async (req, res) => {
   try {
-    const data = await services.user.getSingleUser(req.params.userId);
+    const data = await userInstance.getByID(req.params.userId);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, null);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
 /**
- * Delete One Admin
+ * Delete One AdminModel
  * @param {*} req
  * @param {*} res
  */
 exports.destroy = async (req, res) => {
   try {
-    const adminId = req.params.adminId;
-    const admin = await Admin.findOne({ _id: adminId });
+    const admin = await adminInstance.get({ _id: req.params.adminId });
 
-    if (!admin) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-      return;
-    }
     admin.deletedBy = req.user.id;
     admin.deleted = true;
     admin.deletedAt = Date.now();
     await admin.save();
-    JsonResponse(res, 200, MSG_TYPES.DELETED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -187,22 +194,20 @@ exports.destroy = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.current = async (req, res) => {
+exports.updateMe = async (req, res) => {
   try {
     const { error } = validateUpdateAdmin(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
-    const admin = await Admin.findOne({ _id: req.user.id });
-    if (!admin) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-      return;
-    }
-    await Admin.updateOne({ _id: req.user.id }, req.body);
+      return JsonResponse(res, 400, error.details[0].message);
 
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+    const admin = await adminInstance.get({ _id: req.user.id });
+    
+    await admin.updateOne(req.body);
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -215,12 +220,9 @@ exports.password = async (req, res) => {
   try {
     const { error } = validatePassword(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
-    const admin = await Admin.findOne({ _id: req.user.id });
-    if (!admin) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-      return;
-    }
+      return JsonResponse(res, 400, error.details[0].message);
+
+    const admin = await adminInstance.get({ _id: req.user.id });
 
     let validPassword = await bcrypt.compare(
       req.body.oldPassword,
@@ -228,17 +230,18 @@ exports.password = async (req, res) => {
     );
 
     if (!validPassword) {
-      JsonResponse(res, 403, MSG_TYPES.INVALID_PASSWORD, null, null);
+      JsonResponse(res, 403, MSG_TYPES.INVALID_PASSWORD);
+      return 
     }
 
     admin.password = await bcrypt.hash(req.body.password, 10);
 
     await admin.save();
 
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -249,19 +252,14 @@ exports.password = async (req, res) => {
  */
 exports.disable = async (req, res) => {
   try {
-    const adminId = req.params.adminId;
-    const admin = await Admin.findOne({ _id: adminId });
+    const admin = await adminInstance.get({ _id: req.params.adminId });
 
-    if (!admin) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
-      return;
-    }
-    admin.disabled = true;
+    admin.status = "suspended";
     await admin.save();
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -273,17 +271,17 @@ exports.disable = async (req, res) => {
 exports.enable = async (req, res) => {
   try {
     const adminId = req.params.adminId;
-    const admin = await Admin.findOne({ _id: adminId });
+    const admin = await AdminModel.findOne({ _id: adminId });
 
     if (!admin) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
     admin.disabled = false;
     await admin.save();
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };

@@ -9,7 +9,7 @@ router.post("/login", controller.auth.adminLogin);
 
 //Admin Routes
 router.get("/all", Auth, hasRole([ROLES.ADMIN]), controller.admin.all);
-router.get("/current", Auth, controller.admin.current);
+router.get("/current", Auth, controller.admin.me);
 
 router.get('/transactions', Auth, hasRole([ROLES.ADMIN]), controller.transaction.allByAdmin)
 router.get('/transactions/:id', Auth, hasRole([ROLES.ADMIN]), controller.transaction.single)
@@ -53,7 +53,7 @@ router.get("/user/all", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controll
 router.get("/user/:userId", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleUser);
 
 // Admin Updates
-router.put("/update", Auth, controller.admin.current);
+router.put("/update", Auth, controller.admin.updateMe);
 router.patch("/password", Auth, controller.admin.password);
 router.patch("/:adminId/disable", Auth, hasRole(), controller.admin.disable);
 router.patch("/:adminId/enable", Auth, hasRole(), controller.admin.enable);

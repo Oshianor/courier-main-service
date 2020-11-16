@@ -76,6 +76,4 @@ const organizerSchema = new mongoose.Schema(
 
 const Organization = mongoose.model("Organization", organizerSchema);
 
-module.exports = {
-  Organization,
-};
+module.exports = Organization;

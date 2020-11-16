@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
-const Joi = require("joi");
 const ObjectId = mongoose.Schema.Types.ObjectId;
-const {nanoid} = require("nanoid");
 
 const orderSchema = mongoose.Schema(
   {
@@ -177,6 +175,4 @@ const orderSchema = mongoose.Schema(
 
 const Order = mongoose.model("Order", orderSchema);
 
-module.exports = {
-  Order,
-};
+module.exports = Order;

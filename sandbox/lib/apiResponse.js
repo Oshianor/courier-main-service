@@ -1,4 +1,4 @@
-const { MSG_TYPES } = require("../constant/types");
+const { MSG_ERRORS, MSG_SUCCESS } = require("../constant/types");
 
 function JsonResponse(res, status, msg, data = null, meta = null) {
   const body = {
@@ -9,7 +9,7 @@ function JsonResponse(res, status, msg, data = null, meta = null) {
       pagination: {
         pageSize: 1,
         page: 1,
-        // currentPage: 1,
+        currentPage: 1,
       },
     },
   };
@@ -22,13 +22,17 @@ function JsonResponse(res, status, msg, data = null, meta = null) {
   } else {
     delete body.meta;
   }
-  
   if (typeof msg === "string") {
-    const data = MSG_TYPES[msg];
+    const data = MSG_ERRORS[msg];
     if (typeof data !== "undefined") {
       body.msg = MSG_ERRORS[msg];
     } else {
-      body.msg = msg;
+      const data = MSG_SUCCESS[msg];
+      if (typeof data !== "undefined") {
+        body.msg = MSG_SUCCESS[msg];
+      } else {
+        body.msg = msg;
+      }
     }
   }
   res.status(status ?? 200).send(body);

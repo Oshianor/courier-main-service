@@ -1,16 +1,17 @@
 const config = require("config");
-const { JsonResponse } = require("../lib/apiResponse");
-const { Admin } = require("../models/admin");
-const { MSG_TYPES } = require("../constant/types");
-const { Country } = require("../models/countries");
-const { Vehicle } = require("../models/vehicle");
-const { Company } = require("../models/company");
+const Admin = require("../models/admin");
+const Country = require("../models/countries");
+const Vehicle = require("../models/vehicle");
+const Company = require("../models/company");
+const DistancePrice = require("../models/distancePrice");
 const {
-  DistancePrice,
   validateDistancePrice,
   validateDistancePriceCompany,
   validateUpdateDistancePrice,
-} = require("../models/distancePrice");
+} = require("../request/distancePrice");
+const { JsonResponse } = require("../lib/apiResponse");
+const { MSG_TYPES } = require("../constant/types");
+
 
 /**
  * Create DP for admin

@@ -1,29 +1,16 @@
 const moment = require("moment");
-const bcrypt = require("bcrypt");
-const service = require("../services");
-const { Company } = require("../models/company");
-const {
-  Rider,
-  validateRider,
-  validateRiderSelf,
-} = require("../models/rider");
-const { Country } = require("../models/countries");
+const Company = require("../models/company");
+const Rider = require("../models/rider");
+const OnlineHistory = require("../models/onlineHistory");
+const Country = require("../models/countries");
+const Entry = require("../models/entry");
+const RiderCompanyRequest = require("../models/riderCompanyRequest");
+const { validateStatusUpdate } = require("../models/riderCompanyRequest");
+const { validateRider, validateRiderSelf } = require("../request/rider");
+const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { Verification } = require("../templates");
-const {
-  UploadFileFromBinary,
-  Mailer,
-  GenerateToken,
-  GenerateOTP,
-} = require("../utils");
-const {
-  RiderCompanyRequest,
-  validateStatusUpdate,
-} = require("../models/riderCompanyRequest");
-const { OnlineHistory } = require("../models/onlineHistory");
-const { Entry } = require("../models/entry");
-
 
 /**
  * Create Rider

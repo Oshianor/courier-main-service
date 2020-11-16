@@ -1,9 +1,11 @@
+const Admin = require("../models/admin");
+const DistancePrice = require("../models/distancePrice");
+const Company = require("../models/company");
+const Setting = require("../models/settings");
+const { validateUpdateSettings } = require("../request/settings");
 const { JsonResponse } = require("../lib/apiResponse");
-const { Admin } = require("../models/admin");
-const { DistancePrice } = require("../models/distancePrice");
 const { MSG_TYPES } = require("../constant/types");
-const { Company } = require("../models/company");
-const { Setting, validateUpdateSettings } = require("../models/settings");
+
 
 /**
  * Get settings for admin

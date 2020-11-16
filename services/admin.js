@@ -2,14 +2,17 @@ const Admin = require("../models/admin");
 const moment = require("moment")
 const { Mailer, GenerateToken } = require("../utils");
 const { Verification } = require("../templates");
+const { options } = require("joi");
+const { MSG_TYPES } = require("../constant/types");
 
 
 class AdminSerivice {
-  // constructor() {
-  //   this.createAdmin = createAdmin;
-  // }
-
-  createAdmin (body, user) {
+  /**
+   * Create Admin service
+   * @param {Sting} body
+   * @param {String} user
+   */
+  createAdmin(body, user) {
     return new Promise(async (resolve, reject) => {
       // check if an existing admin has incoming email
       const adminCheck = await Admin.findOne({
@@ -34,8 +37,46 @@ class AdminSerivice {
 
       resolve(admin);
       return;
+    });
+  }
+
+  /**
+   * Get a single Admin
+   * @param {Object} filter 
+   * @param {Object} option 
+   */
+  get (filter={}, option = null) {
+    return new Promise(async (resolve, reject) => {
+      const select = option ? option : { password: 0, rememberToken: 0 };
+      const admin = await Admin.findOne(filter).select(select);
+
+      if (!admin) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+      }
+      resolve(admin);
     })
   }
+
+  /**
+   * Get multiple admin based on the filer parameters
+   * @param {Object} filter 
+   * @param {Object} option 
+   * @param {String} populate 
+   */
+  getAll (filter={}, option=null, populate="") {
+    return new Promise(async (resolve, reject) => {
+      const select = option ? option : { password: 0, rememberToken: 0 };
+      const admin = await Admin.find(filter).select(select).populate(populate);
+
+      // if (!admin) {
+      //   reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+      // }
+      resolve(admin);
+    })
+  }
+
+
+
 }
 
 

@@ -37,6 +37,7 @@
     "randexp": "^0.5.3",
     "socket.io": "^3.0.0",
     "socket.io-redis": "^6.0.0",
+    "typedi": "^0.8.0",
     "winston": "^3.3.3",
     "winston-mongodb": "^5.0.5"
   }

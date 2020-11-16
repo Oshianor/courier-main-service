@@ -1,7 +1,8 @@
 const config = require("config");
 const objectPath = require("object-path");
 const bcrypt = require("bcrypt");
-const { Admin, validateAdminLogin } = require("../models/admin");
+const Admin = require("../models/admin");
+const { validateAdminLogin } = require("../request/admin");
 const { Company, validateCompanyLogin } = require("../models/company");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");

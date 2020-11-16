@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const moment = require("moment");
-const { Admin, validateAdmin, validatePassword } = require("../models/admin");
+const Admin = require("../models/admin");
+const { validateAdmin, validatePassword } = require("../request/admin");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken } = require("../utils");
@@ -8,7 +9,10 @@ const { Verification } = require("../templates");
 const { Country } = require("../models/countries");
 const { Rider } = require("../models/rider");
 const { paginate } = require("../utils");
-const services = require("../services");
+const user = require("../services/user");
+const countryService = require("../services/country");
+const adminService = require("../services/admin");
+const {Container} = require("typedi");
 
 /**
  * Create Admin
@@ -21,43 +25,23 @@ exports.createAdmin = async (req, res) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message, null, null);
 
-    // check if an existing admin has incoming email
-    const adminCheck = await Admin.findOne({
-      $or: [{ email: req.body.email }, { phoneNumber: req.body.phoneNumber }],
-    });
-    if (adminCheck) {
-      JsonResponse(res, 400, `\"email or phoneNumber "\ already exists!`);
-      return;
-    }
-
-    // validate country
-    const country = await Country.findOne({ name: req.body.country });
-    if (!country)
-      return JsonResponse(res, 404, "Country Not Found", null, null);
-
-    // validate state
-    const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined")
-      return JsonResponse(res, 404, "State Not Found", null, null);
-
-    const token = GenerateToken(225);
-    req.body.rememberToken = {
-      token,
-      expiredDate: moment().add(2, "days"),
-    };
+    const countryInstance = Container.get(countryService);
+    const adminInstance = Container.get(adminService);
+    
+    const country = await countryInstance.getCountryAndState(req.body.country, req.body.state);
     req.body.countryCode = country.cc;
-    req.body.createdBy = req.user.id;
-    await Admin.create(req.body);
-
-    const subject = "Welcome to Exalt Logistics Admin";
-    const html = Verification(token, req.body.email, "admin");
-    Mailer(req.body.email, subject, html);
+    const admin = await adminInstance.createAdmin(req.body, req.user);
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
     return;
   } catch (error) {
     console.log(error);
-    return res.status(500).send("Something went wrong!");
+    if (!error.code) {
+      JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+      return
+    }
+    JsonResponse(res, error.code, error.msg, null, null);
+    return;
   }
 };
 
@@ -148,7 +132,7 @@ exports.allUsers = async (req, res) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
-    const data = await services.user.getAllUsers({ page, pageSize });
+    const data = await user.getAllUsers({ page, pageSize });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, data.meta);
   } catch (error) {

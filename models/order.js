@@ -67,8 +67,7 @@ const orderSchema = mongoose.Schema(
       type: String,
       enum: [
         "pending",
-        "awaitingPickupConfirmation",
-        "pickup",
+        "onGoing",
         "awaitingDeliveryConfirmation",
         "delivered",
       ],

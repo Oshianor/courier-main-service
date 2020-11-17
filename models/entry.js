@@ -42,6 +42,8 @@ const entrySchema = mongoose.Schema(
         "pending", // when it's in the pool await company
         "companyAccepted", // when a company accepts the order
         "driverAccepted", // when a driver accepts the order
+        "awaitingPickup",
+        "pickedUp",
         "onGoing", // when atleast order is in pickup or delivery
         "completed", // when all orders are conpleted.
         "cancelled", // when the order is cancelled

@@ -50,6 +50,8 @@ io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
   console.log("socket.io connection");
   // handler.entry.pool(socket);
   socket.emit(SERVER_EVENTS.LISTEN_POOL, await handler.entry.pool(socket));
+
+  socket.emit(SERVER_EVENTS.LISTEN_POOL, await handler.entry.pool(socket));
 });
 
 

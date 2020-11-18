@@ -132,12 +132,6 @@ const riderSchema = new mongoose.Schema(
       ref: "Admin",
       default: null,
     },
-    // OTPCode: {
-    //   type: String,
-    //   maxlength: 4,
-    //   default: null,
-    // },
-    // OTPExpiredDate: { type: Date, default: null },
     rememberToken: {
       token: {
         type: String,

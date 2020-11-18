@@ -217,8 +217,19 @@ class EntryService {
       }
 
       const entries = await Entry.find({
-        source: "pool",
-      }).select("-metaData");
+        // source: "pool",
+      })
+        .select("-metaData")
+        .populate("orders")
+        .populate("user", "name email phoneNumber countryCode")
+        .populate(
+          "company",
+          "name email phoneNumber type logo address countryCode"
+        )
+        .populate(
+          "rider",
+          "name email phoneNumber countryCode onlineStatus latitude longitude"
+        );;
 
       resolve(SocketResponse(false, "ok", entries));
     });

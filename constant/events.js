@@ -14,7 +14,6 @@ const SERVER_EVENTS = Object.freeze({
   // new orders ADMIN
   NEW_ENTRY_ADMIN: "newEntryAdmin",
 
-
   // When a company has accepted the order
   ENTRY_ACCEPTED: "entryAccepted",
 

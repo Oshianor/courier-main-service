@@ -1,30 +1,38 @@
 const config = require("config");
 const paystack = require("paystack")(config.get("paystack.secret"));
+const io = require("socket.io-emitter");
 const mongoose = require("mongoose");
-const moment = require("moment");
-const objectPath = require("object-path");
-const service = require("../services");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
-const Order = require("../models/order");
 const Rider = require("../models/rider");
-const Country = require("../models/countries");
-const Setting = require("../models/settings");
-const DistancePrice = require("../models/distancePrice");
-const Pricing = require("../models/pricing");
 const Transaction = require("../models/transaction");
+const RiderEntryRequest = require("../models/riderEntryRequest");
+const { Container } = require("typedi");
 const {
   validateTransaction,
   validateTransactionStatus,
 } = require("../request/transaction");
 const { validateLocalEntry } = require("../request/entry");
-const { Client } = require("@googlemaps/google-maps-services-js");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { AsyncForEach, paginate } = require("../utils");
+const { SERVER_EVENTS } = require("../constant/events");
+const { paginate } = require("../utils");
 const { nanoid } = require("nanoid");
-const client = new Client({});
-
+const CountryService = require("../services/country");
+const EntryService = require("../services/entry");
+const DPService = require("../services/distancePrice");
+const UserService = require("../services/user");
+const SettingService = require("../services/setting");
+const CompanyService = require("../services/company");
+// const OrderService = require("../services/order");
+const socket = new io(config.get("application.redis"), { key: "/sio" })
+const DPInstance = Container.get(DPService);
+const settingInstance = Container.get(SettingService);
+const countryInstance = Container.get(CountryService);
+const entryInstance = Container.get(EntryService);
+const userInstance = Container.get(UserService);
+const companyInstance = Container.get(CompanyService);
+// const orderInstance = Container.get(OrderService);
 
 /**
  * Create an Entry
@@ -32,174 +40,41 @@ const client = new Client({});
  * @param {*} res
  */
 exports.localEntry = async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
     const { error } = validateLocalEntry(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    // validate country and state
-    const country = await Country.findOne({ name: req.body.country });
-    if (!country)
-      return JsonResponse(res, 404, "Country Not Found", null, null);
-
-    // validate state
-    const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined")
-      return JsonResponse(res, 404, "State Not Found", null, null);
+    await countryInstance.getCountryAndState(
+      req.body.country,
+      req.body.state
+    );
 
     // check if we have pricing for the location
-    const distancePrice = await DistancePrice.findOne({
-      country: req.body.country,
-      state: req.body.state,
-      vehicle: req.body.vehicle,
-    });
-    if (!distancePrice)
-      return JsonResponse(res, 404, MSG_TYPES.FAILED_SUPPORT, null, null);
+    const distancePrice = await DPInstance.get({country: req.body.country,state: req.body.state,vehicle: req.body.vehicle});
 
     // get admin settings pricing
-    const setting = await Setting.findOne({ source: "admin" });
-    if (!setting)
-      return JsonResponse(res, 404, MSG_TYPES.FAILED_SUPPORT, null, null);
+    const setting = await settingInstance.get({ source: "admin" });
+ 
+    // get distance calculation
+    const distance = await entryInstance.getDistanceMetrix(req.body);
 
-    // get all coords locations and sort them.
-    const origins = [
-      { lat: req.body.pickupLatitude, lng: req.body.pickupLongitude },
-    ];
-    const destinations = [];
-    // get all origin and destination
-    await AsyncForEach(req.body.delivery, (data, index, arr) => {
-      destinations.push({
-        lat: data.deliveryLatitude,
-        lng: data.deliveryLongitude,
-      });
-    });
-
-    console.log("origins", origins);
-    console.log("destinations", destinations);
-
-    // get distance and duration from google map distance matrix
-    const N = 5000;
-    const distance = await client.distancematrix({
-      params: {
-        origins,
-        destinations,
-        key: config.get("googleMap.key"),
-        travelMode: "DRIVING",
-        drivingOptions: {
-          departureTime: new Date(Date.now() + N), // for the time N milliseconds from now.
-          trafficModel: "optimistic",
-        },
-        avoidTolls: false,
-      },
-    });
-
-    const data = distance.data;
-    req.body.TED = 0;
-    req.body.TET = 0;
-    req.body.TEC = 0;
-    req.body.user = req.user.id;
-    req.body.pickupAddress = data.origin_addresses[0];
-    req.body.metaData = {
-      distance: data,
-      distancePrice,
+    const body = await entryInstance.calculateLocalEntry(
+      req.body,
+      req.user,
+      distance.data,
       setting,
-    };
-    // get item type price
-    let itemTypePrice = 0;
-    if (req.body.itemType === "Document") {
-      itemTypePrice = setting.documentPrice;
-    } else if (req.body.itemType === "Edible") {
-      itemTypePrice = setting.ediblePrice;
-    } else {
-      itemTypePrice = setting.parcelPrice;
-    }
-
-    await AsyncForEach(data.rows, async (row, rowIndex, rowsArr) => {
-      await AsyncForEach(row.elements, (element, elemIndex, elemArr) => {
-        if (element.status === "OK") {
-          const time = parseFloat(element.duration.value / 60);
-          const singleDistance = parseFloat(element.distance.value / 1000);
-          // add user id
-          req.body.delivery[elemIndex].user = req.user.id;
-
-          // orderId
-          req.body.delivery[elemIndex].orderId = nanoid(10);
-          // add the pickup
-          // add delivery address in text
-          req.body.delivery[elemIndex].deliveryAddress =
-            data.destination_addresses[elemIndex];
-          // add pickup details for each order
-          req.body.delivery[elemIndex].pickupLatitude = req.body.pickupLatitude;
-          req.body.delivery[elemIndex].pickupLongitude =
-            req.body.pickupLongitude;
-          req.body.delivery[elemIndex].pickupAddress = data.origin_addresses[0];
-          // set duration of an order from the pick up point to the delivery point
-          req.body.delivery[elemIndex].estimatedTravelduration = time;
-          // set distance of an order from the pick up point to the delivery point
-          req.body.delivery[elemIndex].estimatedDistance = singleDistance;
-
-          // total the distance travelled and time
-          req.body.TET = req.body.TET + time;
-          req.body.TED = req.body.TED + singleDistance;
-
-          // estimated cost
-          // calculate the km travelled for each trip multiplied by our price per km
-          const km =
-            parseFloat(singleDistance) * parseFloat(distancePrice.price);
-          // calculate the weight of each order for each trip multiplied by our price per weight
-          const weight =
-            parseFloat(req.body.delivery[elemIndex].weight) *
-            parseFloat(setting.weightPrice);
-          const amount =
-            parseFloat(km) +
-            parseFloat(weight) +
-            parseFloat(itemTypePrice) +
-            parseFloat(setting.baseFare);
-
-          // set price for each order
-          req.body.delivery[elemIndex].estimatedCost = parseFloat(amount);
-          // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
-
-          // set total price for the entry
-          req.body.TEC = req.body.TEC + parseFloat(amount);
-        } else {
-          // very questionable
-          // just for test only
-          delete req.body.delivery[elemIndex];
-        }
-      });
-    });
-
-    // console.log("req.body", req.body);
-
+      distancePrice
+    );
+    
     // start our mongoDb transaction
-    session.startTransaction();
+    const newEntry = await entryInstance.createEntry(body)
 
-    const newEntry = new Entry(req.body);
-    await AsyncForEach(req.body.delivery, async (row, index, arr) => {
-      req.body.delivery[index].entry = newEntry._id;
-    });
-    const newOrder = await Order.create(req.body.delivery, {
-      session: session,
-    });
-
-    // console.log("newOrder", newOrder);
-    newEntry.orders = newOrder;
-    req.body.orders = newEntry.orders;
-    await newEntry.save({ session: session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    objectPath.del(newEntry, "orders");
-    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry, null);
+    newEntry.metaData = null;
+    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
     return;
   } catch (error) {
-    await session.abortTransaction();
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, error.code, error.msg);
   }
 };
 
@@ -213,22 +88,21 @@ exports.transaction = async (req, res) => {
   try {
     const { error } = validateTransaction(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
-    const entry = await Entry.findOne({
+    const entry = await entryInstance.get({
       _id: req.body.entry,
       status: "request",
       user: req.user.id,
     });
-    if (!entry) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
 
     let msgRES;
     if (req.body.paymentMethod === "card") {
-      const card = await service.user.getCard(req.token, req.body.card);
+      const card = await userInstance.getCard(req.token, req.body.card);
 
       const trans = await paystack.transaction.charge({
         reference: nanoid(20),
-        authorization_code: card.token,
+        authorization_code: card.data.token,
         // email: req.user.email,
         email: "abundance@gmail.com",
         amount: entry.TEC,
@@ -237,9 +111,9 @@ exports.transaction = async (req, res) => {
       console.log("trans", trans);
 
       const msg = "Your Transaction could't be processed at the moment";
-      if (!trans.status) return JsonResponse(res, 404, msg, null, null);
+      if (!trans.status) return JsonResponse(res, 404, msg);
       if (trans.data.status !== "success")
-        return JsonResponse(res, 404, msg, null, null);
+        return JsonResponse(res, 404, msg);
 
       req.body.amount = entry.TEC;
       req.body.user = req.user.id;
@@ -260,26 +134,30 @@ exports.transaction = async (req, res) => {
     }
 
     // start our transaction
-
     session.startTransaction();
 
     const newTransaction = new Transaction(req.body);
 
-    // console.log("newOrder", newOrder);
     entry.transaction = newTransaction;
     entry.status = "pending";
-    await newTransaction.save({ session: session });
-    await entry.save({ session: session });
+    await newTransaction.save({ session });
+    await entry.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
-    JsonResponse(res, 201, msgRES, null, null);
+    console.log("entry", entry);
+
+    // send out new entry that has apporved payment method
+    entry.metaData = null;
+    socket.emit(SERVER_EVENTS.NEW_ENTRY, entry);
+
+    JsonResponse(res, 201, msgRES);
     return;
   } catch (error) {
     console.log(error);
     await session.abortTransaction();
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -292,7 +170,7 @@ exports.riderConfirmPayment = async (req, res) => {
   try {
     const { error } = validateTransactionStatus(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
     // find the rider
     const rider = await Rider.findOne({
@@ -301,7 +179,7 @@ exports.riderConfirmPayment = async (req, res) => {
       status: "active",
       company: { $ne: null },
     });
-    if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     // find the company
     const company = await Company.findOne({
@@ -310,19 +188,19 @@ exports.riderConfirmPayment = async (req, res) => {
       status: "active",
     });
     if (!company)
-      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     const entry = await Entry.findOne({
       status: "accepted",
       rider: rider._id,
       company: company._id,
     });
-    if (!entry) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    if (!entry) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     const trans = await Transaction.findOne({
       entry: entry._id,
     });
-    if (!trans) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    if (!trans) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     let msgRES;
     if (req.body.status === "approved") {
@@ -334,11 +212,11 @@ exports.riderConfirmPayment = async (req, res) => {
       msgRES = "Payment Declined and Order cancelled.";
     }
 
-    JsonResponse(res, 200, msgRES, null, null);
+    JsonResponse(res, 200, msgRES);
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -353,7 +231,7 @@ exports.byCompany = async (req, res) => {
     const { page, pageSize, skip } = paginate(req);
 
     const company = await Company.findOne({ _id: req.user.id, $or: [{ status: "active" }, { status: "inactive" }], verified: true });
-    if (!company) JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    if (!company) JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     const entries = await Entry.find({
       source: "pool",
@@ -377,7 +255,7 @@ exports.byCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
     return;
   }
 };
@@ -394,14 +272,14 @@ exports.singleEntry = async (req, res) => {
       .select("-metaData");
 
     if (!entry) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, entry, null);
     return;
   } catch (error) {
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
     return;
   }
 };
@@ -420,14 +298,14 @@ exports.allOnlineRiderCompanyEntry = async (req, res) => {
       status: "companyAccepted",
       company: req.user.id
     });
-    if (!entry) return JsonResponse(res, 404, "Entry Not Found!", null, null);
+    if (!entry) return JsonResponse(res, 404, "Entry Not Found!");
 
     const company = await Company.findOne({
       _id: req.user.id,
       $or: [{ status: "active" }, { status: "inactive" }],
       verified: true,
     });
-    if (!company) return JsonResponse(res, 404, "Company Not Found!", null, null);
+    if (!company) return JsonResponse(res, 404, "Company Not Found!");
 
     console.log("entry.vehicle", entry.vehicle);
     console.log("company._id", company._id);
@@ -446,7 +324,7 @@ exports.allOnlineRiderCompanyEntry = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, null);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -458,17 +336,20 @@ exports.allOnlineRiderCompanyEntry = async (req, res) => {
 exports.companyAcceptEntry = async (req, res) => {
   try {
 
-    const company = await Company.findOne({ _id: req.user.id, $or: [{status: "active"}, {status: "inactive"}], verified: true });
-    if (!company) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    const company = await companyInstance.get({
+      _id: req.user.id,
+      $or: [{ status: "active" }, { status: "inactive" }],
+      verified: true,
+    });
 
-    const entry = await Entry.findOne({
+    // const currentDate = new Date();
+    const entry = await entryInstance.get({
       _id: req.params.entry,
       status: "pending",
-      company: null
+      company: null,
     });
-    if (!entry) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
 
-    if (!company.vehicles.includes(entry.vehicle)) return JsonResponse(res, 404, "You currently don't have support for this vehicle Type so you can't accept this order.", null, null);
+    if (!company.vehicles.includes(entry.vehicle)) return JsonResponse(res, 404, MSG_TYPES.VEHICLE_NOT_SUPPORTED);
 
     await entry.updateOne({
       company: req.user.id,
@@ -476,10 +357,47 @@ exports.companyAcceptEntry = async (req, res) => {
       status: "companyAccepted",
     }); 
 
-    JsonResponse(res, 200, "You've successfully accepted this Order. Please Asign a rider to this order immedaitely.", null, null);
+    JsonResponse(res, 200, MSG_TYPES.COMPANY_ACCEPT);
     return;
   } catch (error) {
-    console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+/**
+ * Assign a rider to a order accepted by the company
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.AsignRiderToEntry = async (req, res) => {
+  try {
+    const company = await companyInstance.get({
+      _id: req.user.id,
+      $or: [{ status: "active" }, { status: "inactive" }],
+      verified: true,
+    });
+
+    const entry = await entryInstance.get({
+      _id: req.params.entry,
+      status: "companyAccepted",
+      company: company._id,
+      rider: null,
+      transaction: { $ne: null }
+    }, { metaData: 0 });
+
+    const newRiderReq = new RiderEntryRequest({
+      entry: entry._id,
+      company: company._id,
+      rider: req.body.rider
+    });
+
+    await newRiderReq.save();
+    
+    socket.to(String(req.body.rider)).emit(SERVER_EVENTS.ASSIGN_ENTRY, entry);
+
+    JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
   }
 };

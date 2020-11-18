@@ -2,11 +2,13 @@ const jwt = require("jsonwebtoken");
 const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
-const Admin = require("../models/admin");
-const { User } = require("../models/users");
-const service = require("../services");
+const User = require("../models/users");
 const { Container } = require("typedi");
 const AdminService = require("../services/admin");
+const UserService = require("../services/user");
+const adminInstance = Container.get(AdminService);
+const userInstance = Container.get(UserService);
+
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
   ADMIN: "admin",
@@ -18,7 +20,6 @@ const ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
-    const adminInstance = Container.get(AdminService);
     const admin = await adminInstance.get({
       _id: req.user.id,
       status: "active",
@@ -68,20 +69,14 @@ const Auth = async (req, res, next) => {
 const SocketAuth = (socket, next) => {
   try {
     const token = socket.handshake.query.token ?? "";
-    const type = socket.handshake.query.type ?? "";
-
-    // console.log("token", token);
-    // console.log("type", type);
 
     if (token === "") throw new Error("Auth token is required");
-    if (type === "") throw new Error("Account type is required");
 
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
 
-    socket.user = {
-      ...decoded,
-      type,
-    };
+    // console.log("decoded", decoded);
+
+    socket.user = decoded;
     next();
   } catch (ex) {
     console.log("error", ex);
@@ -97,17 +92,16 @@ const UserAuth = async (req, res, next) => {
 
   try {
     // call user account service to get details
-    const userParent = await service.user.get(token);
+    const userParent = await userInstance.get(token);
+    console.log("userParent", userParent);
 
-    // console.log("userParent", userParent);
-
-    const user = await User.findOne({ userId: userParent._id });
+    const user = await User.findOne({ userId: userParent.data._id });
     if (!user) {
-      userParent.userId = userParent._id;
-      await User.create(userParent);
+      userParent.data.userId = userParent.data._id;
+      await User.create(userParent.data);
     }
 
-    req.user = userParent;
+    req.user = userParent.data;
     req.user.id = req.user._id;
     req.token = token;
     delete req.user._id;

@@ -2,10 +2,6 @@ const Country = require("../models/countries");
 
 
 class CountryService {
-  // constructor() {
-  //   this.getCountryAndState = getCountryAndState;
-  //   this.getCountry = getCountry;
-  // }
 
   getCountryAndState(country, state) {
     return new Promise(async (resolve, reject) => {

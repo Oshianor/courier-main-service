@@ -1,10 +1,10 @@
-const { Entry, validateLocalEntry } = require("../models/entry");
-const { Company } = require("../models/company");
-const { SocketResponse } = require("../lib/apiResponse");
-const { Pricing } = require("../models/pricing");
+const { Entry, validateLocalEntry } = require("../../models/entry");
+const { Company } = require("../../models/company");
+const { SocketResponse } = require("../../lib/apiResponse");
+const { Pricing } = require("../../models/pricing");
 const moment = require("moment");
-const services = require("../services");
-const { SERVER_EVENTS } = require("../constant/events");
+const services = require("../../services");
+const { SERVER_EVENTS } = require("../../constant/events");
 
 exports.riderLocation = async (socket) => {
   if (socket.user.type !== "company")

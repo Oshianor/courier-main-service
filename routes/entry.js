@@ -18,5 +18,6 @@ router.patch("/company/accept/:entry", Auth, controller.entry.companyAcceptEntry
 // compnay accept entry
 router.get("/company/online/:entry", Auth, controller.entry.allOnlineRiderCompanyEntry);
 
+router.post("/rider-assign/:entry", Auth, controller.entry.AsignRiderToEntry);
 
 module.exports = router;

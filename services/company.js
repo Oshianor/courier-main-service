@@ -9,7 +9,6 @@ const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 
-
 class CompanyService {
   /**
    * Create a Company account
@@ -82,11 +81,11 @@ class CompanyService {
   }
 
   /**
-   * Get a single Company
+   * Check if a company already exist
    * @param {Object} filter
    * @param {Object} option
    */
-  get(filter = {}, option = null) {
+  validateCompany(filter = {}, option = null) {
     return new Promise(async (resolve, reject) => {
       const select = option ? option : { password: 0, rememberToken: 0 };
       const company = await Company.findOne(filter).select(select);
@@ -99,6 +98,29 @@ class CompanyService {
   }
 
   /**
+   * Get a single Company
+   * @param {Object} filter
+   * @param {Object} option
+   */
+  get(filter = {}, option = null) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const select = option ? option : { password: 0, rememberToken: 0 };
+        const company = await Company.findOne(filter).select(select);
+
+        if (!company) {
+          reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        }
+        resolve(company);
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+    });
+  }
+
+  /**
    * Get multiple company based on the filer parameters
    * @param {Object} filter
    * @param {Object} option
@@ -107,12 +129,13 @@ class CompanyService {
   getAll(filter = {}, option = null, populate = "") {
     return new Promise(async (resolve, reject) => {
       const select = option ? option : { password: 0, rememberToken: 0 };
-      const company = await Company.find(filter).select(select).populate(populate);
+      const company = await Company.find(filter)
+        .select(select)
+        .populate(populate);
 
       resolve(company);
     });
   }
 }
-
 
 module.exports = CompanyService;

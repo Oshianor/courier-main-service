@@ -27,26 +27,28 @@ const AsyncForEach = async (array, callback) => {
 };
 
 const GenerateOTP = (num) => {
+
   const OTPCode = new RandExp(`[0-9]{${num}}`).gen();
 
   return OTPCode;
 };
 
-const Mailer = (
-  email,
-  subject,
-  html,
-  senderEmail = config.get("mail.email")
-) => {
+
+/**
+ * Send Mail to an Email
+ * @param {string} to 
+ * @param {string} subject 
+ * @param {HTML} html 
+ * @param {string} from 
+ */
+const Mailer = (to, subject, html, from = config.get("mail.email")) => {
   sgMail.setApiKey(config.get("mail.key"));
-  const msg = {
-    to: email,
-    from: senderEmail,
+  return sgMail.send({
+    to,
+    from,
     subject,
     html,
-  };
-
-  return sgMail.send(msg);
+  });
 };
 
 const UploadFileFormLocal = async (file, churchId) => {

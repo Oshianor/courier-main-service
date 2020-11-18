@@ -26,6 +26,11 @@ const MSG_TYPES = Object.freeze({
     "We currently don't have support for this location. Please contact our support for assistance",
   ACCOUNT_DELETED: "Account no longer exists!",
   INVALID_PASSWORD: "Invalid Password",
+  COMPANY_ACCEPT:
+    "You've successfully accepted this Order. Please Asign a rider to this order immedaitely.",
+  VEHICLE_NOT_SUPPORTED:
+    "You currently don't have support for this vehicle Type so you can't accept this order.",
+  RIDER_ASSIGN: "Order sent to rider."
 });
 
 const ACCOUNT_TYPES = Object.freeze({

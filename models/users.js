@@ -22,7 +22,6 @@ const UserSchema = new mongoose.Schema(
     state: String,
     countryCode: String,
     address: String,
-    postalCode: String,
     img: String,
   },
   {

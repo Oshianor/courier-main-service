@@ -10,9 +10,8 @@ const { validateRiderLogin } = require("../request/rider");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 
-
 /**
- * Admin Login
+ * Company Login
  * @param {*} req
  * @param {*} res
  */
@@ -50,10 +49,8 @@ exports.companyLogin = async (req, res) => {
       return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID);
 
     const token = company.generateToken();
-
-    console.log("company", company);
     
-    objectPath.empty(company, "password");
+    company.password = "";
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
     return;
@@ -103,7 +100,7 @@ exports.adminLogin = async (req, res) => {
 
     const token = admin.generateToken();
 
-    delete admin.password;
+    admin.password = "";
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, admin, null);
     return;
@@ -148,7 +145,7 @@ exports.riderLogin = async (req, res) => {
 
     const token = rider.generateToken();
 
-    delete rider.password;
+    rider.password = "";
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, rider, null);
     return;
@@ -203,7 +200,7 @@ exports.accountVerify = async (req, res) => {
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED);
   } catch (error) {
     console.log(error);
-    return res.status(400).send("Something went wrong");
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -238,6 +235,6 @@ exports.companyVerify = async (req, res) => {
     JsonResponse(res, null, MSG_TYPES.AWAIT_ADMIN);
   } catch (error) {
     console.log(error);
-    return res.status(400).send("Something went wrong");
+    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };

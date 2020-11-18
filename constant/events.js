@@ -14,7 +14,7 @@ const SERVER_EVENTS = Object.freeze({
   ASSIGN_ENTRY: "assignEntry",
 
   // driver location in realtime
-  DRIVER_LOCATION: "driverLocation"
+  DRIVER_LOCATION: "driverLocation",
 });
 
 

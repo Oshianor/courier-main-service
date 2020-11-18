@@ -2,7 +2,6 @@ const Admin = require("../models/admin");
 const moment = require("moment")
 const { Mailer, GenerateToken } = require("../utils");
 const { Verification } = require("../templates");
-const { options } = require("joi");
 const { MSG_TYPES } = require("../constant/types");
 
 

@@ -70,6 +70,7 @@ exports.localEntry = async (req, res) => {
     const newEntry = await entryInstance.createEntry(body)
 
     newEntry.metaData = null;
+    socket.to("admin").emit(SERVER_EVENTS.NEW_ENTRY_ADMIN, newEntry);
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
     return;
   } catch (error) {

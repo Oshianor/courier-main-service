@@ -17,9 +17,14 @@ io.use(SocketAuth);
 io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
   console.log("socket.io connection");
   // register everybody to a room of their account ID
-  socket.join(socket.user.id);
-
-  socket.emit(SERVER_EVENTS.LISTEN_POOL, await entryInstance.getPool(socket));
+  if (socket.user.type === "rider") {
+    socket.join(socket.user.id);
+  } else if (socket.user.type === "company") {
+    socket.emit(SERVER_EVENTS.LISTEN_POOL, await entryInstance.getPool(socket));
+  } else if (socket.user.type === "admin") {
+    socket.join("admin");
+    socket.emit(SERVER_EVENTS.LISTEN_POOL_ADMIN, await entryInstance.getPoolAdmin(socket));
+  }
 });
 
 module.exports = {

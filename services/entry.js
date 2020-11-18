@@ -33,7 +33,7 @@ class EntryService {
       } catch (error) {
         console.log(error);
         reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
-        return
+        return;
       }
     });
   }
@@ -198,6 +198,26 @@ class EntryService {
         status: "pending",
         state: company.state,
         company: null,
+      }).select("-metaData");
+
+      resolve(SocketResponse(false, "ok", entries));
+    });
+  }
+
+  /**
+   * Send pool via socket to all companies
+   * @param {Socket Pointer} socket
+   */
+  getPoolAdmin(socket) {
+    return new Promise(async (resolve, reject) => {
+      // validate country
+      if (socket.user.type !== "admin") {
+        reject(SocketResponse(true, "Admin Socket"));
+        return;
+      }
+
+      const entries = await Entry.find({
+        source: "pool",
       }).select("-metaData");
 
       resolve(SocketResponse(false, "ok", entries));

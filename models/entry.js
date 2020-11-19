@@ -5,9 +5,19 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 const entrySchema = mongoose.Schema(
   {
     source: {
+      type: String,
+      enum: [
+        "exaltEcommerce", // EE
+        "exaltLogistics", // EL
+        "exaltFoodDelivery", // EFD
+        "thirdPartyApp", // TPA
+      ],
+      default: "exaltLogistics",
+    },
+    type: {
       // this is used to identify our post either for poll or for personal company request
       type: String,
-      enum: ["exaltEcommerce", "pool", "company"],
+      enum: ["pool", "personal"],
       default: "pool",
     },
     user: {
@@ -16,7 +26,13 @@ const entrySchema = mongoose.Schema(
       index: true,
       ref: "User",
     },
-    orders: [{ type: ObjectId, ref: "Order", required: true }],
+    orders: [
+      {
+        type: ObjectId,
+        required: true,
+        ref: "Order"
+      }
+    ],
     company: {
       type: ObjectId,
       index: true,

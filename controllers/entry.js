@@ -24,7 +24,7 @@ const DPService = require("../services/distancePrice");
 const UserService = require("../services/user");
 const SettingService = require("../services/setting");
 const CompanyService = require("../services/company");
-// const OrderService = require("../services/order");
+const EntrySubscription = require("../subscription/entry");
 const socket = new io(config.get("application.redis"), { key: "/sio" })
 const DPInstance = Container.get(DPService);
 const settingInstance = Container.get(SettingService);
@@ -33,6 +33,8 @@ const entryInstance = Container.get(EntryService);
 const userInstance = Container.get(UserService);
 const companyInstance = Container.get(CompanyService);
 // const orderInstance = Container.get(OrderService);
+
+
 
 /**
  * Create an Entry
@@ -70,7 +72,8 @@ exports.localEntry = async (req, res) => {
     const newEntry = await entryInstance.createEntry(body)
 
     newEntry.metaData = null;
-    socket.to("admin").emit(SERVER_EVENTS.NEW_ENTRY_ADMIN, newEntry);
+    const entrySub = new EntrySubscription();
+    await entrySub.newEntry(newEntry._id);
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
     return;
   } catch (error) {
@@ -104,8 +107,8 @@ exports.transaction = async (req, res) => {
       const trans = await paystack.transaction.charge({
         reference: nanoid(20),
         authorization_code: card.data.token,
-        // email: req.user.email,
-        email: "abundance@gmail.com",
+        email: req.user.email,
+        // email: "abundance@gmail.com",
         amount: entry.TEC,
       });
 
@@ -378,13 +381,23 @@ exports.AsignRiderToEntry = async (req, res) => {
       verified: true,
     });
 
-    const entry = await entryInstance.get({
+    // const entry = await entryInstance.get({
+    //   _id: req.params.entry,
+    //   status: "companyAccepted",
+    //   company: company._id,
+    //   rider: null,
+    //   transaction: { $ne: null }
+    // }, { metaData: 0 });
+    const entry = await Entry.findOne({
       _id: req.params.entry,
       status: "companyAccepted",
       company: company._id,
       rider: null,
-      transaction: { $ne: null }
-    }, { metaData: 0 });
+      transaction: { $ne: null },
+    })
+      .populate("orders")
+      .populate("user", "name email phoneNumber countryCode")
+      .select("-metaData");
 
     const newRiderReq = new RiderEntryRequest({
       entry: entry._id,

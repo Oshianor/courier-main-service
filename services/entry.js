@@ -3,7 +3,6 @@ const config = require("config");
 const Entry = require("../models/entry");
 const Order = require("../models/order");
 const Company = require("../models/company");
-const { SocketResponse } = require("../lib/apiResponse");
 const { AsyncForEach } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
@@ -170,70 +169,6 @@ class EntryService {
     });
   }
 
-  /**
-   * Send pool via socket to all companies
-   * @param {Socket Pointer} socket
-   */
-  getPool(socket) {
-    return new Promise(async (resolve, reject) => {
-      // validate country
-      if (socket.user.type !== "company") {
-        reject(SocketResponse(true, "Company Socket"));
-        return;
-      }
-
-      const company = await Company.findOne({
-        _id: socket.user.id,
-        $or: [{ status: "active" }, { status: "inactive" }],
-        verified: true,
-      });
-
-      if (!company) {
-        reject(SocketResponse(true, "Company Account Not Found"));
-        return;
-      }
-
-      const entries = await Entry.find({
-        source: "pool",
-        status: "pending",
-        state: company.state,
-        company: null,
-      }).select("-metaData");
-
-      resolve(SocketResponse(false, "ok", entries));
-    });
-  }
-
-  /**
-   * Send pool via socket to all companies
-   * @param {Socket Pointer} socket
-   */
-  getPoolAdmin(socket) {
-    return new Promise(async (resolve, reject) => {
-      // validate country
-      if (socket.user.type !== "admin") {
-        reject(SocketResponse(true, "Admin Socket"));
-        return;
-      }
-
-      const entries = await Entry.find({
-        // source: "pool",
-      })
-        .select("-metaData")
-        .populate("orders")
-        .populate("user", "name email phoneNumber countryCode")
-        .populate(
-          "company",
-          "name email phoneNumber type logo address countryCode"
-        )
-        .populate(
-          "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
-        );;
-
-      resolve(SocketResponse(false, "ok", entries));
-    });
-  }
 
   /**
    * Calculate the distance and duration via google API
@@ -281,6 +216,8 @@ class EntryService {
       }
     });
   }
+
+
 }
 
 module.exports = EntryService;

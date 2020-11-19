@@ -19,10 +19,14 @@ function validateLocalEntry(data) {
       .required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
-    city: Joi.string().label("City").required(),
-    postCode: Joi.string().label("Post Code").required(),
+    city: Joi.string().label("City").optional(),
+    postCode: Joi.string().label("Post Code").optional(),
     phoneNumber: Joi.string().max(10).required(),
     countryCode: Joi.string().max(5).required(),
+    img: Joi.array()
+      .items(Joi.string().base64().label("Item Image").allow("").required())
+      .max(4)
+      .optional(),
     delivery: Joi.array()
       .items({
         email: Joi.string().email().max(50).label("Email").required(),
@@ -30,19 +34,14 @@ function validateLocalEntry(data) {
         countryCode: Joi.string().max(5).required(),
         name: Joi.string().label("Name").required(),
         itemName: Joi.string().label("Item Name").required(),
-        deliveryTime: Joi.date().label("Delivery Time").required(),
         deliveryLatitude: Joi.number().label("Delivery Latitude").required(),
         deliveryLongitude: Joi.number().label("Delivery Longitude").required(),
         country: Joi.string().label("Country").required(),
         state: Joi.string().label("State").required(),
-        city: Joi.string().label("City").required(),
-        postCode: Joi.string().label("Post Code").required(),
+        city: Joi.string().label("City").optional(),
+        postCode: Joi.string().label("Post Code").optional(),
         weight: Joi.number().label("Weight").required(),
         quantity: Joi.number().label("Quantity").required(),
-        img: Joi.array()
-          .items(Joi.string().base64().label("Item Image").allow("").required())
-          .max(4)
-          .optional(),
       })
       .max(10)
       .required(),

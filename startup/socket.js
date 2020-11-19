@@ -5,7 +5,7 @@ const EntrySubscription = require("../subscription/entry");
 const redisAdapter = require("socket.io-redis");
 const { Container } = require("typedi");
 const { SocketAuth } = require("../middlewares/auth");
-const { SERVER_EVENTS } = require("../constant/events");
+const { SERVER_EVENTS, CLIENT_EVENTS } = require("../constant/events");
 const io = require("socket.io")(http, {
   path: "/sio",
   transports: ["websocket"],
@@ -25,6 +25,12 @@ io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
   } else if (socket.user.type === "admin") {
     socket.join("admin");
     socket.emit(SERVER_EVENTS.LISTEN_POOL_ADMIN, await entryInstance.getPoolAdmin(socket));
+    socket.on(
+      CLIENT_EVENTS.LISTEN_POOL_ADMIN_HISTORY, async (data) => {
+        console.log("data", data);
+        await entryInstance.getPoolAdminHistory(socket, data);
+      }
+    );
   }
 });
 

@@ -17,7 +17,12 @@ const entrySchema = mongoose.Schema(
     type: {
       // this is used to identify our post either for poll or for personal company request
       type: String,
-      enum: ["pool", "personal"],
+      enum: ["local", "interState", "international"],
+      default: "local",
+    },
+    sourceRef: {
+      type: String,
+      enum: ["pool", "company"],
       default: "pool",
     },
     user: {
@@ -30,8 +35,8 @@ const entrySchema = mongoose.Schema(
       {
         type: ObjectId,
         required: true,
-        ref: "Order"
-      }
+        ref: "Order",
+      },
     ],
     company: {
       type: ObjectId,
@@ -90,6 +95,13 @@ const entrySchema = mongoose.Schema(
       required: true,
       maxLenght: 30,
     },
+    itemType: {
+      type: String,
+      enum: ["Document", "Parcel", "Edible"],
+      required: true,
+      trim: true,
+    },
+    img: [String],
     phoneNumber: {
       type: String,
       required: true,

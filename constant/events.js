@@ -28,6 +28,12 @@ const SERVER_EVENTS = Object.freeze({
 const CLIENT_EVENTS = Object.freeze({
   // get pool details
   CONNECT: "connect",
+
+  // fired from the client to get chat history
+  LISTEN_POOL_ADMIN_HISTORY: "listenPoolAdminHistory",
+
+  // fired from the client to get chat history
+  LISTEN_POOL_HISTORY: "listenPoolHistory",
 });
 
 module.exports = {

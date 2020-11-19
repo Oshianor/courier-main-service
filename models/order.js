@@ -51,10 +51,6 @@ const orderSchema = mongoose.Schema(
       type: String,
       default: "kg",
     },
-    // estimatedTime: {
-    //   type: Number,
-    //   required: true,
-    // },
     estimatedTravelduration: {
       type: Number,
       required: true,
@@ -66,10 +62,11 @@ const orderSchema = mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "pending",
-        "onGoing",
-        "awaitingDeliveryConfirmation",
-        "delivered",
+        "pending", // accepted driver/company
+        "pickedUp", // When item has been picked
+        "onGoing", // on the road to delivery.
+        "awaitingDeliveryConfirmation", // await customer confirmation on delivery
+        "delivered", // customer confirmed deluvery
       ],
       default: "pending",
     },
@@ -142,20 +139,10 @@ const orderSchema = mongoose.Schema(
       required: true,
       index: true,
     },
-    deliveryTime: {
-      type: Date,
-      required: true,
-    },
     itemName: {
       type: String,
       required: true,
     },
-    img: [
-      {
-        type: String,
-        default: null,
-      },
-    ],
     weight: {
       type: Number,
       required: true,

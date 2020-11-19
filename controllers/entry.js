@@ -46,10 +46,11 @@ exports.localEntry = async (req, res) => {
     const { error } = validateLocalEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    await countryInstance.getCountryAndState(
+    const country = await countryInstance.getCountryAndState(
       req.body.country,
       req.body.state
     );
+    
 
     // check if we have pricing for the location
     const distancePrice = await DPInstance.get({country: req.body.country,state: req.body.state,vehicle: req.body.vehicle});

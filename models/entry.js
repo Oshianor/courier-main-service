@@ -58,7 +58,7 @@ const entrySchema = mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      default: null,
+      default: "cash",
       enum: ["card", "cash"],
     },
     status: {

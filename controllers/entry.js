@@ -1,7 +1,5 @@
 const config = require("config");
-const paystack = require("paystack")(config.get("paystack.secret"));
 const io = require("socket.io-emitter");
-const mongoose = require("mongoose");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Rider = require("../models/rider");
@@ -17,11 +15,9 @@ const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
 const { paginate } = require("../utils");
-const { nanoid } = require("nanoid");
 const CountryService = require("../services/country");
 const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
-const UserService = require("../services/user");
 const SettingService = require("../services/setting");
 const CompanyService = require("../services/company");
 const EntrySubscription = require("../subscription/entry");
@@ -30,9 +26,7 @@ const DPInstance = Container.get(DPService);
 const settingInstance = Container.get(SettingService);
 const countryInstance = Container.get(CountryService);
 const entryInstance = Container.get(EntryService);
-const userInstance = Container.get(UserService);
 const companyInstance = Container.get(CompanyService);
-// const orderInstance = Container.get(OrderService);
 
 
 
@@ -89,80 +83,23 @@ exports.localEntry = async (req, res) => {
  * @param {*} res
  */
 exports.transaction = async (req, res) => {
-  const session = await mongoose.startSession();
   try {
     const { error } = validateTransaction(req.body);
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
-    const entry = await entryInstance.get({
-      _id: req.body.entry,
-      status: "request",
-      user: req.user.id,
-    });
+    const { entry, msg } = await entryInstance.createTransaction(req.body, req.user, req.token);
 
-    let msgRES;
-    if (req.body.paymentMethod === "card") {
-      const card = await userInstance.getCard(req.token, req.body.card);
-
-      const trans = await paystack.transaction.charge({
-        reference: nanoid(20),
-        authorization_code: card.data.token,
-        email: req.user.email,
-        // email: "abundance@gmail.com",
-        amount: entry.TEC,
-      });
-
-      console.log("trans", trans);
-
-      const msg = "Your Transaction could't be processed at the moment";
-      if (!trans.status) return JsonResponse(res, 404, msg);
-      if (trans.data.status !== "success")
-        return JsonResponse(res, 404, msg);
-
-      req.body.amount = entry.TEC;
-      req.body.user = req.user.id;
-      req.body.status = "approved";
-      req.body.approvedAt = new Date();
-      req.body.entry = entry;
-      req.body.txRef = trans.data.reference;
-
-      msgRES = "Payment Successfully Processed";
-    } else {
-      req.body.amount = entry.TEC;
-      req.body.user = req.user.id;
-      req.body.status = "pending";
-      req.body.entry = entry;
-      req.body.txRef = nanoid(10);
-
-      msgRES = "Cash Payment Method Confirmed";
-    }
-
-    // start our transaction
-    session.startTransaction();
-
-    const newTransaction = new Transaction(req.body);
-
-    entry.transaction = newTransaction;
-    entry.status = "pending";
-    await newTransaction.save({ session });
-    await entry.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    console.log("entry", entry);
-
-    // send out new entry that has apporved payment method
-    entry.metaData = null;
     socket.emit(SERVER_EVENTS.NEW_ENTRY, entry);
 
-    JsonResponse(res, 201, msgRES);
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry._id);
+
+    JsonResponse(res, 201, msg);
     return;
   } catch (error) {
     console.log(error);
-    await session.abortTransaction();
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    return JsonResponse(res, error.code, error.msg);
   }
 };
 

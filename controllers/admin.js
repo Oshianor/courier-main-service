@@ -29,10 +29,6 @@ exports.createAdmin = async (req, res) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
-    // instantiate a class
-    // const countryInstance = Container.get(CountryService);
-    // const adminInstance = Container.get(AdminService);
-
     const country = await countryInstance.getCountryAndState(
       req.body.country,
       req.body.state
@@ -56,8 +52,6 @@ exports.createAdmin = async (req, res) => {
  */
 exports.all = async (req, res) => {
   try {
-    // const adminInstance = Container.get(AdminService);
-
     const admin = await adminInstance.getAll({ deleted: false });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
@@ -75,9 +69,6 @@ exports.all = async (req, res) => {
  */
 exports.me = async (req, res) => {
   try {
-    // get the admin class
-    // const adminInstance = Container.get(AdminService);
-
     const admin = await adminInstance.get({ _id: req.user.id });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
@@ -97,15 +88,11 @@ exports.allRider = async (req, res) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
-    const rider = await RiderModel.find({ company: req.params.company })
-      .select("-password -rememberToken")
-      .populate("vehicles")
-      .skip(skip)
-      .limit(pageSize);
-    const total = await RiderModel.find({
-      company: req.params.company,
-    }).countDocuments();
-
+    const { rider, total } = await adminInstance.getAllRider(
+      req.params.company,
+      skip,
+      pageSize
+    );
     const meta = {
       total,
       pagination: { pageSize, page },
@@ -222,26 +209,13 @@ exports.password = async (req, res) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
-    const admin = await adminInstance.get({ _id: req.user.id });
-
-    let validPassword = await bcrypt.compare(
-      req.body.oldPassword,
-      admin.password
-    );
-
-    if (!validPassword) {
-      JsonResponse(res, 403, MSG_TYPES.INVALID_PASSWORD);
-      return 
-    }
-
-    admin.password = await bcrypt.hash(req.body.password, 10);
-
-    await admin.save();
+    await adminInstance.changePassword(req.body, req.user)
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    JsonResponse(res, error.code, error.msg);
+    return
   }
 };
 
@@ -257,9 +231,11 @@ exports.disable = async (req, res) => {
     admin.status = "suspended";
     await admin.save();
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    JsonResponse(res, error.code, error.msg);
+    return 
   }
 };
 
@@ -270,18 +246,15 @@ exports.disable = async (req, res) => {
  */
 exports.enable = async (req, res) => {
   try {
-    const adminId = req.params.adminId;
-    const admin = await AdminModel.findOne({ _id: adminId });
+    const admin = await adminInstance.get({ _id: req.params.adminId });
 
-    if (!admin) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-      return;
-    }
-    admin.disabled = false;
+    admin.status = "active";
     await admin.save();
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    JsonResponse(res, error.code, error.msg);
+    return
   }
 };

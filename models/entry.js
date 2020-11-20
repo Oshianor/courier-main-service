@@ -56,6 +56,11 @@ const entrySchema = mongoose.Schema(
       ref: "Transaction",
       default: null,
     },
+    paymentMethod: {
+      type: String,
+      default: null,
+      enum: ["card", "cash"],
+    },
     status: {
       type: String,
       enum: [

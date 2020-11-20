@@ -3,10 +3,14 @@ const config = require("config");
 const Entry = require("../models/entry");
 const Order = require("../models/order");
 const Company = require("../models/company");
+const Transaction = require("../models/transaction");
+const UserService = require("../services/user");
+const paystack = require("paystack")(config.get("paystack.secret"));
+const { nanoid } = require("nanoid");
+const { Container } = require("typedi");
 const { AsyncForEach } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
-const { nanoid } = require("nanoid");
 const client = new Client({});
 
 class EntryService {
@@ -215,6 +219,92 @@ class EntryService {
         reject({ err: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
+  }
+
+
+  /**
+   * Create transaction for entry
+   * @param {Object} body 
+   * @param {Object} user 
+   * @param {String} token 
+   */
+  createTransaction (body, user, token) {
+    return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+      try {
+        const entry = await this.get({
+          _id: body.entry,
+          status: "request",
+          user: user.id,
+        });
+
+        console.log("entry", entry);
+
+        let msgRES;
+        if (body.paymentMethod === "card") {
+          const userInstance = Container.get(UserService);
+          const card = await userInstance.getCard(token, body.card);
+
+          const trans = await paystack.transaction.charge({
+            reference: nanoid(20),
+            authorization_code: card.data.token,
+            email: user.email,
+            // email: "abundance@gmail.com",
+            amount: entry.TEC,
+          });
+          console.log("trans", trans);
+
+          if (!trans.status) {
+            reject({ code: 404, msg: "Your Transaction could't be processed at the moment" })
+            return 
+          }
+          if (trans.data.status !== "success") {
+            reject({ code: 404, msg: "Your Transaction could't be processed at the moment" })
+            return 
+          }
+            
+          body.amount = entry.TEC;
+          body.user = user.id;
+          body.status = "approved";
+          body.approvedAt = new Date();
+          body.entry = entry;
+          body.txRef = trans.data.reference;
+
+          msgRES = "Payment Successfully Processed";
+        } else {
+          body.amount = entry.TEC;
+          body.user = user.id;
+          body.status = "pending";
+          body.entry = entry;
+          body.txRef = nanoid(10);
+
+          msgRES = "Cash Payment Method Confirmed";
+        }
+
+        // start our transaction
+        session.startTransaction();
+
+        const newTransaction = new Transaction(body);
+
+        entry.transaction = newTransaction;
+        entry.status = "pending";
+        entry.paymentMethod = body.paymentMethod;
+        await newTransaction.save({ session });
+        await entry.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        // console.log("entry", entry);
+
+        // send out new entry that has apporved payment method
+        entry.metaData = null;
+        resolve({ entry, msg: msgRES });
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 500, msg: "Your Transaction could't be processed at the moment"  })
+      }
+    })
   }
 
 

@@ -1,5 +1,6 @@
 const Admin = require("../models/admin");
 const moment = require("moment")
+const Rider = require("../models/rider");
 const { Mailer, GenerateToken } = require("../utils");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
@@ -41,10 +42,10 @@ class AdminSerivice {
 
   /**
    * Get a single Admin
-   * @param {Object} filter 
-   * @param {Object} option 
+   * @param {Object} filter
+   * @param {Object} option
    */
-  get (filter={}, option = null) {
+  get(filter = {}, option = null) {
     return new Promise(async (resolve, reject) => {
       const select = option ? option : { password: 0, rememberToken: 0 };
       const admin = await Admin.findOne(filter).select(select);
@@ -53,16 +54,16 @@ class AdminSerivice {
         reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
       }
       resolve(admin);
-    })
+    });
   }
 
   /**
    * Get multiple admin based on the filer parameters
-   * @param {Object} filter 
-   * @param {Object} option 
-   * @param {String} populate 
+   * @param {Object} filter
+   * @param {Object} option
+   * @param {String} populate
    */
-  getAll (filter={}, option=null, populate="") {
+  getAll(filter = {}, option = null, populate = "") {
     return new Promise(async (resolve, reject) => {
       const select = option ? option : { password: 0, rememberToken: 0 };
       const admin = await Admin.find(filter).select(select).populate(populate);
@@ -71,11 +72,61 @@ class AdminSerivice {
       //   reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
       // }
       resolve(admin);
-    })
+    });
   }
 
+  /**
+   * Get all Riders
+   * @param {MongoDB ObjectId} company
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllRider(company, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      const rider = await Rider.find({ company })
+        .select("-password -rememberToken")
+        .populate("vehicles")
+        .skip(skip)
+        .limit(pageSize);
 
+      const total = await Rider.find({
+        company,
+      }).countDocuments();
 
+      resolve({ rider, total });
+    });
+  }
+
+  /**
+   * Change admin Password
+   * @param {Express req *} body
+   * @param {Auth user} user
+   */
+  changePassword(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const admin = await Admin.get({ _id: user.id });
+
+        let validPassword = await bcrypt.compare(
+          body.oldPassword,
+          admin.password
+        );
+
+        if (!validPassword) {
+          reject({ code: 403, msg: MSG_TYPES.INVALID_PASSWORD });
+          return;
+        }
+
+        admin.password = await bcrypt.hash(body.password, 10);
+
+        await admin.save();
+
+        resolve(admin);
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 

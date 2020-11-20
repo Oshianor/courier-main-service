@@ -30,7 +30,7 @@ class EntrySubscription {
         .populate(
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
-        );
+        )
 
       socket
         .to("admin")
@@ -62,7 +62,8 @@ class EntrySubscription {
         .populate(
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
-        );
+        )
+        .sort({ updatedAt: -1 });
       const total = await Entry.find().countDocuments();
 
       const meta = {
@@ -100,7 +101,8 @@ class EntrySubscription {
         .populate(
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
-        );
+        )
+        .sort({ updatedAt: -1 });
 
       const total = await Entry.find().countDocuments();
       
@@ -183,6 +185,28 @@ class EntrySubscription {
 
       resolve(SocketResponse(false, "ok", entries));
     });
+  }
+
+
+  updateEntryAdmin(entryId) {
+    return new Promise(async (resolve, reject) => {
+      const entry = await Entry.findOne(entryId)
+        .populate("transaction")
+        .populate("orders")
+        .populate("user", "name email phoneNumber countryCode")
+        .populate(
+          "company",
+          "name email phoneNumber type logo address countryCode"
+        )
+        .populate(
+          "rider",
+          "name email phoneNumber countryCode onlineStatus latitude longitude"
+        );
+
+      socket.to("admin").emit( SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN, SocketResponse(false, "ok", entry));
+
+      resolve(entry);
+    })
   }
 }
 

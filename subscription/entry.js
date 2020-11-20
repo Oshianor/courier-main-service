@@ -51,6 +51,7 @@ class EntrySubscription {
     return new Promise(async (resolve, reject) => {
       const entries = await Entry.find()
         .select("-metaData")
+        .limit(10)
         .populate("transaction")
         .populate("orders")
         .populate("user", "name email phoneNumber countryCode")

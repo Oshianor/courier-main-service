@@ -30,7 +30,6 @@ const DistancePriceSchema = mongoose.Schema(
       type: String,
       index: true,
       required: true,
-      unique: true,
     },
     vehicle: {
       type: ObjectId,

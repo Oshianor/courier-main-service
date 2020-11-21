@@ -85,7 +85,7 @@ const entrySchema = mongoose.Schema(
       type: Date,
       default: null,
     },
-    driverAcceptedAt: {
+    riderAcceptedAt: {
       type: Date,
       default: null,
     },

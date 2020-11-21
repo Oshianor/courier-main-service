@@ -5,6 +5,9 @@ const OnlineHistory = require("../models/onlineHistory");
 const Country = require("../models/countries");
 const Entry = require("../models/entry");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
+const CountryService = require("../services/country");
+const RiderService = require("../services/rider");
+const CompanyService = require("../services/company");
 const { validateStatusUpdate } = require("../models/riderCompanyRequest");
 const { validateRider, validateRiderSelf } = require("../request/rider");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
@@ -21,75 +24,32 @@ exports.create = async (req, res) => {
   try {
     const { error } = validateRider(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
-    const company = await Company.findOne({
-      _id: req.user.id,
-      verified: true,
-      status: "active",
-    });
-    if (!company)
-      return JsonResponse(res, 404, "Company Not Found!", null, null);
-
-    const rider = await Rider.findOne({ email: req.body.email });
-    if (rider)
-      return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-
-    const phoneCheck = await Rider.findOne({
-      phoneNumber: req.body.phoneNumber,
-    });
-    if (phoneCheck) {
-      JsonResponse(res, 400, `\"phoneNumber"\ already exists!`, null, null);
-      return;
-    }
-
-    // validate country
-    const country = await Country.findOne({ name: req.body.country });
-    if (!country)
-      return JsonResponse(res, 404, "Country Not Found", null, null);
-
-    // validate state
-    const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined")
-      return JsonResponse(res, 404, "State Not Found", null, null);
-
-    if (req.files.POI) {
-      const POI = await UploadFileFromBinary(
-        req.files.POI.data,
-        req.files.POI.name
+      const countryInstance = new CountryService();
+      const country = await countryInstance.getCountryAndState(
+        req.body.country,
+        req.body.state
       );
-      req.body.POI = POI.Key;
-    }
+      // add country code.
+      req.body.countryCode = country.cc;
 
-    if (req.files.img) {
-      const img = await UploadFileFromBinary(
-        req.files.img.data,
-        req.files.img.name
-      );
-      req.body.img = img.Key;
-    }
+      
+      const companyInstance = new CompanyService();
+      const company = await companyInstance.get({
+        _id: req.user.id,
+        verified: true,
+        status: "active",
+      });
+      req.body.company = req.user.id;
+      req.body.createdBy = "company";
+      const riderInstance = new RiderService();
+      const rider = await riderInstance.create(req.body, req.files);
 
-    const token = GenerateToken(225);
-    req.body.rememberToken = {
-      token,
-      expiredDate: moment().add(2, "days"),
-    };
-
-    req.body.company = req.user.id;
-    req.body.countryCode = country.cc; // add country code.
-    req.body.createdBy = "company";
-    // req.body.verificationType = "email";
-    req.body.companyRequest = "approved";
-    await Rider.create(req.body);
-
-    const subject = "Welcome to Exalt Logistics";
-    const html = Verification(token, req.body.email, "rider");
-    Mailer(req.body.email, subject, html);
-
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, null, null);
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, error.code, error.msg);
   }
 };
 
@@ -101,88 +61,34 @@ exports.create = async (req, res) => {
 exports.createSelf = async (req, res) => {
   try {
     const { error } = validateRiderSelf(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    if (error) {
-      JsonResponse(res, 400, error.details[0].message, null, null);
-      return;
-    }
+    const countryInstance = new CountryService();
+    const country = await countryInstance.getCountryAndState(
+      req.body.country,
+      req.body.state
+    );
 
-    const company = await Company.findOne({
+    const companyInstance = new CompanyService();
+    const company = await companyInstance.get({
       _id: req.body.company,
       verified: true,
       status: "active",
     });
-    if (!company)
-      return JsonResponse(res, 404, "Company Not Found!", null, null);
-
-    const rider = await Rider.findOne({ email: req.body.email });
-    if (rider)
-      return JsonResponse(res, 400, `\"email"\ already exists!`, null, null);
-
-    const phoneCheck = await Rider.findOne({
-      phoneNumber: req.body.phoneNumber,
-    });
-    if (phoneCheck) {
-      JsonResponse(res, 400, `\"phoneNumber"\ already exists!`, null, null);
-      return;
-    }
-
-    // validate country
-    const country = await Country.findOne({ name: req.body.country });
-    if (!country)
-      return JsonResponse(res, 404, "Country Not Found", null, null);
-
-    // validate state
-    const state = country.states.filter((v, i) => v.name === req.body.state);
-    if (typeof state[0] === "undefined")
-      return JsonResponse(res, 404, "State Not Found", null, null);
-
-    if (req.files.POI) {
-      const POI = await UploadFileFromBinary(
-        req.files.POI.data,
-        req.files.POI.name
-      );
-      req.body.POI = POI.Key;
-    }
-
-    if (req.files.img) {
-      const img = await UploadFileFromBinary(
-        req.files.img.data,
-        req.files.img.name
-      );
-      req.body.img = img.Key;
-    }
-
-    const token = GenerateToken(225);
-    req.body.rememberToken = {
-      token,
-      expiredDate: moment().add(2, "days"),
-    };
-
-    // const password = await bcrypt.hash(req.body.password, 10);
-    // req.body.password = password;
-    req.body.countryCode = country.cc; // add country code.
+    
+    // add country code.
+    req.body.countryCode = country.cc;
     req.body.createdBy = "self";
     req.body.company = null;
-    const newRider = new Rider(req.body);
+    const riderInstance = new RiderService();
+    const rider = await riderInstance.create(req.body, req.files);
+    await riderInstance.sendCompanyRequest(company._id, rider._id);
 
-    const request = new RiderCompanyRequest({
-      company: company.id,
-      rider: newRider._id,
-      status: "pending",
-    });
-    await request.save();
-    await newRider.save();
-
-    const subject = "Welcome to Exalt Logistics";
-    const html = Verification(token, req.body.email, "rider");
-    Mailer(req.body.email, subject, html);
-    newRider.rememberToken = null;
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, newRider, null);
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, rider);
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, error.code, error.msg);
   }
 };
 
@@ -200,10 +106,10 @@ exports.me = async (req, res) => {
     })
       .populate("vehicle")
       .select("-password");
-    if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+    if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     if (!rider.company)
-      return JsonResponse(res, 404, "Company Not Found!", null, null);
+      return JsonResponse(res, 404, "Company Not Found!");
 
     const company = await Company.findOne({
       _id: rider.company,
@@ -211,12 +117,12 @@ exports.me = async (req, res) => {
       status: "active",
     });
     if (!company)
-      return JsonResponse(res, 404, "Company Not Found!", null, null);
+      return JsonResponse(res, 404, "Company Not Found!");
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, null);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -229,7 +135,7 @@ exports.single = async (req, res) => {
   try {
     const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
-      JsonResponse(res, 404, "Company Not Found!", null, null);
+      JsonResponse(res, 404, "Company Not Found!");
       return;
     }
     const riderId = req.params.riderId;
@@ -238,14 +144,14 @@ exports.single = async (req, res) => {
       .select("-password");
 
     if (!rider) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
 
-    JsonResponse(res, 200, null, rider, null);
+    JsonResponse(res, 200, null, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -260,7 +166,7 @@ exports.all = async (req, res) => {
 
     const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
-      JsonResponse(res, 404, "Company Not Found!", null, null);
+      JsonResponse(res, 404, "Company Not Found!");
       return;
     }
 
@@ -282,7 +188,7 @@ exports.all = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -310,7 +216,7 @@ exports.allByAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -344,7 +250,7 @@ exports.requests = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -361,19 +267,19 @@ exports.updateSingle = async (req, res) => {
       status: "active",
     });
     if (!company)
-      return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
+      return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND);
 
     const rider = await Rider.findOne({
       _id: req.user.id,
       verified: true,
       status: "active",
     });
-    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
+    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND);
 
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, rider, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -386,13 +292,13 @@ exports.respond = async (req, res) => {
   try {
     const { error } = validateStatusUpdate(req.body);
     if (error) {
-      return JsonResponse(res, 400, error.details[0].message, null, null);
+      return JsonResponse(res, 400, error.details[0].message);
     }
     const request = await RiderCompanyRequest.findOne({
       _id: req.params.requestId,
     });
     if (!request)
-      return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, null, null);
+      return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND);
 
     const rider = await Rider.findOne({ _id: request.rider });
 
@@ -405,10 +311,10 @@ exports.respond = async (req, res) => {
 
     await request.save();
 
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, request, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, request);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -421,28 +327,18 @@ exports.status = async (req, res) => {
   try {
     const { error } = validateRiderStatus(req.body);
     if (error)
-      return JsonResponse(res, 400, error.details[0].message, null, null);
-
-    // // to disable a rider account we need to know if they
-    // const entry = await Entry.findOne({
-    //   $or: [
-    //     { status: "ongoing", rider: req.params.rider },
-    //     { status: "driverAccepted", rider: req.params.rider },
-    //   ],
-    // });
-
-    // if (entry) return JsonResponse(res, 200, "This rider is currently on a trip", null, null);
+      return JsonResponse(res, 400, error.details[0].message);
 
     const rider = await Rider.findOne({ _id: req.params.rider });
-    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, rider, null);
+    if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     await rider.updateOne({ status: req.body.status });
 
-    JsonResponse(res, 200, `Rider account ${req.body.status}`, null, null);
+    JsonResponse(res, 200, `Rider account ${req.body.status}`);
     return
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -458,7 +354,7 @@ exports.online = async (req, res) => {
       status: "active",
       verified: true,
     });
-    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, rider, null);
+    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, rider);
 
     let msg;
     if (rider.onlineStatus) {
@@ -470,7 +366,7 @@ exports.online = async (req, res) => {
         ],
       });
 
-      if (entry) return JsonResponse(res, 200, "You can't go offline while on a trip.", null, null);
+      if (entry) return JsonResponse(res, 200, "You can't go offline while on a trip.");
 
       msg = "Offline Successfully ";
       await rider.updateOne({ onlineStatus: false });
@@ -489,11 +385,11 @@ exports.online = async (req, res) => {
       await newOnelineHistory.save();
     }
 
-    JsonResponse(res, 200, msg, null, null);
+    JsonResponse(res, 200, msg);
     return
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -505,14 +401,14 @@ exports.online = async (req, res) => {
 exports.location = async (req, res) => {
   try {
     const { error } = validateRiderLocation(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message, null, null);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
       
     await Rider.updateOne({ _id: req.user.id }, req.body)
 
-    JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -525,7 +421,7 @@ exports.destroy = async (req, res) => {
   try {
     const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
-      JsonResponse(res, 404, "Company Not Found!", null, null);
+      JsonResponse(res, 404, "Company Not Found!");
       return;
     }
 
@@ -533,16 +429,16 @@ exports.destroy = async (req, res) => {
     const rider = await Rider.findOne({ _id: riderId });
 
     if (!rider) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
     rider.deletedBy = req.user.id;
     rider.deleted = true;
     rider.deletedAt = Date.now();
     await rider.save();
-    JsonResponse(res, 200, MSG_TYPES.DELETED, null, null);
+    JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };

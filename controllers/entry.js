@@ -4,13 +4,12 @@ const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Rider = require("../models/rider");
 const Transaction = require("../models/transaction");
-const RiderEntryRequest = require("../models/riderEntryRequest");
 const { Container } = require("typedi");
 const {
   validateTransaction,
   validateTransactionStatus,
 } = require("../request/transaction");
-const { validateLocalEntry } = require("../request/entry");
+const { validateLocalEntry, validateEntryID } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
@@ -19,14 +18,12 @@ const CountryService = require("../services/country");
 const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
-const CompanyService = require("../services/company");
 const EntrySubscription = require("../subscription/entry");
 const socket = new io(config.get("application.redis"), { key: "/sio" })
 const DPInstance = Container.get(DPService);
 const settingInstance = Container.get(SettingService);
 const countryInstance = Container.get(CountryService);
 const entryInstance = Container.get(EntryService);
-const companyInstance = Container.get(CompanyService);
 
 
 
@@ -92,6 +89,7 @@ exports.transaction = async (req, res) => {
 
     socket.emit(SERVER_EVENTS.NEW_ENTRY, entry);
 
+    // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
 
@@ -176,8 +174,9 @@ exports.byCompany = async (req, res) => {
     if (!company) JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     const entries = await Entry.find({
-      source: "pool",
+      sourceRef: "pool",
       state: company.state,
+      status: "pending"
       // company: null
     })
       .skip(skip)
@@ -185,7 +184,8 @@ exports.byCompany = async (req, res) => {
       .select("-metaData");
 
     const total = await Entry.find({
-      source: "pool",
+      sourceRef: "pool",
+      status: "pending",
       state: company.state,
     }).countDocuments();
 
@@ -278,26 +278,11 @@ exports.allOnlineRiderCompanyEntry = async (req, res) => {
 exports.companyAcceptEntry = async (req, res) => {
   try {
 
-    const company = await companyInstance.get({
-      _id: req.user.id,
-      $or: [{ status: "active" }, { status: "inactive" }],
-      verified: true,
-    });
+    const entry = await entryInstance.companyAcceptEntry(req.params, req.user)
 
-    // const currentDate = new Date();
-    const entry = await entryInstance.get({
-      _id: req.params.entry,
-      status: "pending",
-      company: null,
-    });
-
-    if (!company.vehicles.includes(entry.vehicle)) return JsonResponse(res, 404, MSG_TYPES.VEHICLE_NOT_SUPPORTED);
-
-    await entry.updateOne({
-      company: req.user.id,
-      companyAcceptedAt: new Date(),
-      status: "companyAccepted",
-    }); 
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry._id);
 
     JsonResponse(res, 200, MSG_TYPES.COMPANY_ACCEPT);
     return;
@@ -311,43 +296,42 @@ exports.companyAcceptEntry = async (req, res) => {
  * @param {*} req 
  * @param {*} res 
  */
-exports.AsignRiderToEntry = async (req, res) => {
+exports.riderAssignToEntry = async (req, res) => {
   try {
-    const company = await companyInstance.get({
-      _id: req.user.id,
-      $or: [{ status: "active" }, { status: "inactive" }],
-      verified: true,
-    });
+    const { error } = validateEntryID(req.params);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    // const entry = await entryInstance.get({
-    //   _id: req.params.entry,
-    //   status: "companyAccepted",
-    //   company: company._id,
-    //   rider: null,
-    //   transaction: { $ne: null }
-    // }, { metaData: 0 });
-    const entry = await Entry.findOne({
-      _id: req.params.entry,
-      status: "companyAccepted",
-      company: company._id,
-      rider: null,
-      transaction: { $ne: null },
-    })
-      .populate("orders")
-      .populate("user", "name email phoneNumber countryCode")
-      .select("-metaData");
+    const entry = await entryInstance.riderAsignEntry(req.body, req.params, req.user);
 
-    const newRiderReq = new RiderEntryRequest({
-      entry: entry._id,
-      company: company._id,
-      rider: req.body.rider
-    });
-
-    await newRiderReq.save();
-    
+    // send to rider by their room id
+    // send socket to riders only
     socket.to(String(req.body.rider)).emit(SERVER_EVENTS.ASSIGN_ENTRY, entry);
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * Rider Accept entry
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.riderAcceptEntry = async (req, res) => {
+  try {
+    const { error } = validateEntryID(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const entry = await entryInstance.riderAcceptEntry(req.body, req.user);
+
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry._id);
+
+    JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
     return;
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);

@@ -109,12 +109,13 @@ class CompanyService {
         const company = await Company.findOne(filter).select(select);
 
         if (!company) {
-          reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+          return;
         }
         resolve(company);
       } catch (error) {
         console.log("error", error);
-        reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
         return;
       }
     });

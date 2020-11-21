@@ -8,6 +8,8 @@ const orderSchema = mongoose.Schema(
       required: true,
       index: true,
       unique: true,
+      trim: true,
+      lowercase: true
       // default: nanoid(10)
     },
     entry: {

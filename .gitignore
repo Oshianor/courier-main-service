@@ -4,3 +4,4 @@ node_modules/
 logs/*
 sendgrid.env
 .DS_Store
+firebase-token.json

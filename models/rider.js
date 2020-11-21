@@ -80,12 +80,6 @@ const riderSchema = new mongoose.Schema(
       default: "company",
       enum: ["company", "self"],
     },
-    // verificationType: {
-    //   type: String,
-    //   required: true,
-    //   default: "email",
-    //   enum: ["email", "otp"],
-    // },
     onlineStatus: {
       type: Boolean,
       default: false,
@@ -100,11 +94,9 @@ const riderSchema = new mongoose.Schema(
       type: Number,
       default: 0.0,
     },
-    tripStatus: {
-      type: Boolean,
-      default: false,
-      // enum: ["ongoing", ""]
-      index: true,
+    FCMToken: {
+      type: String,
+      default: null,
     },
     policyNumber: {
       type: String,

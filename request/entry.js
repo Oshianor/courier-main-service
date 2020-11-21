@@ -50,7 +50,19 @@ function validateLocalEntry(data) {
   return Schema.validate(data);
 }
 
+function validateEntryID(data) {
+  const Schema = Joi.object().keys({
+    entry: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .label("Vehicle")
+      .required(),
+  });
+
+  return Schema.validate(data);
+}
+
 
 module.exports = {
   validateLocalEntry,
+  validateEntryID,
 };

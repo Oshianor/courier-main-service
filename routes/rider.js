@@ -13,4 +13,6 @@ router.patch("/location", Auth, controller.rider.location);
 // go online/offline
 router.patch("/online", Auth, controller.rider.online);
 
+router.patch("/fcmtoken", Auth, controller.rider.FCMToken);
+
 module.exports = router;

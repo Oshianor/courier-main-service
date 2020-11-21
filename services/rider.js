@@ -2,6 +2,7 @@ const Admin = require("../models/admin");
 const moment = require("moment");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
 const Rider = require("../models/rider");
+const Company = require("../models/company");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
@@ -52,20 +53,20 @@ class RiderSerivice {
         const subject = "Welcome to Exalt Logistics";
         const html = Verification(token, body.email, "rider");
         Mailer(body.email, subject, html);
-        
+
         newRider.rememberToken = null;
         resolve(newRider);
       } catch (error) {
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-        return
+        return;
       }
-    })
+    });
   }
 
   /**
    * Send a request to a company
-   * @param {String} company 
-   * @param {String} rider 
+   * @param {String} company
+   * @param {String} rider
    */
   sendCompanyRequest(company, rider) {
     return new Promise(async (resolve, reject) => {
@@ -77,9 +78,67 @@ class RiderSerivice {
       await request.save();
 
       resolve(request);
-    })
+    });
   }
 
+  /**
+   * Update rider FCMToken from firebase
+   * @param {Req} body
+   * @param {Auth user} user
+   */
+  updateFCMToken(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: user.id, status: "active" });
+        if (!rider) {
+          reject({ code: 404, msg: "No Account found" });
+          return;
+        }
+
+        await rider.updateOne({ FCMToken: body.FCMToken });
+
+        resolve(rider);
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Delete One Rider by company
+   * @param {Req} params
+   * @param {Auth user} user
+   */
+  destory(params, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const company = await Company.findOne({ _id: user.id });
+        if (!company) {
+          reject({ code: 404, msg: "Company Not Found!" });
+          return;
+        }
+
+        const rider = await Rider.findOne({
+          _id: params.riderId,
+          company: company._id
+        });
+        if (!rider) {
+          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+          return;
+        }
+
+        rider.deletedBy = user.id;
+        rider.deleted = true;
+        rider.deletedAt = Date.now();
+        await rider.save();
+
+        resolve(rider);
+      } catch (error) {
+        reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 module.exports = RiderSerivice;

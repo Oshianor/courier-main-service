@@ -9,7 +9,7 @@ const CountryService = require("../services/country");
 const RiderService = require("../services/rider");
 const CompanyService = require("../services/company");
 const { validateStatusUpdate } = require("../models/riderCompanyRequest");
-const { validateRider, validateRiderSelf } = require("../request/rider");
+const { validateRider, validateRiderSelf, validateRiderFCMToken } = require("../request/rider");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -419,26 +419,33 @@ exports.location = async (req, res) => {
  */
 exports.destroy = async (req, res) => {
   try {
-    const company = await Company.findOne({ _id: req.user.id });
-    if (!company) {
-      JsonResponse(res, 404, "Company Not Found!");
-      return;
-    }
+    const riderInstance = new RiderService();
+    await riderInstance.destory(req.params, req.user);
 
-    const riderId = req.params.riderId;
-    const rider = await Rider.findOne({ _id: riderId });
-
-    if (!rider) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-      return;
-    }
-    rider.deletedBy = req.user.id;
-    rider.deleted = true;
-    rider.deletedAt = Date.now();
-    await rider.save();
     JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    JsonResponse(res, error.code, error.msg);
   }
 };
+
+/**
+ * Update rider FCMToken from firebase controller 
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.FCMToken = async (req, res) => {
+  try {
+    const { error } = validateRiderFCMToken(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const riderInstance = new RiderService()
+    await riderInstance.updateFCMToken(req.body, req.user);
+
+    JsonResponse(res, 200, "FCM Token updated.");
+    return 
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}

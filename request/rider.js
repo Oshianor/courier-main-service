@@ -94,6 +94,14 @@ function validateRiderLocation(body) {
   return schema.validate(body);
 }
 
+function validateRiderFCMToken(body) {
+  const schema = Joi.object({
+    FCMToken: Joi.string().required(),
+  });
+
+  return schema.validate(body);
+}
+
 
 module.exports = {
   validateRider,
@@ -102,4 +110,5 @@ module.exports = {
   validateRiderLogin,
   validateRiderStatus,
   validateRiderLocation,
+  validateRiderFCMToken,
 };

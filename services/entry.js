@@ -235,17 +235,25 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        const entry = await this.get({
+        const entry = await Entry.findOne({
           _id: body.entry,
           status: "request",
           user: user.id,
         });
 
+        if (!entry) {
+          reject({
+            code: 404,
+            msg: "Entry transaction already processed.",
+          });
+          return;
+        }
+
         console.log("entry", entry);
 
         let msgRES;
         if (body.paymentMethod === "card") {
-          const userInstance = Container.get(UserService);
+          const userInstance = new UserService();
           const card = await userInstance.getCard(token, body.card);
 
           const trans = await paystack.transaction.charge({

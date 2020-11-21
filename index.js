@@ -2,7 +2,7 @@ require("winston-mongodb");
 require("./startup/aws");
 require("./startup/logger");
 const { http, app } = require("./startup/socket")
-require("./startup/prod")(app);
+// require("./startup/prod")(app);
 const config = require("config");
 const port = process.env.PORT || config.get("application.port");
 const mongoose = require('mongoose');

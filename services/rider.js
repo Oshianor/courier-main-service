@@ -99,7 +99,7 @@ class RiderSerivice {
 
         resolve(rider);
       } catch (error) {
-        console.log("error", error);
+        console.log("error", error2);
         reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
       }
     });

@@ -32,6 +32,7 @@ const MSG_TYPES = Object.freeze({
     "You currently don't have support for this vehicle Type so you can't accept this order.",
   RIDER_ASSIGN: "Order sent to rider.",
   RIDER_ACCEPTED: "You've successfully accepted this order",
+  RIDER_REJECTED: "You've successfully rejected this order",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

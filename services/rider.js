@@ -142,7 +142,7 @@ class RiderSerivice {
   }
 
   /**
-   * Get rider assigned order list for the day
+   * Get rider accepted order list
    * @param {Auth user} user
    */
   getRiderBasket(user) {

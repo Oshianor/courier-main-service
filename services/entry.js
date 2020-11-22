@@ -523,8 +523,39 @@ class EntryService {
     });
   }
 
-  riderRejectEntry() {
-    return new Promise(async (resolve, reject) => {});
+  riderRejectEntry(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({
+          _id: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
+
+        // check if the rider was assigned any request for the entry
+        const reqEntry = await RiderEntryRequest.findOne({
+          rider: user.id,
+          entry: body.entry,
+          status: "pending",
+        });
+
+        if (!reqEntry) {
+          reject({ code: 404, msg: "No request was assign to you." });
+          return;
+        }
+
+        await reqEntry.updateOne({ status: "declined" });
+
+        resolve(reqEntry);
+      } catch (error) {
+        reject({ code: 400, msg: "You can't reject this order" });
+      }
+    });
   }
 }
 

@@ -451,7 +451,7 @@ exports.FCMToken = async (req, res) => {
 }
 
 /**
- * Update rider FCMToken from firebase controller 
+ * Get rider accepted order list
  * @param {*} req 
  * @param {*} res 
  */

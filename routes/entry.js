@@ -22,4 +22,7 @@ router.post("/rider-assign/:entry", Auth, controller.entry.riderAssignToEntry);
 
 router.post("/rider-accept", Auth, controller.entry.riderAcceptEntry);
 
+router.post("/rider-reject", Auth, controller.entry.riderRejectEntry);
+
+
 module.exports = router;

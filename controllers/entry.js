@@ -337,3 +337,23 @@ exports.riderAcceptEntry = async (req, res) => {
     return JsonResponse(res, error.code, error.msg);
   }
 };
+
+
+/**
+ * Rider Reject entry
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.riderRejectEntry = async (req, res) => {
+  try {
+    const { error } = validateEntryID(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    await entryInstance.riderRejectEntry(req.body, req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.RIDER_REJECTED);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};

@@ -6,6 +6,7 @@ const Company = require("../models/company");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
+const Order = require("../models/order");
 
 class RiderSerivice {
   /**
@@ -121,7 +122,7 @@ class RiderSerivice {
 
         const rider = await Rider.findOne({
           _id: params.riderId,
-          company: company._id
+          company: company._id,
         });
         if (!rider) {
           reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
@@ -136,6 +137,37 @@ class RiderSerivice {
         resolve(rider);
       } catch (error) {
         reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Get rider assigned order list for the day
+   * @param {Auth user} user
+   */
+  getRiderBasket(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: user.id, status: "active" });
+        if (!rider) {
+          reject({ code: 404, msg: "Account not found" });
+          return;
+        }
+        
+        const order = await Order.find({
+          rider: user.id,
+          status: { $ne: "delivered" },
+          // createdAt: { $gte: start, $lt: end },
+        })
+          .populate("user", "name email phoneNumber countryCode")
+          .populate(
+            "company",
+            "name email phoneNumber type logo address countryCode"
+          );
+
+        resolve(order);
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
       }
     });
   }

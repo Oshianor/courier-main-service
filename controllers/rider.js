@@ -449,3 +449,21 @@ exports.FCMToken = async (req, res) => {
     return
   }
 }
+
+/**
+ * Update rider FCMToken from firebase controller 
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.basket = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const orders = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
+    return 
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}

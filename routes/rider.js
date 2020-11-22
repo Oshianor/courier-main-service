@@ -14,5 +14,8 @@ router.patch("/location", Auth, controller.rider.location);
 router.patch("/online", Auth, controller.rider.online);
 
 router.patch("/fcmtoken", Auth, controller.rider.FCMToken);
+//get all orders by a rider for the day
+router.get("/basket", Auth, controller.rider.basket);
+
 
 module.exports = router;

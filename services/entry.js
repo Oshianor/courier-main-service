@@ -5,16 +5,16 @@ const Entry = require("../models/entry");
 const Order = require("../models/order");
 const Company = require("../models/company");
 const Transaction = require("../models/transaction");
-const UserService = require("../services/user");
 const RiderEntryRequest = require("../models/riderEntryRequest");
-const CompanyService = require("../services/company");
+const Rider = require("../models/rider");
+const UserService = require("./user");
+const CompanyService = require("./company");
+const TripLogService = require("./triplog");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
-const { Container } = require("typedi");
 const { AsyncForEach } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
-const Rider = require("../models/rider");
 const client = new Client({});
 
 
@@ -523,6 +523,11 @@ class EntryService {
     });
   }
 
+  /**
+   * Rider reject entry
+   * @param {Object} body
+   * @param {Auth User} user
+   */
   riderRejectEntry(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -554,6 +559,75 @@ class EntryService {
         resolve(reqEntry);
       } catch (error) {
         reject({ code: 400, msg: "You can't reject this order" });
+      }
+    });
+  }
+
+  /**
+   * Rider starts pickup
+   * @param {Object} body
+   * @param {Auth User} user
+   */
+  riderStartEntryPickup(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({
+          _id: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
+
+        const company = await Company.findOne({
+          _id: rider.company,
+          status: "active",
+          verified: true,
+        });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
+
+        // check if the entry has not been taken by another rider
+        const entry = await Entry.findOne({
+          _id: body.entry,
+          status: "driverAccepted",
+          company: company._id,
+          rider: rider._id,
+        });
+
+        if (!entry) {
+          reject({ code: 404, msg: "This order doesn't exist" });
+          return;
+        }
+
+        await entry.updateOne({ status: "enrouteToPickup" });
+        // update all order status
+        await Order.updateMany(
+          { entry: entry._id },
+          { status: "enrouteToPickup" }
+        );
+
+        // log trip status
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createPickupLog(
+          entry.orders,
+          rider._id,
+          entry.user,
+          entry._id,
+          rider.latitude,
+          rider.longitude
+        );
+
+        resolve(entry);
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 400, msg: "Something went wrong. You can't proceed to pickup" });
       }
     });
   }

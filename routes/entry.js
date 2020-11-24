@@ -24,5 +24,6 @@ router.post("/rider-accept", Auth, controller.entry.riderAcceptEntry);
 
 router.post("/rider-reject", Auth, controller.entry.riderRejectEntry);
 
+router.post("/enroute-pickup", Auth, controller.entry.riderStartPickup);
 
 module.exports = router;

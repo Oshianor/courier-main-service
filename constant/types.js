@@ -33,6 +33,7 @@ const MSG_TYPES = Object.freeze({
   RIDER_ASSIGN: "Order sent to rider.",
   RIDER_ACCEPTED: "You've successfully accepted this order",
   RIDER_REJECTED: "You've successfully rejected this order",
+  PROCEED_TO_PICKUP: "Proceeding to pickup location",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

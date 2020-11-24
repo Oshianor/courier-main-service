@@ -9,7 +9,7 @@ const orderSchema = mongoose.Schema(
       index: true,
       unique: true,
       trim: true,
-      lowercase: true
+      lowercase: true,
       // default: nanoid(10)
     },
     entry: {
@@ -65,8 +65,10 @@ const orderSchema = mongoose.Schema(
       type: String,
       enum: [
         "pending", // accepted driver/company
-        "pickedUp", // When item has been picked
-        "onGoing", // on the road to delivery.
+        "enrouteToPickup", //on the way to pickup
+        "awaitingPickupConfirmation", // arrived at pickup location and awaiting comfirmation
+        "pickedup", // When item has been picked
+        "enrouteToDelivery", // on the road to delivery.
         "awaitingDeliveryConfirmation", // await customer confirmation on delivery
         "delivered", // customer confirmed deluvery
       ],

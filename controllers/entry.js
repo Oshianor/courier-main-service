@@ -4,7 +4,6 @@ const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Rider = require("../models/rider");
 const Transaction = require("../models/transaction");
-const { Container } = require("typedi");
 const {
   validateTransaction,
   validateTransactionStatus,
@@ -20,10 +19,11 @@ const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
 const EntrySubscription = require("../subscription/entry");
 const socket = new io(config.get("application.redis"), { key: "/sio" })
-const DPInstance = Container.get(DPService);
-const settingInstance = Container.get(SettingService);
-const countryInstance = Container.get(CountryService);
-const entryInstance = Container.get(EntryService);
+// const { Container } = require("typedi");
+// const DPInstance = Container.get(DPService);
+// const settingInstance = Container.get(SettingService);
+// const countryInstance = Container.get(CountryService);
+// const entryInstance = Container.get(EntryService);
 
 
 
@@ -37,6 +37,10 @@ exports.localEntry = async (req, res) => {
     const { error } = validateLocalEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    const entryInstance = new EntryService();
+    const countryInstance = new CountryService();
+    const settingInstance = new SettingService();
+    const DPInstance = new DPService();
     const country = await countryInstance.getCountryAndState(
       req.body.country,
       req.body.state
@@ -85,6 +89,7 @@ exports.transaction = async (req, res) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
+    const entryInstance = new EntryService();
     const { entry, msg } = await entryInstance.createTransaction(req.body, req.user, req.token);
 
     socket.emit(SERVER_EVENTS.NEW_ENTRY, entry);
@@ -278,6 +283,7 @@ exports.allOnlineRiderCompanyEntry = async (req, res) => {
 exports.companyAcceptEntry = async (req, res) => {
   try {
 
+    const entryInstance = new EntryService();
     const entry = await entryInstance.companyAcceptEntry(req.params, req.user)
 
     // send socket to admin for update
@@ -301,6 +307,7 @@ exports.riderAssignToEntry = async (req, res) => {
     const { error } = validateEntryID(req.params);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    const entryInstance = new EntryService();
     const entry = await entryInstance.riderAsignEntry(req.body, req.params, req.user);
 
     // send to rider by their room id
@@ -325,6 +332,7 @@ exports.riderAcceptEntry = async (req, res) => {
     const { error } = validateEntryID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    const entryInstance = new EntryService();
     const entry = await entryInstance.riderAcceptEntry(req.body, req.user);
 
     // send socket to admin for update
@@ -349,9 +357,31 @@ exports.riderRejectEntry = async (req, res) => {
     const { error } = validateEntryID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    const entryInstance = new EntryService();
     await entryInstance.riderRejectEntry(req.body, req.user);
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_REJECTED);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * Start Pickup trigger by rider
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.riderStartPickup = async (req, res) => {
+  try {
+    const { error } = validateEntryID(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const entryInstance = new EntryService();
+    await entryInstance.riderStartEntryPickup(req.body, req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
     return;
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);

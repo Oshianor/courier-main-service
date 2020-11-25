@@ -1,6 +1,29 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
+const OTPRecordSchema = mongoose.Schema(
+  {
+    OTPCode: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    latitude: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    longitude: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    }
+  },
+  {
+    timestamps: true,
+  }
+);
+
 
 const entrySchema = mongoose.Schema(
   {
@@ -69,26 +92,23 @@ const entrySchema = mongoose.Schema(
         "companyAccepted", // when a company accepts the order
         "driverAccepted", // when a driver accepts the order
         "enrouteToPickup", // when atleast order is in pickup
-        "pickedUp", // when he item is picked up
+        "arrivedAtPickup",
+        "pickedup", // when he item is picked up
         "enrouteToDelivery", // when atleast order is  delivery
+        "arrivedAtDelivery", // when the rider gets to the delivery location
+        "delivered", // when an order is delivered
         "completed", // when all orders are conpleted.
         "cancelled", // when the order is cancelled
       ],
       default: "request",
       index: true,
     },
-    cancelledAt: {
-      type: Date,
+    OTPCode: {
+      type: String,
       default: null,
+      trim: true,
     },
-    companyAcceptedAt: {
-      type: Date,
-      default: null,
-    },
-    riderAcceptedAt: {
-      type: Date,
-      default: null,
-    },
+    OTPRecord: [OTPRecordSchema],
     email: {
       type: String,
       required: true,
@@ -175,6 +195,18 @@ const entrySchema = mongoose.Schema(
     metaData: {
       type: Object,
       default: {},
+    },
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+    companyAcceptedAt: {
+      type: Date,
+      default: null,
+    },
+    riderAcceptedAt: {
+      type: Date,
+      default: null,
     },
   },
   {

@@ -52,10 +52,16 @@ function validateLocalEntry(data) {
 
 function validateEntryID(data) {
   const Schema = Joi.object().keys({
-    entry: Joi.string()
-      .regex(/^[0-9a-fA-F]{24}$/)
-      .label("Vehicle")
-      .required(),
+    entry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+  });
+
+  return Schema.validate(data);
+}
+
+function validatePickupOTP(data) {
+  const Schema = Joi.object().keys({
+    OTPCode: Joi.string().min(4).max(4).required(),
+    entry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
   });
 
   return Schema.validate(data);
@@ -65,4 +71,5 @@ function validateEntryID(data) {
 module.exports = {
   validateLocalEntry,
   validateEntryID,
+  validatePickupOTP,
 };

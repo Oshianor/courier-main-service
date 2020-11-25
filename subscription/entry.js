@@ -190,7 +190,7 @@ class EntrySubscription {
 
   updateEntryAdmin(entryId) {
     return new Promise(async (resolve, reject) => {
-      const entry = await Entry.findOne(entryId)
+      const entry = await Entry.findById(entryId)
         .populate("transaction")
         .populate("orders")
         .populate("user", "name email phoneNumber countryCode")

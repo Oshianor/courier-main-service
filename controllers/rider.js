@@ -442,7 +442,7 @@ exports.FCMToken = async (req, res) => {
     const riderInstance = new RiderService()
     await riderInstance.updateFCMToken(req.body, req.user);
 
-    JsonResponse(res, 200, "FCM Token updated.");
+    JsonResponse(res, 200, MSG_TYPES.FCMToken);
     return 
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

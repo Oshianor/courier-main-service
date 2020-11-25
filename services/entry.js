@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
 const Entry = require("../models/entry");
+const User = require("../models/users");
 const Order = require("../models/order");
 const Company = require("../models/company");
 const Transaction = require("../models/transaction");
@@ -10,9 +11,11 @@ const Rider = require("../models/rider");
 const UserService = require("./user");
 const CompanyService = require("./company");
 const TripLogService = require("./triplog");
+const NotificationService = require("./notification");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
-const { AsyncForEach } = require("../utils");
+const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
+const { OTPCode } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
@@ -599,7 +602,7 @@ class EntryService {
           status: "driverAccepted",
           company: company._id,
           rider: rider._id,
-        });
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
@@ -615,7 +618,8 @@ class EntryService {
 
         // log trip status
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createPickupLog(
+        await tripLogInstance.createLog(
+          "enrouteToPickup",
           entry.orders,
           rider._id,
           entry.user,
@@ -624,10 +628,371 @@ class EntryService {
           rider.longitude
         );
 
-        resolve(entry);
+        // resolve(entry);
+        resolve({ entry, rider, company });
       } catch (error) {
         console.log("error", error);
-        reject({ code: 400, msg: "Something went wrong. You can't proceed to pickup" });
+        reject({
+          code: 400,
+          msg: "Something went wrong. You can't proceed to pickup",
+        });
+      }
+    });
+  }
+
+  /**
+   * Rider Arrive a pickup location
+   * @param {Object} body
+   * @param {Auth User} user
+   */
+  riderArriveAtPickup(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({
+          _id: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
+
+        const company = await Company.findOne({
+          _id: rider.company,
+          status: "active",
+          verified: true,
+        });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
+
+        // check if the entry has not been taken by another rider
+        const entry = await Entry.findOne({
+          _id: body.entry,
+          status: "enrouteToPickup",
+          company: company._id,
+          rider: rider._id,
+        }).populate("user");
+
+        if (!entry) {
+          reject({ code: 404, msg: "This order doesn't exist" });
+          return;
+        }
+
+        const token = GenerateOTP(4);
+
+        // update the status to delivery updated
+        await entry.updateOne({ status: "arrivedAtPickup", OTPCode: token });
+        // update all order status
+        await Order.updateMany(
+          { entry: entry._id },
+          { status: "arrivedAtPickup" }
+        );
+
+        // send OTP code to the receipant
+        const subject = "Pickup OTP Code";
+        const html = OTPCode(token);
+        Mailer(entry.email, subject, html);
+
+        // send OTP code
+        const notifyInstance = new NotificationService();
+        const msg = `Your Pickup verification OTP code is ${token}`;
+        const to = entry.countryCode + entry.phoneNumber;
+        await notifyInstance.sendOTPByTermii(msg, to);
+
+        // if the email assigned to the entry isn't the same as the
+        // user that created the post email then send to both parties
+        if (entry.user.email !== entry.email) {
+          Mailer(entry.user.email, subject, html);
+          const toUser = entry.user.countryCode + entry.user.phoneNumber;
+          await notifyInstance.sendOTPByTermii(msg, toUser);
+        }
+
+        // log trip status
+        const metaData = {
+          OTPCode: token,
+        };
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createLog(
+          "arrivedAtPickup",
+          entry.orders,
+          rider._id,
+          entry.user,
+          entry._id,
+          rider.latitude,
+          rider.longitude,
+          metaData
+        );
+
+        resolve({ entry, rider, company });
+      } catch (error) {
+        console.log("error", error);
+        reject({
+          code: 400,
+          msg: "Something went wrong. You can't proceed to pickup",
+        });
+      }
+    });
+  }
+
+  /**
+   * Rider confirm user cash payment at pickup location
+   * @param {Object} body
+   * @param {Auth User} user
+   */
+  riderConfirmCashPayment(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({
+          _id: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
+
+        const company = await Company.findOne({
+          _id: rider.company,
+          status: "active",
+          verified: true,
+        });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
+
+        // check if the entry has not been taken by another rider
+        const entry = await Entry.findOne({
+          _id: body.entry,
+          status: "arrivedAtPickup",
+          company: company._id,
+          rider: rider._id,
+        }).populate("user");
+
+        if (!entry) {
+          reject({ code: 404, msg: "This order doesn't exist" });
+          return;
+        }
+
+        // check if the payment method is cash
+        if (entry.paymentMethod === "cash") {
+          reject({ code: 400, msg: "You can't approve a entry that isn't a cash payment" });
+          return;
+        }
+
+        const transaction = await Transaction.findOne({
+          entry: body.entry,
+          paymentMethod: "cash",
+          status: "pending"
+        });
+
+        if (!transaction) {
+          reject({
+            code: 404,
+            msg: "No Transaction was found for this entry",
+          });
+          return;
+        }
+
+        // when rider select declined on payment status
+        if (body.status === "declined") {
+          await transaction.updateOne({ status: "declined" });
+          await entry.updateOne({ status: "cancelled", cancelledAt: new Date() });
+          await Order.updateMany(
+            { entry: entry._id },
+            { status: "cancelled", cancelledAt: new Date() }
+          );
+
+          const tripLogInstance = new TripLogService();
+          await tripLogInstance.createLog(
+            "cancelled",
+            entry.orders,
+            rider._id,
+            entry.user,
+            entry._id,
+            rider.latitude,
+            rider.longitude
+          );
+
+          reject({ code: 200, msg: "You've successfully cancelled this trip." });
+          return;
+        }
+
+
+        await transaction.updateOne({ status: "approved" });
+
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createLog(
+          "confirmPayment",
+          entry.orders,
+          rider._id,
+          entry.user,
+          entry._id,
+          rider.latitude,
+          rider.longitude
+        );
+
+        resolve({ entry, rider, company, transaction });
+      } catch (error) {
+        console.log("error", error);
+        reject({
+          code: 400,
+          msg: "Something went wrong. You can't confirm the payment for this order",
+        });
+      }
+    });
+  }
+
+  /**
+   * Driver Confirm OTP code for pickup
+   * @param {Object} body
+   * @param {Auth User} user
+   */
+  riderComfirmPickupOTPCode(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({
+          _id: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
+
+        const company = await Company.findOne({
+          _id: rider.company,
+          status: "active",
+          verified: true,
+        });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
+
+        // check if the entry has not been taken by another rider
+        const entry = await Entry.findOne({
+          _id: body.entry,
+          status: "arrivedAtPickup",
+          company: company._id,
+          rider: rider._id,
+        }).populate("user");
+
+        if (!entry) {
+          reject({ code: 404, msg: "This order doesn't exist" });
+          return;
+        }
+
+        // check if the payment method is cash
+        if (entry.paymentMethod === "cash") {
+          const transaction = await Transaction.findOne({ entry: body.entry });
+          if (!transaction) {
+            reject({
+              code: 404,
+              msg: "No Transaction was found for this entry",
+            });
+            return;
+          }
+
+          if (transaction.status !== "approved") {
+            reject({
+              code: 400,
+              msg: `You need confirm payment before confirming pickup.`,
+            });
+
+            return;
+          }
+        }
+
+        // get the total tries
+        // check if the rider has made more than 3 tries
+        // now check based on timer
+        const count = 2;
+        const tries = entry.OTPRecord.length;
+        const leftTries = tries - count;
+        console.log("leftTries", leftTries);
+        if (leftTries > 0) {
+          console.log("should show this");
+          const lastRecord = entry.OTPRecord[tries - 1];
+          if (typeof lastRecord !== "undefined") {
+            console.log("should show this too");
+
+            const lastRecordDate = moment(lastRecord.createdAt);
+            const currentDate = moment();
+            const timeLeft = currentDate.diff(lastRecordDate, "minute");
+            console.log("timeLeft", timeLeft);
+            console.log("lastRecordDate", lastRecordDate);
+            console.log("currentDate", currentDate);
+            // check if the last OTP record is more than 10 mins
+            if (timeLeft < 10) {
+              reject({
+                code: 400,
+                msg: `Please try again in ${Math.abs(timeLeft - 10)} mins`,
+              });
+
+              return;
+            }
+          }
+        }
+
+        // when the OTPCode is wrong.
+        if (entry.OTPCode !== body.OTPCode) {
+          const data = {
+            OTPCode: body.OTPCode,
+            latitude: rider.latitude,
+            longitude: rider.longitude,
+          };
+
+          // a record to the entry details
+          await entry.updateOne({
+            $push: { OTPRecord: data },
+          });
+
+          // const leftTries = entry.OTPRecord.length - count;
+          reject({
+            code: 400,
+            msg: `Wrong confirmation code. You have ${Math.abs(
+              leftTries
+            )} try left`,
+          });
+
+          return;
+        }
+
+        // update the status to delivery updated
+        await entry.updateOne({ status: "pickedup", OTPCode: null });
+        // update all order status
+        await Order.updateMany({ entry: entry._id }, { status: "pickedup" });
+
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createLog(
+          "pickedup",
+          entry.orders,
+          rider._id,
+          entry.user,
+          entry._id,
+          rider.latitude,
+          rider.longitude
+        );
+
+        resolve({ entry, rider, company });
+      } catch (error) {
+        console.log("error", error);
+        reject({
+          code: 400,
+          msg: "Something went wrong. You can't proceed to pickup",
+        });
       }
     });
   }

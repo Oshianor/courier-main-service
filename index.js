@@ -1,6 +1,7 @@
 require("winston-mongodb");
 require("./startup/aws");
 require("./startup/logger");
+require("./startup/firebase");
 const { http, app } = require("./startup/socket")
 // require("./startup/prod")(app);
 const config = require("config");

@@ -34,6 +34,9 @@ const MSG_TYPES = Object.freeze({
   RIDER_ACCEPTED: "You've successfully accepted this order",
   RIDER_REJECTED: "You've successfully rejected this order",
   PROCEED_TO_PICKUP: "Proceeding to pickup location",
+  PICKED_UP: "Item successfully picked up.",
+  ARRIVED_AT_PICKUP: "Arrival at pickup location confirmed",
+  FCMToken: "FCM Token updated.",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

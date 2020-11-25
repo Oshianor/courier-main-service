@@ -13,6 +13,7 @@ const vehicle = require("../routes/vehicle");
 const distancePrice = require("../routes/distancePrice");
 const company = require("../routes/company");
 const rider = require("../routes/rider");
+const user = require("../routes/user");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
@@ -32,6 +33,7 @@ app.use("/api/v1/company", company);
 app.use("/api/v1/entry", entry);
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/rider", rider);
+app.use("/api/v1/user", user);
 app.use(error);
 
 module.exports = app;

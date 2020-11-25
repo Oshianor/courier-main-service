@@ -22,9 +22,9 @@
   cdn: {
     url: "https://d12xp0t1lkbg8.cloudfront.net/",
   },
-  otp: {
-    termil: "TLBMcobpjGogzsYvZWvcKsdLHFw",
-  },
+  termii: {
+    key: "TLBMcLbpjGogzsYvZWvcKsdLHFw"
+  }
   paystack: {
     secret: "sk_test_44f0de5ab496afb",
     public: "pk_test_ad7a14206a8abc7",

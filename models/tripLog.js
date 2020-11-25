@@ -8,11 +8,14 @@ const tripLogSchema = new mongoose.Schema(
       type: String,
       enum: [
         "enrouteToPickup",
-        "pickedUp",
+        "pickedup",
         "enrouteToDelivery",
-        "completed",
-        "onGoing",
+        "arrivedAtPickup",
+        "arrivedAtDelivery",
         "delivered",
+        "completed",
+        "confirmPayment",
+        "cancelled",
       ],
       required: true,
       index: true,
@@ -39,7 +42,7 @@ const tripLogSchema = new mongoose.Schema(
       type: ObjectId,
       index: true,
       ref: "Order",
-      default: null
+      default: null,
     },
     latitude: {
       type: Number,

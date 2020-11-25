@@ -21,20 +21,22 @@ class TripLogService {
    * @param {Array} order
    * @param {Number} latitude
    * @param {Number} longitude
+   * @param {metaData} metaData
    */
-  createPickupLog(order, rider, user, entry, latitude, longitude) {
+  createLog(type, order, rider, user, entry, latitude, longitude, metaData={}) {
     return new Promise(async (resolve, reject) => {
       try {
         const triplogged = [];
         await AsyncForEach(order, (data, index, arr) => {
           triplogged.push({
-            type: "enrouteToPickup",
+            type,
             rider: rider,
             user: user,
             entry: entry,
             order: data,
             latitude: latitude,
             longitude: longitude,
+            metaData,
           });
         });
 

@@ -23,6 +23,10 @@ const UserSchema = new mongoose.Schema(
     countryCode: String,
     address: String,
     img: String,
+    FCMToken: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

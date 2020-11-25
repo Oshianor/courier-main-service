@@ -66,11 +66,12 @@ const orderSchema = mongoose.Schema(
       enum: [
         "pending", // accepted driver/company
         "enrouteToPickup", //on the way to pickup
-        "awaitingPickupConfirmation", // arrived at pickup location and awaiting comfirmation
+        "arrivedAtPickup", // arrived at pickup location and awaiting comfirmation
         "pickedup", // When item has been picked
         "enrouteToDelivery", // on the road to delivery.
-        "awaitingDeliveryConfirmation", // await customer confirmation on delivery
+        "arrivedAtDelivery", // await customer confirmation on delivery
         "delivered", // customer confirmed deluvery
+        "cancelled",
       ],
       default: "pending",
     },

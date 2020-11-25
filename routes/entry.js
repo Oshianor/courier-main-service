@@ -7,8 +7,7 @@ const { UserAuth, Auth } = require("../middlewares/auth");
 router.post("/", UserAuth, controller.entry.localEntry);
 // approve an entry for different payment method
 router.post("/confirm", UserAuth, controller.entry.transaction);
-// rider confirm cash payment
-router.patch("/cash/payment", UserAuth, controller.entry.riderConfirmPayment);
+
 
 router.get("/pool", Auth, controller.entry.byCompany);
 
@@ -25,5 +24,14 @@ router.post("/rider-accept", Auth, controller.entry.riderAcceptEntry);
 router.post("/rider-reject", Auth, controller.entry.riderRejectEntry);
 
 router.post("/enroute-pickup", Auth, controller.entry.riderStartPickup);
+
+router.post("/arrived-pickup", Auth, controller.entry.riderArriveAtPickup);
+
+// rider confirm cash payment
+router.patch("/confirm/cash-payment", UserAuth, controller.entry.riderConfirmCashPayment);
+
+router.post("/confirm-pickup", Auth, controller.entry.riderComfirmPickupOTPCode);
+
+
 
 module.exports = router;

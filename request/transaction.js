@@ -21,6 +21,9 @@ function validateTransaction(body) {
 function validateTransactionStatus(body) {
   const schema = Joi.object({
     status: Joi.string().valid("approved", "declined").required(),
+    entry: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
   });
 
   return schema.validate(body);

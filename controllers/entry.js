@@ -8,7 +8,11 @@ const {
   validateTransaction,
   validateTransactionStatus,
 } = require("../request/transaction");
-const { validateLocalEntry, validateEntryID } = require("../request/entry");
+const {
+  validateLocalEntry,
+  validateEntryID,
+  validatePickupOTP,
+} = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
@@ -18,12 +22,9 @@ const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
 const EntrySubscription = require("../subscription/entry");
+const NotifyService = require("../services/notification");
+const UserService = require("../services/user")
 const socket = new io(config.get("application.redis"), { key: "/sio" })
-// const { Container } = require("typedi");
-// const DPInstance = Container.get(DPService);
-// const settingInstance = Container.get(SettingService);
-// const countryInstance = Container.get(CountryService);
-// const entryInstance = Container.get(EntryService);
 
 
 
@@ -103,65 +104,6 @@ exports.transaction = async (req, res) => {
   } catch (error) {
     console.log(error);
     return JsonResponse(res, error.code, error.msg);
-  }
-};
-
-/**
- * Rider confirm user cash payment
- * @param {*} req
- * @param {*} res
- */
-exports.riderConfirmPayment = async (req, res) => {
-  try {
-    const { error } = validateTransactionStatus(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message);
-
-    // find the rider
-    const rider = await Rider.findOne({
-      _id: req.user.id,
-      verified: true,
-      status: "active",
-      company: { $ne: null },
-    });
-    if (!rider) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-
-    // find the company
-    const company = await Company.findOne({
-      _id: req.user.id,
-      verified: true,
-      status: "active",
-    });
-    if (!company)
-      return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-
-    const entry = await Entry.findOne({
-      status: "accepted",
-      rider: rider._id,
-      company: company._id,
-    });
-    if (!entry) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-
-    const trans = await Transaction.findOne({
-      entry: entry._id,
-    });
-    if (!trans) return JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-
-    let msgRES;
-    if (req.body.status === "approved") {
-      await trans.updateOne({ status: "approved", approvedAt: new Date() });
-      msgRES = "Payment Approved.";
-    } else {
-      await trans.updateOne({ status: "declined", approvedAt: new Date() });
-      await entry.updateOne({ status: "cancelled", cancelledAt: new Date() });
-      msgRES = "Payment Declined and Order cancelled.";
-    }
-
-    JsonResponse(res, 200, msgRES);
-    return;
-  } catch (error) {
-    console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
 
@@ -381,7 +323,118 @@ exports.riderStartPickup = async (req, res) => {
     const entryInstance = new EntryService();
     await entryInstance.riderStartEntryPickup(req.body, req.user);
 
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    const { entry } = await entrySub.updateEntryAdmin(req.body.entry);
+
+    // send nofication to the user device
+    const title = "Driver is on his way to the pickup location";
+    const notifyInstance = new NotifyService();
+    notifyInstance.textNotify(title, "", entry.user.FCMToken);
+
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * Rider Arrive a pickup location
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.riderArriveAtPickup = async (req, res) => {
+  try {
+    const { error } = validateEntryID(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const entryInstance = new EntryService();
+    const {entry} = await entryInstance.riderArriveAtPickup(req.body, req.user);
+
+    // send fcm notification
+    // send nofication to the user device
+    const title = "Driver has arrived at the pickup location";
+    const notifyInstance = new NotifyService();
+    notifyInstance.textNotify(title, "", entry.user.FCMToken);
+
+    
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(req.body.entry);
+
+    JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * Rider confirm user cash payment at pickup location
+ * @param {*} req
+ * @param {*} res
+ */
+exports.riderConfirmCashPayment = async (req, res) => {
+  try {
+    const { error } = validateTransactionStatus(req.body);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message);
+
+      const entryInstance = new EntryService();
+      const { entry } = await entryInstance.riderConfirmCashPayment(
+        req.body,
+        req.user
+      );
+
+      // send fcm notification
+      // send nofication to the user device
+      const title = "Your payment has been confirmed. Thank you";
+      const notifyInstance = new NotifyService();
+      notifyInstance.textNotify(title, "", entry.user.FCMToken);
+
+      // send socket to admin for update
+      const entrySub = new EntrySubscription();
+      await entrySub.updateEntryAdmin(entry._id);
+    
+
+    JsonResponse(res, 200, msgRES);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+/**
+ * Driver Confirm OTP code for pickup
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.riderComfirmPickupOTPCode = async (req, res) => {
+  try {
+    const { error } = validatePickupOTP(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const entryInstance = new EntryService();
+    const { entry } = await entryInstance.riderComfirmPickupOTPCode(
+      req.body,
+      req.user
+    );
+
+    // send fcm notification
+    // send nofication to the user device
+    const title = "Driver has confirmed Pickup.";
+    const notifyInstance = new NotifyService();
+    notifyInstance.textNotify(title, "", entry.user.FCMToken);
+
+    
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry._id);
+
+    JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
     return;
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);

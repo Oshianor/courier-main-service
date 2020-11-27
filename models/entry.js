@@ -43,6 +43,25 @@ const entrySchema = mongoose.Schema(
       enum: ["local", "interState", "international"],
       default: "local",
     },
+    status: {
+      type: String,
+      enum: [
+        "request", // when the request is made without payment method added
+        "pending", // when it's in the pool await company
+        "companyAccepted", // when a company accepts the order
+        "driverAccepted", // when a driver accepts the order
+        "enrouteToPickup", // when atleast order is in pickup
+        "arrivedAtPickup",
+        "pickedup", // when he item is picked up
+        "enrouteToDelivery", // when atleast order is  delivery
+        "arrivedAtDelivery", // when the rider gets to the delivery location
+        "delivered", // when an order is delivered
+        "completed", // when all orders are conpleted.
+        "cancelled", // when the order is cancelled
+      ],
+      default: "request",
+      index: true,
+    },
     sourceRef: {
       type: String,
       enum: ["pool", "company"],
@@ -83,25 +102,6 @@ const entrySchema = mongoose.Schema(
       type: String,
       default: "cash",
       enum: ["card", "cash"],
-    },
-    status: {
-      type: String,
-      enum: [
-        "request", // when the request is made without payment method added
-        "pending", // when it's in the pool await company
-        "companyAccepted", // when a company accepts the order
-        "driverAccepted", // when a driver accepts the order
-        "enrouteToPickup", // when atleast order is in pickup
-        "arrivedAtPickup",
-        "pickedup", // when he item is picked up
-        "enrouteToDelivery", // when atleast order is  delivery
-        "arrivedAtDelivery", // when the rider gets to the delivery location
-        "delivered", // when an order is delivered
-        "completed", // when all orders are conpleted.
-        "cancelled", // when the order is cancelled
-      ],
-      default: "request",
-      index: true,
     },
     OTPCode: {
       type: String,

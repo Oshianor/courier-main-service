@@ -8,7 +8,6 @@ router.post("/", UserAuth, controller.entry.localEntry);
 // approve an entry for different payment method
 router.post("/confirm", UserAuth, controller.entry.transaction);
 
-
 router.get("/pool", Auth, controller.entry.byCompany);
 
 router.get("/:id", Auth, controller.entry.singleEntry);
@@ -28,7 +27,7 @@ router.post("/enroute-pickup", Auth, controller.entry.riderStartPickup);
 router.post("/arrived-pickup", Auth, controller.entry.riderArriveAtPickup);
 
 // rider confirm cash payment
-router.patch("/confirm/cash-payment", UserAuth, controller.entry.riderConfirmCashPayment);
+router.post("/confirm/cash-payment", Auth, controller.entry.riderConfirmCashPayment);
 
 router.post("/confirm-pickup", Auth, controller.entry.riderComfirmPickupOTPCode);
 

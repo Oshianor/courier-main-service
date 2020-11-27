@@ -6,6 +6,7 @@ const cors = require("cors");
 const fileUpload = require("express-fileupload");
 const error = require("../middlewares/error");
 const entry = require("../routes/entry");
+const order = require("../routes/order");
 const auth = require("../routes/auth");
 const admin = require("../routes/admin");
 const pricing = require("../routes/pricing");
@@ -34,6 +35,7 @@ app.use("/api/v1/entry", entry);
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/rider", rider);
 app.use("/api/v1/user", user);
+app.use("/api/v1/order", order);
 app.use(error);
 
 module.exports = app;

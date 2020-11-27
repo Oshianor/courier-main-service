@@ -321,11 +321,14 @@ exports.riderStartPickup = async (req, res) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    await entryInstance.riderStartEntryPickup(req.body, req.user);
+     const { entry } = await entryInstance.riderStartEntryPickup(
+       req.body,
+       req.user
+     );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    const { entry } = await entrySub.updateEntryAdmin(req.body.entry);
+   await entrySub.updateEntryAdmin(req.body.entry);
 
     // send nofication to the user device
     const title = "Driver is on his way to the pickup location";
@@ -384,7 +387,7 @@ exports.riderConfirmCashPayment = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message);
 
       const entryInstance = new EntryService();
-      const { entry } = await entryInstance.riderConfirmCashPayment(
+      const { entry, code, msg } = await entryInstance.riderConfirmCashPayment(
         req.body,
         req.user
       );
@@ -400,7 +403,7 @@ exports.riderConfirmCashPayment = async (req, res) => {
       await entrySub.updateEntryAdmin(entry._id);
     
 
-    JsonResponse(res, 200, msgRES);
+    JsonResponse(res, code, msg);
     return;
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);
@@ -440,3 +443,4 @@ exports.riderComfirmPickupOTPCode = async (req, res) => {
     return JsonResponse(res, error.code, error.msg);
   }
 };
+

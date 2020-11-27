@@ -783,7 +783,7 @@ class EntryService {
         }
 
         // check if the payment method is cash
-        if (entry.paymentMethod === "cash") {
+        if (entry.paymentMethod === "card") {
           reject({ code: 400, msg: "You can't approve a entry that isn't a cash payment" });
           return;
         }
@@ -822,7 +822,12 @@ class EntryService {
             rider.longitude
           );
 
-          reject({ code: 200, msg: "You've successfully cancelled this trip." });
+          resolve({
+            entry, 
+            rider, company, transaction,
+            code: 200,
+            msg: "You've successfully declined this payment and the order has been cancelled for this trip.",
+          });
           return;
         }
 
@@ -840,7 +845,14 @@ class EntryService {
           rider.longitude
         );
 
-        resolve({ entry, rider, company, transaction });
+        resolve({
+          entry,
+          rider,
+          company,
+          transaction,
+          code: 200,
+          msg: "Payment has been approved successfully.",
+        });
       } catch (error) {
         console.log("error", error);
         reject({

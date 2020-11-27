@@ -49,6 +49,41 @@ class TripLogService {
       }
     });
   }
+
+
+  /**
+   * Log Order delivery initiation data
+   * @param {ObjectID} rider
+   * @param {String} user
+   * @param {ObjectID} entry
+   * @param {Array} order
+   * @param {Number} latitude
+   * @param {Number} longitude
+   * @param {metaData} metaData
+   */
+  createOrderLog(type, order, rider, user, entry, latitude, longitude, metaData={}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const newTripLog = new TripLog({
+          type,
+          rider,
+          user,
+          entry,
+          order,
+          latitude,
+          longitude,
+          metaData,
+        });
+
+        await newTripLog.save();
+
+        resolve(newTripLog);
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 module.exports = TripLogService;

@@ -1,6 +1,29 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
+const OTPRecordSchema = mongoose.Schema(
+  {
+    OTPCode: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    latitude: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+    longitude: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const orderSchema = mongoose.Schema(
   {
     orderId: {
@@ -11,6 +34,20 @@ const orderSchema = mongoose.Schema(
       trim: true,
       lowercase: true,
       // default: nanoid(10)
+    },
+    status: {
+      type: String,
+      enum: [
+        "pending", // accepted driver/company
+        "enrouteToPickup", //on the way to pickup
+        "arrivedAtPickup", // arrived at pickup location and awaiting comfirmation
+        "pickedup", // When item has been picked
+        "enrouteToDelivery", // on the road to delivery.
+        "arrivedAtDelivery", // await customer confirmation on delivery
+        "delivered", // customer confirmed deluvery
+        "cancelled",
+      ],
+      default: "pending",
     },
     entry: {
       type: ObjectId,
@@ -36,6 +73,12 @@ const orderSchema = mongoose.Schema(
       ref: "Rider",
       default: null,
     },
+    OTPCode: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    OTPRecord: [OTPRecordSchema],
     estimatedCost: {
       type: Number,
       required: true,
@@ -60,20 +103,6 @@ const orderSchema = mongoose.Schema(
     estimatedTraveldurationUnit: {
       type: String,
       default: "min",
-    },
-    status: {
-      type: String,
-      enum: [
-        "pending", // accepted driver/company
-        "enrouteToPickup", //on the way to pickup
-        "arrivedAtPickup", // arrived at pickup location and awaiting comfirmation
-        "pickedup", // When item has been picked
-        "enrouteToDelivery", // on the road to delivery.
-        "arrivedAtDelivery", // await customer confirmation on delivery
-        "delivered", // customer confirmed deluvery
-        "cancelled",
-      ],
-      default: "pending",
     },
     tollFee: {
       type: Number,

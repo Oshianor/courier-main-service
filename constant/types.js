@@ -36,6 +36,8 @@ const MSG_TYPES = Object.freeze({
   PROCEED_TO_PICKUP: "Proceeding to pickup location",
   PICKED_UP: "Item successfully picked up.",
   ARRIVED_AT_PICKUP: "Arrival at pickup location confirmed",
+  ARRIVED_AT_DELIVERY: "Arrival at delivery location confirmed",
+  PROCEED_TO_DELIVERY: "Proceeding to delivery location",
   FCMToken: "FCM Token updated.",
 });
 

@@ -311,6 +311,11 @@ class EntryService {
         entry.paymentMethod = body.paymentMethod;
         await newTransaction.save({ session });
         await entry.save({ session });
+        await Order.updateMany(
+          { entry: entry._id },
+          { transaction: newTransaction._id },
+          { session }
+        );
 
         await session.commitTransaction();
         session.endSession();

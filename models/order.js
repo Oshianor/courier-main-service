@@ -61,6 +61,12 @@ const orderSchema = mongoose.Schema(
       ref: "Company",
       default: null,
     },
+    transaction: {
+      type: ObjectId,
+      index: true,
+      ref: "Transaction",
+      default: null,
+    },
     user: {
       type: ObjectId,
       index: true,

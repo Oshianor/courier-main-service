@@ -167,7 +167,8 @@ class RiderSerivice {
           .populate(
             "company",
             "name email phoneNumber type logo address countryCode"
-          );
+          )
+          .populate("transaction");
 
         resolve(order);
       } catch (error) {

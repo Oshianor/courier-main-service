@@ -3,12 +3,6 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const UserSchema = new mongoose.Schema(
   {
-    userId: {
-      type: ObjectId,
-      index: true,
-      required: true,
-      unique: true,
-    },
     email: {
       type: String,
       index: true,

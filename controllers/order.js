@@ -38,7 +38,7 @@ exports.riderInitiateOrderDelivery = async (req, res) => {
     const title = `Delivery for order #${order.orderId}`;
     const body = `Driver is on his way to ${order.deliveryAddress}.`;
     const notifyInstance = new NotifyService();
-    notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_DELIVERY);
     return;
@@ -72,7 +72,7 @@ exports.riderArriveAtDelivery = async (req, res) => {
     const title = `Driver has arrived`;
     const body = `Driver has arrived at the delivery location ${order.deliveryAddress}.`;
     const notifyInstance = new NotifyService();
-    notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_DELIVERY);
     return;
@@ -102,7 +102,7 @@ exports.confirmDelivery = async (req, res) => {
     const title = msg;
     const body = "";
     const notifyInstance = new NotifyService();
-    notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
     
     // send socket to admin for update
     const entrySub = new EntrySubscription();

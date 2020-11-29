@@ -328,12 +328,12 @@ exports.riderStartPickup = async (req, res) => {
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-   await entrySub.updateEntryAdmin(req.body.entry);
+    await entrySub.updateEntryAdmin(req.body.entry);
 
     // send nofication to the user device
     const title = "Driver is on his way to the pickup location";
     const notifyInstance = new NotifyService();
-    notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
     return;
@@ -360,7 +360,7 @@ exports.riderArriveAtPickup = async (req, res) => {
     // send nofication to the user device
     const title = "Driver has arrived at the pickup location";
     const notifyInstance = new NotifyService();
-    notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
 
     
     // send socket to admin for update
@@ -396,7 +396,7 @@ exports.riderConfirmCashPayment = async (req, res) => {
       // send nofication to the user device
       const title = "Your payment has been confirmed. Thank you";
       const notifyInstance = new NotifyService();
-      notifyInstance.textNotify(title, "", entry.user.FCMToken);
+      await notifyInstance.textNotify(title, "", entry.user.FCMToken);
 
       // send socket to admin for update
       const entrySub = new EntrySubscription();
@@ -430,7 +430,7 @@ exports.riderComfirmPickupOTPCode = async (req, res) => {
     // send nofication to the user device
     const title = "Driver has confirmed Pickup.";
     const notifyInstance = new NotifyService();
-    notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
 
     
     // send socket to admin for update

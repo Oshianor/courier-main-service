@@ -10,43 +10,49 @@ class NotificationService {
    * @param {Object} data
    */
   textNotify = (title, body, FCMToken, data = {}) => {
-    // return new Promise((resolve, reject) => {
-    const message = {
-      notification: {
-        title,
-        body: body.length > 60 ? body.substr(0, 60) + "..." : body,
-      },
-      data,
-      android: {
-        ttl: 3600 * 1000,
-        // notification: {
-        //   icon: "no_icon",
-        //   color: "#f45342",
-        // },
-      },
-      apns: {
-        payload: {
-          aps: {
-            badge: 42,
+    return new Promise((resolve, reject) => {
+
+      // if not push token is passed then we resolve to null
+      if (!FCMToken) {
+        resolve(null)
+        return;
+      }
+
+
+      const message = {
+        notification: {
+          title,
+          body: body.length > 60 ? body.substr(0, 60) + "..." : body,
+        },
+        data,
+        android: {
+          ttl: 3600 * 1000,
+          // notification: {
+          //   icon: "no_icon",
+          //   color: "#f45342",
+          // },
+        },
+        apns: {
+          payload: {
+            aps: {
+              badge: 42,
+            },
           },
         },
-      },
-      token: FCMToken,
-    };
-    const defaultMessaging = firebase
-      .messaging()
-      .send(message)
-      .then((resp) => {
-        console.log("Message sent successfully:", resp);
-        // resolve(resp);
-      })
-      .catch((err) => {
-        console.log("Failed to send the message:", err);
-        // resolve(null)
-      });
-
-    console.log("defaultMessaging", defaultMessaging);
-    // })
+        token: FCMToken,
+      };
+      firebase
+        .messaging()
+        .send(message)
+        .then((resp) => {
+          console.log("Message sent successfully:", resp);
+          resolve(resp);
+        })
+        .catch((err) => {
+          console.log("Failed to send the message:", err);
+          resolve(null)
+        });
+    })
   };
 
   /**

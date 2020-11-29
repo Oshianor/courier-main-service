@@ -95,9 +95,9 @@ const UserAuth = async (req, res, next) => {
     const userParent = await userInstance.get(token);
     console.log("userParent", userParent);
 
-    const user = await User.findOne({ userId: userParent.data._id });
+    const user = await User.findById(userParent.data._id);
     if (!user) {
-      userParent.data.userId = userParent.data._id;
+      // userParent.data.userId = userParent.data._id;
       await User.create(userParent.data);
     }
 

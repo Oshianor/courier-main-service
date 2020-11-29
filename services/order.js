@@ -243,7 +243,7 @@ class OrderService {
 
         // send OTP code
         const notifyInstance = new NotificationService();
-        const msg = `Your delivery verification OTP code is ${token} for ${order.orderId}`;
+        const msg = `Your delivery verification OTP code is ${token} for #${order.orderId}`;
         const to = order.countryCode + order.phoneNumber;
         await notifyInstance.sendOTPByTermii(msg, to);
 

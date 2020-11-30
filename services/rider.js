@@ -176,6 +176,46 @@ class RiderSerivice {
       }
     });
   }
+
+  /**
+   * Get rider accepted order list
+   * @param {Auth user} user
+   */
+  getRiderDeliveredBasket(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: user.id, status: "active" });
+        if (!rider) {
+          reject({ code: 404, msg: "Account not found" });
+          return;
+        }
+        
+        const start = moment().startOf("day");
+        const end = moment().endOf("day");
+        const order = await Order.find({
+          rider: user.id,
+          status: "delivered",
+          createdAt: { $gte: start, $lt: end },
+        })
+          .populate("user", "name email phoneNumber countryCode")
+          .populate(
+            "entry",
+            "status type source paymentMethod transaction itemType TEC TED TET"
+          )
+          .populate(
+            "company",
+            "name email phoneNumber type logo address countryCode"
+          )
+          .populate("transaction");
+
+        resolve(order);
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+      }
+    });
+  }
+
+
 }
 
 module.exports = RiderSerivice;

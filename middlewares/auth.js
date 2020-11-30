@@ -88,13 +88,15 @@ const SocketAuth = (socket, next) => {
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token)
-    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
 
   try {
     // call user account service to get details
     const userParent = await userInstance.get(token);
     console.log("userParent", userParent);
 
+
+    // need to find a better solution
     const user = await User.findById(userParent.data._id);
     if (!user) {
       // userParent.data.userId = userParent.data._id;

@@ -467,3 +467,22 @@ exports.basket = async (req, res) => {
     return
   }
 }
+
+
+/**
+ * Get rider completed order for the day
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.completedOrder = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const orders = await riderInstance.getRiderDeliveredBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
+    return 
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}

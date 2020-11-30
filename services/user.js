@@ -1,7 +1,10 @@
 const config = require("config");
 const axios = require("axios");
 const User = require("../models/users");
-const NotificationService = require("./notification")
+const Order = require("../models/order");
+const moment = require("moment");
+const { MSG_TYPES } = require("../constant/types");
+const NotificationService = require("./notification");
 const { GenerateOTP, Mailer } = require("../utils")
 const { OTPCode } = require("../templates")
 
@@ -111,11 +114,80 @@ class UserService {
     });
   }
 
+  /**
+   * Get user pending order list
+   * @param {Auth user} user
+   */
+  getUserPendingOrder(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const order = await Order.find({
+          user: user.id,
+          status: { $ne: "delivered" },
+        })
+          .populate("rider", "name email phoneNumber countryCode")
+          .populate(
+            "entry",
+            "status type source paymentMethod transaction itemType TEC TED TET"
+          )
+          .populate(
+            "company",
+            "name email phoneNumber type logo address countryCode"
+          )
+          .populate("transaction");
+
+        resolve(order);
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Get user delievered order
+   * @param {Auth user} user
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getUserDeliveredOrder(user, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const order = await Order.find({
+          rider: user.id,
+          status: "delivered",
+        })
+          .populate("user", "name email phoneNumber countryCode")
+          .populate(
+            "entry",
+            "status type source paymentMethod transaction itemType TEC TED TET"
+          )
+          .populate(
+            "company",
+            "name email phoneNumber type logo address countryCode"
+          )
+          .populate("transaction")
+          .skip(skip)
+          .limit(pageSize);
+
+        const total = await Order.find({
+          rider: user.id,
+          status: "delivered",
+        }).countDocuments();
+
+        resolve({ order, total });
+      } catch (error) {
+        console.log("error", error);
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
   // /**
-  //  * Send OTP code to the 
-  //  * @param {Object} token otp code sent to the  
-  //  * @param {Object} entry 
-  //  * @param {Object} user 
+  //  * Send OTP code to the
+  //  * @param {Object} token otp code sent to the
+  //  * @param {Object} entry
+  //  * @param {Object} user
   //  */
   // sendUserPickupOTP(token, entry, user=null) {
   //   return new Promise((resolve, reject) => {
@@ -131,7 +203,7 @@ class UserService {
   //       const msg = `Your Pickup verification OTP code is ${token}`;
   //       const to = entry.countryCode + entry.phoneNumber;
   //       await notifyInstance.sendOTPByTermii(msg, to);
-                
+
   //       if (user) {
   //         Mailer(user.email, subject, html);
   //         const toUser = user.countryCode + user.phoneNumber;

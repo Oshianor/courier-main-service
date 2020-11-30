@@ -44,7 +44,7 @@ const transactionSchema = new mongoose.Schema(
       default: "pending",
     },
     approvedAt: {
-      // this is for the rider
+      // this is for the rider when the payment method is cash
       type: Date,
       default: null,
     },

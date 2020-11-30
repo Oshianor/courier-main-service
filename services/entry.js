@@ -308,6 +308,7 @@ class EntryService {
 
         entry.transaction = newTransaction;
         entry.status = "pending";
+        entry.approvedAt = new Date();
         entry.paymentMethod = body.paymentMethod;
         await newTransaction.save({ session });
         await entry.save({ session });
@@ -358,8 +359,10 @@ class EntryService {
           company: null,
         });
 
-        if (!company.vehicles.includes(entry.vehicle))
-          return JsonResponse(res, 404, MSG_TYPES.VEHICLE_NOT_SUPPORTED);
+        if (!company.vehicles.includes(entry.vehicle)) {
+          reject({ code: 400, msg: MSG_TYPES.VEHICLE_NOT_SUPPORTED });
+          return
+        }
 
         await entry.updateOne({
           company: user.id,
@@ -836,8 +839,11 @@ class EntryService {
           return;
         }
 
-
-        await transaction.updateOne({ status: "approved" });
+        const currentDate = new Date();
+        await transaction.updateOne({
+          status: "approved",
+          approvedAt: currentDate,
+        });
 
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createLog(

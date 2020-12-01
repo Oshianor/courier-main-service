@@ -128,8 +128,6 @@ exports.orderDetails = async (req, res) => {
     const orderInstance = new OrderService();
     const orderDetails = await orderInstance.getOrderDetails({ orderId: req.body.orderId });
 
-    if (!orderDetails) JsonResponse(res, 404, 'Order not found', orderDetails);
-
     JsonResponse(res, 200, 'Order details retrieved successfully', orderDetails);
     return;
   } catch (error) {

@@ -77,6 +77,11 @@ const UploadFileFormLocal = async (file, churchId) => {
   }
 };
 
+  /**
+   * Upload a binary file to S3
+   * @param {Binary} fileInBanary
+   * @param {String} fileName
+   */
 const UploadFileFromBinary = async (fileInBanary, fileName) => {
   const params = {
     Bucket: config.get("aws.bucket"),
@@ -84,7 +89,27 @@ const UploadFileFromBinary = async (fileInBanary, fileName) => {
     Body: fileInBanary,
   };
   const upload = await s3.upload(params).promise();
-  // console.log("Upload Data:", upload);
+  console.log("Upload Data:", upload);
+  return upload;
+};
+
+
+  /**
+   * Upload a binary file to S3
+   * @param {Binary} fileInBanary
+   * @param {String} fileName
+   */
+const UploadFileFromBase64 = async (fileInBanary, fileName) => {
+  const bur = new Buffer.from(fileInBanary.replace(/^data:image\/\w+;base64,/, ""), "base64");
+  const params = {
+    Bucket: config.get("aws.bucket"),
+    Key: `${Date.now()}_${fileName}.png`, // File name you want to save as in S3
+    Body: bur,
+    ContentEncoding: "base64",
+    ContentType: "image/png",
+  };
+  const upload = await s3.upload(params).promise();
+  console.log("Upload Data:", upload);
   return upload;
 };
 
@@ -100,12 +125,14 @@ const paginate = (req) => {
   return { page, pageSize, skip };
 };
 
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
   Mailer,
   UploadFileFormLocal,
   UploadFileFromBinary,
+  UploadFileFromBase64,
   AsyncForEach,
   paginate,
 };

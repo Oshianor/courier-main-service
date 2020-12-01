@@ -57,6 +57,10 @@ exports.localEntry = async (req, res) => {
     // get distance calculation
     const distance = await entryInstance.getDistanceMetrix(req.body);
 
+
+    const images = await entryInstance.uploadArrayOfImages(req.body.img);
+    req.body.img = images;
+
     const body = await entryInstance.calculateLocalEntry(
       req.body,
       req.user,
@@ -158,6 +162,8 @@ exports.singleEntry = async (req, res) => {
   try {
     const entry = await Entry.findOne({ _id: req.params.id })
       .populate("orders")
+      .populate("transaction")
+      .populate("vehicle")
       .select("-metaData");
 
     if (!entry) {

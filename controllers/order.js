@@ -9,7 +9,7 @@ const EntryService = require("../services/entry");
 const EntrySubscription = require("../subscription/entry");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user");
-const { validateOrderID, validateOrderOTP } = require("../request/order");
+const { validateOrderID, validateOrderOTP, validateUserOrderID } = require("../request/order");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
@@ -43,7 +43,7 @@ exports.riderInitiateOrderDelivery = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_DELIVERY);
     return;
   } catch (error) {
-        console.log("error", error);
+    console.log("error", error);
     return JsonResponse(res, error.code, error.msg);
   }
 };
@@ -77,7 +77,7 @@ exports.riderArriveAtDelivery = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_DELIVERY);
     return;
   } catch (error) {
-        console.log("error", error);
+    console.log("error", error);
     return JsonResponse(res, error.code, error.msg);
   }
 };
@@ -103,7 +103,7 @@ exports.confirmDelivery = async (req, res) => {
     const body = "";
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, body, entry.user.FCMToken);
-    
+
     // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
@@ -114,3 +114,26 @@ exports.confirmDelivery = async (req, res) => {
     return JsonResponse(res, error.code, error.msg);
   }
 };
+
+/**
+ * Fetch order details
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.orderDetails = async (req, res) => {
+  try {
+    const { error } = validateUserOrderID(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const orderInstance = new OrderService();
+    const orderDetails = await orderInstance.getOrderDetails({ orderId: req.body.orderId });
+
+    if (!orderDetails) JsonResponse(res, 404, 'Order not found', orderDetails);
+
+    JsonResponse(res, 200, 'Order details retrieved successfully', orderDetails);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+

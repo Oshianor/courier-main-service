@@ -18,8 +18,16 @@ function validateOrderOTP(data) {
   return Schema.validate(data);
 }
 
+function validateUserOrderID(data) {
+  const Schema = Joi.object().keys({
+    orderId: Joi.string().regex(/^[0-9a-zA-Z]{8}$/).required(),
+  });
+
+  return Schema.validate(data);
+}
 
 module.exports = {
   validateOrderID,
-  validateOrderOTP
+  validateOrderOTP,
+  validateUserOrderID
 };

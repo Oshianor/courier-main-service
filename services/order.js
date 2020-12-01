@@ -455,6 +455,7 @@ class OrderService {
 
       if (!order) {
         reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
       }
 
       resolve(order);

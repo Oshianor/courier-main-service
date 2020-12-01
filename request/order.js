@@ -20,7 +20,7 @@ function validateOrderOTP(data) {
 
 function validateUserOrderID(data) {
   const Schema = Joi.object().keys({
-    orderId: Joi.string().regex(/^[0-9a-zA-Z]{8}$/).required(),
+    orderId: Joi.string().regex(/^[-0-9a-zA-Z_]{8}$/).required(),
   });
 
   return Schema.validate(data);

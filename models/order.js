@@ -100,7 +100,7 @@ const orderSchema = mongoose.Schema(
     },
     estimatedDistanceUnit: {
       type: String,
-      default: "kg",
+      default: "km",
     },
     estimatedTravelduration: {
       type: Number,

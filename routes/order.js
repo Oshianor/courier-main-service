@@ -11,4 +11,6 @@ router.post("/arrived-delivery", Auth, controller.order.riderArriveAtDelivery);
 router.post("/confirm-delivery", Auth, controller.order.confirmDelivery);
 
 
+router.post("/order-details", Auth, controller.order.orderDetails);
+
 module.exports = router;

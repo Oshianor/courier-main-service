@@ -416,7 +416,7 @@ class OrderService {
           status: { $ne: "delivered" },
         });
 
-        
+
         if (!orderNotDelivered) {
           entry.status = "completed";
           await entry.save();
@@ -434,6 +434,31 @@ class OrderService {
           msg: "Something went wrong. You can't confirm this delivery",
         });
       }
+    });
+  }
+
+
+  /**
+ * Get order details
+ * @param {Object} filter
+ */
+  getOrderDetails(filter = {}) {
+    return new Promise(async (resolve, reject) => {
+      // check if we have pricing for the location
+      const order = await Order.findOne(filter)
+        .select('-_id status company transaction rider entry weight quantity name email itemName country state user deliveryAddress pickupAddress estimatedDistanceUnit')
+        .populate('user', ' -_id name email phoneNumber')
+        .populate('company', '-_id name email phoneNumber')
+        .populate('rider', ' -_id name email phoneNumber plateNumber')
+        .populate('transaction', ' -_id status paymentMethod amount')
+        .populate('entry', '-_id itemType status orders type source ');
+
+      if (!order) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+
+      resolve(order);
     });
   }
 }

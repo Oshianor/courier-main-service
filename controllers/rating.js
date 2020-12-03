@@ -1,9 +1,8 @@
 const RatingService = require("../services/rating");
-const { validateUserID, validateRatingID, validateRating } = require("../request/rating");
+const EntryService = require("../services/entry");
+const { validateRiderID, validateRating } = require("../request/rating");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-
-
 
 /**
  * Rate a user
@@ -12,10 +11,21 @@ const { MSG_TYPES } = require("../constant/types");
  */
 exports.rateUser = async (req, res) => {
   try {
-    const { error } = validateRating(req.body);
+
+    const entryInstance = new EntryService();
+    const entry = await entryInstance.get({ _id: req.body.entry }, 'user');
+    const ratingObj = {
+      rider: req.user.id,
+      user: `${entry.user}`,
+      source: req.body.source,
+      entry: req.body.entry,
+      rating: req.body.rating,
+      comment: req.body.comment || 'No comment'
+    }
+    const { error } = validateRating(ratingObj);
     if (error) return JsonResponse(res, 400, error.details[0].message);
     const ratingInstance = new RatingService();
-    await ratingInstance.createRating(req.body);
+    await ratingInstance.createRating(ratingObj);
     JsonResponse(res, 200, MSG_TYPES.RATING_DONE);
     return;
   } catch (error) {
@@ -24,36 +34,17 @@ exports.rateUser = async (req, res) => {
 };
 
 /**
- * Get my rating 
+ * Get rider ratings 
  * @param {*} req 
  * @param {*} res 
  */
-exports.getOneRating = async (req, res) => {
+exports.getAllRiderRatings = async (req, res) => {
   try {
-    const { error } = validateRatingID(req.body);
+    const { error } = validateRiderID({ rider: req.user.id });
     if (error) return JsonResponse(res, 400, error.details[0].message);
     const ratingInstance = new RatingService();
-    const rating = await ratingInstance.getOneRating({ _id: req.body.rating });
-    JsonResponse(res, 200, MSG_TYPES.RATING_RETRIEVED, rating);
-    return;
-  } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
-  }
-};
-
-
-/**
- * Get my rating 
- * @param {*} req 
- * @param {*} res 
- */
-exports.getAllRatings = async (req, res) => {
-  try {
-    const { error } = validateUserID(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
-    const ratingInstance = new RatingService();
-    const rating = await ratingInstance.getAllRatings({ ratingTo: req.body.user });
-    JsonResponse(res, 200, 'Ratings retrieved successfully', rating);
+    const { totalRating, rating } = await ratingInstance.getAllRatings({ rider: req.user.id, source: 'user' }, parseInt(req.query.pageNumber, 10), parseInt(req.query.nPerPage, 10));
+    JsonResponse(res, 200, 'Ratings retrieved successfully', { totalRating, rating });
     return;
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);

@@ -4,19 +4,14 @@ const { MSG_TYPES } = require("../constant/types");
 class RatingService {
   /**
  * Create a rating
- * @param {ObjectID} from
- * @param {ObjectID} to
- * @param {ObjectID} order
- * @param {Number} rating
- * @param {String} comment
-
+ * @param {Object} ratingObject
  */
-  createRating({ ratingFrom, ratingTo, order, rating, comment }) {
+  createRating(ratingObject) {
     return new Promise(async (resolve, reject) => {
       try {
-        const existingRating = await Rating.findOne({ ratingFrom: ratingFrom, ratingTo: ratingTo, order: order });
+        const existingRating = await Rating.findOne({ source: ratingObject.source, entry: ratingObject.entry, user: ratingObject.user });
         if (existingRating) return reject({ code: 409, msg: MSG_TYPES.RATING_EXIST });
-        const createRating = await Rating.create({ ratingFrom, ratingTo, order, rating, comment });
+        const createRating = await Rating.create(ratingObject);
         resolve(createRating);
       } catch (error) {
         console.log("error", error);
@@ -26,39 +21,22 @@ class RatingService {
   }
 
   /**
-   * Get a user Rating
-   * @param {Object} filter
-   */
-  getOneRating(filter = {}) {
-    return new Promise(async (resolve, reject) => {
-      // check if we have pricing for the location
-      const rating = await Rating.findOne(filter)
-        .select('-_id order rating ratingFrom comment ')
-        .populate('order', '-_id status itemName quantity weight pickupAddress deliveryAddress')
-        .populate('ratingFrom', '-_id name email phoneNumber');
-
-      if (!rating) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
-
-      resolve(rating);
-    });
-  }
-
-
-  /**
  * Get a user Rating
  * @param {Object} filter
+ * @param {Number} pageNumber 
+ * @param {Number} nPerPage
  */
-  getAllRatings(filter = {}) {
+  getAllRatings(filter = {}, pageNumber, nPerPage) {
     return new Promise(async (resolve, reject) => {
-      // check if we have pricing for the location
+      if (!nPerPage) nPerPage = 10;
+      const totalRating = await Rating.countDocuments(filter)
       const rating = await Rating.find(filter)
-        .select('order rating ratingFrom comment ')
-        .populate('order', '-_id status itemName quantity weight pickupAddress deliveryAddress')
-        .populate('ratingFrom', '-_id name email phoneNumber');
-
+        .select('-_id user rating comment')
+        .populate('user', '-_id name email')
+        .skip(pageNumber > 0 ? ((pageNumber - 1) * nPerPage) : 0)
+        .limit(nPerPage)
       if (rating.length < 1) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
-
-      resolve(rating);
+      resolve({ totalRating, rating });
     });
   }
 

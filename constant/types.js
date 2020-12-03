@@ -39,6 +39,9 @@ const MSG_TYPES = Object.freeze({
   ARRIVED_AT_DELIVERY: "Arrival at delivery location confirmed",
   PROCEED_TO_DELIVERY: "Proceeding to delivery location",
   FCMToken: "FCM Token updated.",
+  RATING_DONE: "Rating submitted successfully.",
+  RATING_EXIST: "Rating exists.",
+  RATING_RETRIEVED: "Rating retrieved successfully.",
 });
 
 const ACCOUNT_TYPES = Object.freeze({

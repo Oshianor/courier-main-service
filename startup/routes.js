@@ -15,6 +15,7 @@ const distancePrice = require("../routes/distancePrice");
 const company = require("../routes/company");
 const rider = require("../routes/rider");
 const user = require("../routes/user");
+const rating = require("../routes/rating");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
@@ -36,6 +37,7 @@ app.use("/api/v1/auth", auth);
 app.use("/api/v1/rider", rider);
 app.use("/api/v1/user", user);
 app.use("/api/v1/order", order);
+app.use("/api/v1/rating", rating);
 app.use(error);
 
 module.exports = app;

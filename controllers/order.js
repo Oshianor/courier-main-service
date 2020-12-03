@@ -16,6 +16,9 @@ const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
 const { paginate } = require("../utils");
 const mongoose = require("mongoose");
+const { validateRiderID } = require("../request/rating");
+const moment = require("moment");
+
 
 
 
@@ -139,19 +142,17 @@ exports.orderDetails = async (req, res) => {
 };
 
 /**
- * Get order overview sorted daily
+ * Get order overview for the week
  * @param {*} req 
  * @param {*} res 
  */
 exports.orderOverview = async (req, res) => {
   try {
-    const { error } = validateOrderID(req.body);
+    const { error } = validateRiderID({ rider: req.user.id });
     if (error) return JsonResponse(res, 400, error.details[0].message);
-
+    const beginningOfWeek = moment().startOf('isoWeek').toDate();
     const tripInstance = new TripLogService();
-
-    const orderDetails = await tripInstance.getOverview({ order: mongoose.Types.ObjectId(req.body.order), type: 'delivered' });
-
+    const orderDetails = await tripInstance.getOverview({ rider: mongoose.Types.ObjectId(req.user.id), type: 'delivered', createdAt: { $gte: beginningOfWeek } });
     JsonResponse(res, 200, 'Order overview fetched successfully', orderDetails);
     return;
   } catch (error) {

@@ -12,6 +12,7 @@ const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach } = require("../utils");
 
 
+
 class TripLogService {
   /**
    * Log pickup initiation data
@@ -23,7 +24,7 @@ class TripLogService {
    * @param {Number} longitude
    * @param {metaData} metaData
    */
-  createLog(type, order, rider, user, entry, latitude, longitude, metaData={}) {
+  createLog(type, order, rider, user, entry, latitude, longitude, metaData = {}) {
     return new Promise(async (resolve, reject) => {
       try {
         const triplogged = [];
@@ -61,7 +62,7 @@ class TripLogService {
    * @param {Number} longitude
    * @param {metaData} metaData
    */
-  createOrderLog(type, order, rider, user, entry, latitude, longitude, metaData={}) {
+  createOrderLog(type, order, rider, user, entry, latitude, longitude, metaData = {}) {
     return new Promise(async (resolve, reject) => {
       try {
         const newTripLog = new TripLog({
@@ -80,6 +81,75 @@ class TripLogService {
         resolve(newTripLog);
       } catch (error) {
         console.log("error", error);
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Get log for a trip(s)
+   * @param {Object} filter
+   * @param {Object} option
+   * @param {String} populate
+   */
+  get(filter = {}, option = {}, populate = "") {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // get orders from trip log
+        const orderLog = await TripLog.find(filter)
+          .select(option)
+          .populate(populate);
+
+        if (!orderLog) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+
+        resolve(orderLog);
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Get order overview from trip log
+   * @param {Object} filter
+   */
+
+  getOverview(filter = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // aggregate info from the log sorted daily
+        const orderLog = await TripLog.aggregate([
+          { $match: filter },
+          {
+            $lookup: {
+              from: 'orders',
+              localField: 'order',
+              foreignField: '_id',
+              as: 'order'
+            }
+          },
+          { $unwind: '$order' },
+          {
+            $sort: {
+              createdAt: -1
+            }
+          },
+          {
+            $group: {
+              _id: "$createdAt",
+              totalOrders: { $sum: 1 },
+              totalIncome: { $sum: "$order.estimatedCost" },
+              totalDistance: { $sum: "$order.estimatedDistance" },
+              data: { $push: "$$ROOT" }
+            }
+          },
+          { $project: { "data": { "order": { "estimatedCostCurrency": 1, "estimatedCost": 1, "estimatedDistanceUnit": 1, "estimatedDistance": 1 }, }, "totalOrders": 1, "totalIncome": 1, "totalDistance": 1 } }
+        ])
+
+        if (!orderLog) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+
+        resolve(orderLog);
+      } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });

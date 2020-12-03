@@ -453,10 +453,8 @@ class OrderService {
         .populate('transaction', ' -_id status paymentMethod amount')
         .populate('entry', '-_id itemType status orders type source ');
 
-      if (!order) {
-        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
-        return;
-      }
+      if (!order) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+
 
       resolve(order);
     });

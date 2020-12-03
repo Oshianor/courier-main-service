@@ -5,6 +5,7 @@ const Entry = require("../models/entry");
 const Rider = require("../models/rider");
 const Transaction = require("../models/transaction");
 const OrderService = require("../services/order");
+const TripLogService = require("../services/triplog");
 const EntryService = require("../services/entry");
 const EntrySubscription = require("../subscription/entry");
 const NotifyService = require("../services/notification");
@@ -14,6 +15,8 @@ const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
 const { paginate } = require("../utils");
+const mongoose = require("mongoose");
+
 
 
 /**
@@ -135,3 +138,23 @@ exports.orderDetails = async (req, res) => {
   }
 };
 
+/**
+ * Get order overview sorted daily
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.orderOverview = async (req, res) => {
+  try {
+    const { error } = validateOrderID(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const tripInstance = new TripLogService();
+
+    const orderDetails = await tripInstance.getOverview({ order: mongoose.Types.ObjectId(req.body.order), type: 'delivered' });
+
+    JsonResponse(res, 200, 'Order overview fetched successfully', orderDetails);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};  

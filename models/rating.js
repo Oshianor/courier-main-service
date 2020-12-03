@@ -3,33 +3,36 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const ratingSchema = new mongoose.Schema(
   {
-    ratingFrom: {
+    rider: {
       type: ObjectId,
       index: true,
       ref: "Rider",
       required: true,
     },
-    ratingTo: {
+    user: {
       type: ObjectId,
       index: true,
       ref: "User",
       required: true,
     },
-    order: {
+    source: {
+      type: String,
+      enum: ["rider", "user"]
+    },
+    entry: {
       type: ObjectId,
       index: true,
-      ref: "Order",
-      default: null,
+      ref: "Entry"
     },
     rating: {
       type: Number,
       required: true,
       min: 1,
-      max: 10
+      max: 10,
     },
     comment: {
-      type: String
-    }
+      type: String,
+    },
   },
   {
     timestamps: true,

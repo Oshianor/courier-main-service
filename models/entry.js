@@ -140,6 +140,7 @@ const entrySchema = mongoose.Schema(
       type: ObjectId,
       index: true,
       required: true,
+      ref: "Vehicle",
     },
     pickupLatitude: {
       type: Number,

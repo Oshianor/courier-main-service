@@ -14,7 +14,12 @@ const TripLogService = require("./triplog");
 const NotificationService = require("./notification");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
-const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
+const {
+  AsyncForEach,
+  GenerateOTP,
+  Mailer,
+  UploadFileFromBase64,
+} = require("../utils");
 const { OTPCode } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
@@ -179,6 +184,23 @@ class EntryService {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
+  }
+
+  /**
+   * Upload array of images
+   * @param {Array} images
+   */
+  uploadArrayOfImages(images) {
+    return new Promise(async (resolve, reject) => {
+      const img = [];
+      await AsyncForEach(images, async (row, rowIndex, arr) => {
+        const ObjectId = mongoose.Types.ObjectId();
+        const file = await UploadFileFromBase64(row, ObjectId);
+        img.push(file.Key)
+      })
+
+      resolve(img)
+    })
   }
 
   /**

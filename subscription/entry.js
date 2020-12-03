@@ -153,7 +153,9 @@ class EntrySubscription {
         status: "pending",
         state: company.state,
         company: null,
-      }).select("-metaData");
+      })
+        .select("-metaData")
+        .sort({ approvedAt: -1 });
 
       resolve(SocketResponse(false, "ok", entries));
     });

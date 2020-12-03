@@ -360,9 +360,15 @@ exports.online = async (req, res) => {
     if (rider.onlineStatus) {
       // to disable a rider account we need to know if they
       const entry = await Entry.findOne({
+        rider: req.user.id,
         $or: [
-          { status: "ongoing", rider: req.user.id },
-          { status: "driverAccepted", rider: req.user.id },
+          { status: "driverAccepted" },
+          { status: "enrouteToPickup" },
+          { status: "arrivedAtPickup" },
+          { status: "pickedup" },
+          { status: "enrouteToDelivery" },
+          { status: "arrivedAtDelivery" },
+          { status: "delivered" },
         ],
       });
 

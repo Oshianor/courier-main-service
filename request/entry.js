@@ -24,9 +24,14 @@ function validateLocalEntry(data) {
     phoneNumber: Joi.string().max(10).required(),
     countryCode: Joi.string().max(5).required(),
     img: Joi.array()
-      .items(Joi.string().base64().label("Item Image").allow("").required())
+      .items(
+        Joi.string()
+          .base64({ paddingRequired: false })
+          .label("Item Image")
+          .required()
+      )
       .max(4)
-      .optional(),
+      .required(),
     delivery: Joi.array()
       .items({
         email: Joi.string().email().max(50).label("Email").required(),

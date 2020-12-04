@@ -23,19 +23,21 @@ class RatingService {
   /**
  * Get a user Rating
  * @param {Object} filter
- * @param {Number} pageNumber 
- * @param {Number} nPerPage
+ * @param {Number} skip 
+ * @param {Number} pageSize
  */
-  getAllRatings(filter = {}, pageNumber, nPerPage) {
+  getAllRatings(filter = {}, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
-      if (!nPerPage) nPerPage = 10;
+
       const totalRating = await Rating.countDocuments(filter)
       const rating = await Rating.find(filter)
         .select('-_id user rating comment')
         .populate('user', '-_id name email')
-        .skip(pageNumber > 0 ? ((pageNumber - 1) * nPerPage) : 0)
-        .limit(nPerPage)
+        .skip(skip)
+        .limit(pageSize);
+
       if (rating.length < 1) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+
       resolve({ totalRating, rating });
     });
   }

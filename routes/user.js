@@ -10,5 +10,8 @@ router.get("/order/pending", UserAuth, controller.user.pending);
 
 router.get("/order/completed", UserAuth, controller.user.completed);
 
+// get my transactions
+router.get("/transaction-history", UserAuth, controller.transaction.allByUser);
+
 
 module.exports = router;

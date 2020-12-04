@@ -5,14 +5,11 @@ const { Auth } = require("../middlewares/auth");
 
 // Rating routes
 
-// rate a user
+// rate a user 
 router.post("/rate-user", Auth, controller.rating.rateUser);
 
-// get my rating
-router.post("/get-ratings", Auth, controller.rating.getAllRatings);
-
-// get my rating
-router.post("/get-rating", Auth, controller.rating.getOneRating);
+// get all rider rating
+router.get("/rider-ratings", Auth, controller.rating.getAllRiderRatings);
 
 
 module.exports = router;  

@@ -117,7 +117,7 @@ class TripLogService {
   getOverview(filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-        // aggregate info from the log sorted daily
+        // aggregate info from the log sorted weekly
         const orderLog = await TripLog.aggregate([
           { $match: filter },
           {
@@ -136,7 +136,11 @@ class TripLogService {
           },
           {
             $group: {
-              _id: "$createdAt",
+              _id: {
+                month: { $month: "$createdAt" },
+                day: { $dayOfMonth: "$createdAt" },
+                year: { $year: "$createdAt" }
+              },
               totalOrders: { $sum: 1 },
               totalIncome: { $sum: "$order.estimatedCost" },
               totalDistance: { $sum: "$order.estimatedDistance" },

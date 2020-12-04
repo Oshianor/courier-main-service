@@ -12,6 +12,6 @@ router.post("/confirm-delivery", Auth, controller.order.confirmDelivery);
 
 router.post("/order-details", Auth, controller.order.orderDetails);
 
-router.post("/daily-overview", Auth, controller.order.orderOverview);
+router.get("/weekly-overview", Auth, controller.order.orderOverview);
 
 module.exports = router;

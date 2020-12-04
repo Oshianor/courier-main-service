@@ -399,3 +399,39 @@ exports.destroy = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
+
+/**
+ * Get me Transactions for a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.allTransactions = async (req, res) => {
+  try {
+    const company = req.user.id
+    const { page, pageSize, skip } = paginate(req);
+
+    const companyDetails = await Company.findOne({
+      _id: company,
+      verified: true,
+      status: "active",
+    })
+
+    if (!companyDetails) {
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
+      return;
+    }
+
+    const { transactions, total } = await companyInstance.allTransactions(
+      company, skip,pageSize
+    )
+    const meta = {
+      total,
+      pagination: { pageSize, page}
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};

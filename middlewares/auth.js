@@ -28,7 +28,7 @@ const hasRole = (roles = []) => {
 
     // let admin = await Admin.findOne();
     if (!admin) return JsonResponse(res, 401, "Unauthenticated", null, null);
- 
+
     if (admin.role === ROLES.SUPER_ADMIN) {
       next();
     } else {
@@ -74,8 +74,6 @@ const SocketAuth = (socket, next) => {
 
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
 
-    // console.log("decoded", decoded);
-
     socket.user = decoded;
     next();
   } catch (ex) {
@@ -93,10 +91,8 @@ const UserAuth = async (req, res, next) => {
   try {
     // call user account service to get details
     const userParent = await userInstance.get(token);
-    console.log("userParent", userParent);
 
-
-    // need to find a better solution
+    // need to find a better solution    
     const user = await User.findById(userParent.data._id);
     if (!user) {
       // userParent.data.userId = userParent.data._id;
@@ -109,7 +105,7 @@ const UserAuth = async (req, res, next) => {
     delete req.user._id;
     next();
   } catch (ex) {
-    console.log(ex);
+    console.log('Exception', ex);
     if (ex.msg) {
       return JsonResponse(res, 401, ex.msg, null, null);
     }

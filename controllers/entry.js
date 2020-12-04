@@ -12,6 +12,7 @@ const {
   validateLocalEntry,
   validateEntryID,
   validatePickupOTP,
+  validateSendRiderRequest,
 } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -252,11 +253,11 @@ exports.companyAcceptEntry = async (req, res) => {
  */
 exports.riderAssignToEntry = async (req, res) => {
   try {
-    const { error } = validateEntryID(req.params);
+    const { error } = validateSendRiderRequest(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const entry = await entryInstance.riderAsignEntry(req.body, req.params, req.user);
+    const entry = await entryInstance.riderAsignEntry(req.body, req.user);
 
     // send to rider by their room id
     // send socket to riders only

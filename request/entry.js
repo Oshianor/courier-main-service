@@ -55,9 +55,20 @@ function validateLocalEntry(data) {
   return Schema.validate(data);
 }
 
-function validateEntryID(data) {
+function validateSendRiderRequest(data) {
   const Schema = Joi.object().keys({
     entry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    rider: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+  });
+
+  return Schema.validate(data);
+}
+
+function validateEntryID(data) {
+  const Schema = Joi.object().keys({
+    entry: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
   });
 
   return Schema.validate(data);
@@ -77,4 +88,5 @@ module.exports = {
   validateLocalEntry,
   validateEntryID,
   validatePickupOTP,
+  validateSendRiderRequest,
 };

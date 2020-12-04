@@ -28,6 +28,12 @@ const transactionSchema = new mongoose.Schema(
       ref: "Rider",
       default: null,
     },
+    company: {
+      type: ObjectId,
+      index: true,
+      ref: "Company",
+      default: null,
+    },
     paymentMethod: {
       type: String,
       required: true,
@@ -50,7 +56,7 @@ const transactionSchema = new mongoose.Schema(
     },
     note: {
       type: String,
-      default: ""
+      default: "",
     },
   },
   {

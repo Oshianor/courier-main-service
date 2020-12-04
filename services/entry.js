@@ -374,6 +374,13 @@ class EntryService {
           verified: true,
         });
 
+        const transaction = await Transaction.findOne({ entry: params.entry });
+
+        if (!transaction) {
+          reject({ code: 400, msg: "This entry cannot be processed." });
+          return;
+        }
+
         // const currentDate = new Date();
         const entry = await this.get({
           _id: params.entry,
@@ -394,6 +401,8 @@ class EntryService {
 
         await Order.updateMany({ entry: params.entry }, { company: user.id });
 
+        await transaction.updateOne({ company: user.id });
+        
         resolve(entry);
       } catch (error) {
         console.log("error", error);
@@ -403,12 +412,11 @@ class EntryService {
   }
 
   /**
-   * COmpany send rider request
-   * @param {Object} params
-   * @param {Object} params
+   * Company send rider request
+   * @param {Object} body
    * @param {Auth user Object} user
    */
-  riderAsignEntry(body, params, user) {
+  riderAsignEntry(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
         const rider = await Rider.findOne({
@@ -430,7 +438,7 @@ class EntryService {
         // if he has any pending at all
         if (reqEntry) {
           // if rider has already been sent this request and it's pending
-          if (String(reqEntry.entry) === params.entry) {
+          if (String(reqEntry.entry) === body.entry) {
             reject({ code: 400, msg: "Rider already assigned this entry." });
             return;
           }
@@ -449,7 +457,7 @@ class EntryService {
 
         // find the entry that has been accepted by a company
         const entry = await Entry.findOne({
-          _id: params.entry,
+          _id: body.entry,
           status: "companyAccepted",
           company: company._id,
           rider: null,
@@ -526,6 +534,14 @@ class EntryService {
           return;
         }
 
+
+        const transaction = await Transaction.findOne({ entry: body.entry });
+
+        if (!transaction) {
+          reject({ code: 400, msg: "This entry cannot be processed." });
+          return;
+        }
+
         // check if the rider was assigned any request for the entry
         const reqEntry = await RiderEntryRequest.findOne({
           rider: user.id,
@@ -547,6 +563,8 @@ class EntryService {
         await Order.updateMany({ entry: body.entry }, { rider: user.id });
 
         await reqEntry.updateOne({ status: "accepted" });
+
+        await transaction.updateOne({ rider: user.id });
 
         resolve({ entry, reqEntry });
       } catch (error) {

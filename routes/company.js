@@ -47,6 +47,8 @@ router.patch("/distance-price/:dp", Auth, controller.distancePrice.updateCompany
 // delete distance price for a location and vehicle
 router.delete("/distance-price/:dp", Auth, controller.distancePrice.deleteCompany);
 
+//get all transactions for a company
+router.get("/transactions",Auth,controller.company.allTransactions)
 
 
 module.exports = router;

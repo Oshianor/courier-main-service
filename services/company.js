@@ -137,6 +137,26 @@ class CompanyService {
       resolve(company);
     });
   }
+
+  /**
+   * Get all Transactions for a company
+   * @param {MongoDB ObjectId} company
+   * @param {number} skip
+   * @param {number} pageSize
+  */
+  allTransactions(company,skip,pageSize){
+    return new Promise(async(resolve,reject) => {
+      const transactions = await Transaction.find({company})
+        .skip(skip)
+        .limit(pageSize)
+      
+      const total = await Transaction.find({
+        company
+      }).countDocuments();
+
+      resolve({transactions,total})
+    })
+  }
 }
 
 module.exports = CompanyService;

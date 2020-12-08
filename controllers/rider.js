@@ -34,7 +34,7 @@ exports.create = async (req, res) => {
       // add country code.
       req.body.countryCode = country.cc;
 
-      
+
       const companyInstance = new CompanyService();
       const company = await companyInstance.get({
         _id: req.user.id,
@@ -75,7 +75,7 @@ exports.createSelf = async (req, res) => {
       verified: true,
       status: "active",
     });
-    
+
     // add country code.
     req.body.countryCode = country.cc;
     req.body.createdBy = "self";
@@ -408,7 +408,7 @@ exports.location = async (req, res) => {
   try {
     const { error } = validateRiderLocation(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
-      
+
     await Rider.updateOne({ _id: req.user.id }, req.body)
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
@@ -436,9 +436,9 @@ exports.destroy = async (req, res) => {
 };
 
 /**
- * Update rider FCMToken from firebase controller 
- * @param {*} req 
- * @param {*} res 
+ * Update rider FCMToken from firebase controller
+ * @param {*} req
+ * @param {*} res
  */
 exports.FCMToken = async (req, res) => {
   try {
@@ -449,7 +449,7 @@ exports.FCMToken = async (req, res) => {
     await riderInstance.updateFCMToken(req.body, req.user);
 
     JsonResponse(res, 200, MSG_TYPES.FCMToken);
-    return 
+    return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
     return
@@ -458,8 +458,8 @@ exports.FCMToken = async (req, res) => {
 
 /**
  * Get rider accepted order list
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.basket = async (req, res) => {
   try {
@@ -467,7 +467,7 @@ exports.basket = async (req, res) => {
     const orders = await riderInstance.getRiderBasket(req.user);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
-    return 
+    return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
     return
@@ -477,8 +477,8 @@ exports.basket = async (req, res) => {
 
 /**
  * Get rider completed order for the day
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.completedOrder = async (req, res) => {
   try {
@@ -486,7 +486,25 @@ exports.completedOrder = async (req, res) => {
     const orders = await riderInstance.getRiderDeliveredBasket(req.user);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
-    return 
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+/**
+ * Get rider's trips in the current month
+ * @param {*} req
+ * @param {*} res
+ */
+exports.trips = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const trips = await riderInstance.getRiderTrips(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, trips);
+    return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
     return

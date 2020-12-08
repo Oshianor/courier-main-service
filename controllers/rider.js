@@ -9,7 +9,12 @@ const CountryService = require("../services/country");
 const RiderService = require("../services/rider");
 const CompanyService = require("../services/company");
 const { validateStatusUpdate } = require("../models/riderCompanyRequest");
-const { validateRider, validateRiderSelf, validateRiderFCMToken } = require("../request/rider");
+const {
+  validateRider,
+  validateRiderSelf,
+  validateRiderFCMToken,
+  validateRiderLocation,
+} = require("../request/rider");
 const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");

@@ -22,6 +22,7 @@ class EntrySubscription {
       const entry = await Entry.findOne(entryId)
         .populate("transaction")
         .populate("orders")
+        .populate("vehicle")
         .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
@@ -30,7 +31,7 @@ class EntrySubscription {
         .populate(
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
-        )
+        );
 
       socket
         .to("admin")
@@ -54,6 +55,7 @@ class EntrySubscription {
         .limit(10)
         .populate("transaction")
         .populate("orders")
+        .populate("vehicle")
         .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
@@ -93,6 +95,7 @@ class EntrySubscription {
         .skip(skip)
         .populate("transaction")
         .populate("orders")
+        .populate("vehicle")
         .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
@@ -154,6 +157,7 @@ class EntrySubscription {
         state: company.state,
         company: null,
       })
+        .populate("vehicle")
         .select("-metaData")
         .sort({ approvedAt: -1 });
 

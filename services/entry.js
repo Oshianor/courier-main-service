@@ -264,7 +264,7 @@ class EntryService {
           _id: body.entry,
           status: "request",
           user: user.id,
-        });
+        }).populate("vehicle");
 
         if (!entry) {
           reject({

@@ -153,7 +153,7 @@ class RiderSerivice {
           reject({ code: 404, msg: "Account not found" });
           return;
         }
-        
+
         const order = await Order.find({
           rider: user.id,
           status: { $ne: "delivered" },
@@ -189,7 +189,7 @@ class RiderSerivice {
           reject({ code: 404, msg: "Account not found" });
           return;
         }
-        
+
         const start = moment().startOf("day");
         const end = moment().endOf("day");
         const order = await Order.find({
@@ -209,6 +209,36 @@ class RiderSerivice {
           .populate("transaction");
 
         resolve(order);
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+      }
+    });
+  }
+
+  /**
+   * Get rider's trips for the current month
+   * @param {Auth user} user
+   */
+  getRiderTrips(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: user.id, status: "active" });
+        if (!rider) {
+          reject({ code: 404, msg: "Account not found" });
+          return;
+        }
+
+        const monthStart = moment().startOf("month");
+        const monthEnd = moment().endOf("month");
+
+        const trips = await Order.find({
+          rider: user.id,
+          status: { $eq: "delivered" },
+          createdAt: { $gte: monthStart, $lt: monthEnd },
+        })
+        .select('-_id status estimatedCost estimatedCostCurrency createdAt');
+
+        resolve(trips);
       } catch (error) {
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
       }

@@ -406,7 +406,7 @@ class EntryService {
         resolve(entry);
       } catch (error) {
         console.log("error", error);
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

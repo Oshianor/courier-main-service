@@ -384,19 +384,9 @@ class EntryService {
         // const currentDate = new Date();
         const entry = await this.get({
           _id: params.entry,
-          // status: "pending",
-          // company: null,
+          status: "pending",
+          company: null,
         });
-
-        if (entry.company) {
-          reject({ code: 400, msg: "This entry has already been taken. Better luck next time" });
-          return;
-        }
-
-        if (entry.status !== "pending") {
-          reject({ code: 400, msg: "This entry doesn't exist" });
-          return;
-        }
 
         if (!company.vehicles.includes(entry.vehicle)) {
           reject({ code: 400, msg: MSG_TYPES.VEHICLE_NOT_SUPPORTED });
@@ -429,10 +419,38 @@ class EntryService {
   riderAsignEntry(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        // find the company
+        const rider = await Rider.findOne({
+          company: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "Rider Not Found" });
+          return;
+        }
+
+        const reqEntry = await RiderEntryRequest.findOne({
+          rider: body.rider,
+          status: "pending",
+        });
+
+        // if he has any pending at all
+        if (reqEntry) {
+          // if rider has already been sent this request and it's pending
+          if (String(reqEntry.entry) === body.entry) {
+            reject({ code: 400, msg: "Rider already assigned this entry." });
+            return;
+          }
+
+          reject({ code: 400, msg: "Rider already has a pending request" });
+          return;
+        }
+
         const companyInstance = new CompanyService();
         const company = await companyInstance.get({
           _id: user.id,
+          // $or: [{ status: "active" }, { status: "inactive" }],
           status: "active",
           verified: true,
         });
@@ -454,74 +472,16 @@ class EntryService {
           return;
         }
 
-        // find all the online riders for the company with the specific vehicle type
-        const riders = await Rider.find({
-          company: company._id,
-          deleted: false,
-          onlineStatus: true,
-          status: "active",
-          verified: true,
-          vehicle: entry.vehicle,
-        });
-        if (typeof riders[0] == "undefined") {
-          reject({ code: 404, msg: "No online Rider was found for this order. Please contact your riders" });
-          return;
-        }
-
-        const riderIDS = [];
-        const riderEntries= [];
-        await AsyncForEach(riders, async (row, index, arr) => {
-          
-          // find all orders for ech rider that has not yet been concluded or cancelled
-          const orders = await Order.findOne({ 
-            rider: row._id, 
-            $or: [
-              { status: { $ne: "delivered" } }, 
-              { status: { $ne: "cancelled" } } 
-            ]
-          }).countDocuments()
-
-          // check how many orders a driver is currently on
-          // if the driver is in less than 10 riders then send him to those orders
-          if (orders < 10) {
-            riderIDS.push(row._id);
-            riderEntries.push({
-              entry: entry._id,
-              company: company._id,
-              rider: row._id,
-            });
-          }
-
-          // const reqEntry = await RiderEntryRequest.findOne({
-          //   rider: body.rider,
-          //   status: "pending",
-          // });
-
-          // // if he has any pending at all
-          // if (reqEntry) {
-          //   // if rider has already been sent this request and it's pending
-          //   if (String(reqEntry.entry) === body.entry) {
-          //     reject({ code: 400, msg: "Rider already assigned this entry." });
-          //     return;
-          //   }
-
-          //   reject({ code: 400, msg: "Rider already has a pending request" });
-          //   return;
-          // }
-
-        });
         // send the request to the driver
-        // const newRiderReq = new RiderEntryRequest({
-        //   entry: entry._id,
-        //   company: company._id,
-        //   rider: body.rider,
-        // });
+        const newRiderReq = new RiderEntryRequest({
+          entry: entry._id,
+          company: company._id,
+          rider: body.rider,
+        });
 
-        // await newRiderReq.save();
+        await newRiderReq.save();
 
-        const newRiderReq = await RiderEntryRequest.create(riderEntries);
-
-        resolve({ entry, company, riders, newRiderReq, riderIDS });
+        resolve(entry);
       } catch (error) {
         console.log("error", error);
         reject(error);

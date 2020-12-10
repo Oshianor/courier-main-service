@@ -160,6 +160,7 @@ companySchema.methods.generateToken = function () {
       id: this._id,
       email: this.email,
       type: "company",
+      state: this.state,
     },
     config.get("application.jwt.key"),
     { expiresIn: "1w" }

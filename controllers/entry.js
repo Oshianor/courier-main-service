@@ -23,6 +23,8 @@ const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
 const EntrySubscription = require("../subscription/entry");
+const RiderSubscription = require("../subscription/rider");
+const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user")
 const socket = new io(config.get("application.redis"), { key: "/sio" })
@@ -98,7 +100,11 @@ exports.transaction = async (req, res) => {
     const entryInstance = new EntryService();
     const { entry, msg } = await entryInstance.createTransaction(req.body, req.user, req.token);
 
-    socket.emit(SERVER_EVENTS.NEW_ENTRY, entry);
+    console.log("entry", entry);
+
+    // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
+    const companySub = new CompanySubscription();
+    await companySub.dispatchToStateRoom(entry);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -185,44 +191,44 @@ exports.singleEntry = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allOnlineRiderCompanyEntry = async (req, res) => {
-  try {
+// exports.allOnlineRiderCompanyEntry = async (req, res) => {
+//   try {
 
-    // find an entry that as been assigned to the company
-    const entry = await Entry.findOne({
-      _id: req.params.entry,
-      status: "companyAccepted",
-      company: req.user.id
-    });
-    if (!entry) return JsonResponse(res, 404, "Entry Not Found!");
+//     // find an entry that as been assigned to the company
+//     const entry = await Entry.findOne({
+//       _id: req.params.entry,
+//       status: "companyAccepted",
+//       company: req.user.id
+//     });
+//     if (!entry) return JsonResponse(res, 404, "Entry Not Found!");
 
-    const company = await Company.findOne({
-      _id: req.user.id,
-      $or: [{ status: "active" }, { status: "inactive" }],
-      verified: true,
-    });
-    if (!company) return JsonResponse(res, 404, "Company Not Found!");
+//     const company = await Company.findOne({
+//       _id: req.user.id,
+//       status: "active",
+//       verified: true,
+//     });
+//     if (!company) return JsonResponse(res, 404, "Company Not Found!");
 
-    console.log("entry.vehicle", entry.vehicle);
-    console.log("company._id", company._id);
-    const riders = await Rider.find({
-      company: company._id,
-      deleted: false,
-      onlineStatus: true,
-      status: "active",
-      verified: true,
-      vehicle: entry.vehicle,
-    })
-      .populate("vehicle")
-      .select("name email phoneNumber state country vehicle");
+//     console.log("entry.vehicle", entry.vehicle);
+//     console.log("company._id", company._id);
+//     const riders = await Rider.find({
+//       company: company._id,
+//       deleted: false,
+//       onlineStatus: true,
+//       status: "active",
+//       verified: true,
+//       vehicle: entry.vehicle,
+//     })
+//       .populate("vehicle")
+//       .select("name email phoneNumber state country vehicle");
 
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, null);
-  } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-  }
-};
+//     JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, null);
+//   } catch (error) {
+//     console.log(error);
+//     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+//   }
+// };
 
 /**
  * Company accept Entry
@@ -239,9 +245,14 @@ exports.companyAcceptEntry = async (req, res) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
 
+    // dispatch accepted entry to companies
+    const companySub = new CompanySubscription();
+    await companySub.dispatchAcceptedEntry(entry._id);
+
     JsonResponse(res, 200, MSG_TYPES.COMPANY_ACCEPT);
     return;
   } catch (error) {
+    console.log("erreeeor", error);
     return JsonResponse(res, error.code, error.msg);
   }
 };
@@ -257,11 +268,14 @@ exports.riderAssignToEntry = async (req, res) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const entry = await entryInstance.riderAsignEntry(req.body, req.user);
+    const { entry, riderIDS } = await entryInstance.riderAsignEntry(
+      req.body,
+      req.user
+    );
 
-    // send to rider by their room id
-    // send socket to riders only
-    socket.to(String(req.body.rider)).emit(SERVER_EVENTS.ASSIGN_ENTRY, entry);
+    // send entries to all the rider
+    const riderSub = new RiderSubscription();
+    await riderSub.sendRidersEntries(riderIDS, entry);
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;

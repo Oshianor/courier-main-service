@@ -58,7 +58,6 @@ function validateLocalEntry(data) {
 function validateSendRiderRequest(data) {
   const Schema = Joi.object().keys({
     entry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
-    rider: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
   });
 
   return Schema.validate(data);

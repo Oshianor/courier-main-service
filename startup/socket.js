@@ -15,7 +15,7 @@ const entryInstance = Container.get(EntrySubscription);
 
 io.use(SocketAuth);
 io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
-  console.log("socket.io connection");
+  console.log("socket.io connection", socket.user);
   // register everybody to a room of their account ID
   if (socket.user.type === "rider") {
     // subcribe individual riders to their IDs
@@ -26,8 +26,8 @@ io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
     );
   } else if (socket.user.type === "company") {
     // subcribe companies to their state
-    socket.join(socket.user.state);
-    socket.to(String(socket.user.state)).emit(SERVER_EVENTS.LISTEN_POOL, await entryInstance.getPool(socket));
+    socket.join(String(socket.user.state));
+    socket.emit(SERVER_EVENTS.LISTEN_POOL, await entryInstance.getPool(socket));
   } else if (socket.user.type === "admin") {
     socket.join("admin");
     socket.emit(SERVER_EVENTS.LISTEN_POOL_ADMIN, await entryInstance.getPoolAdmin(socket));

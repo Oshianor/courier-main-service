@@ -17,7 +17,9 @@ class RiderSubscription {
       await AsyncForEach(riderIDS, (row, index, arr) => {
         // send to rider by their room id
         // send socket to riders only
-        socket.to(String(row)).emit(SERVER_EVENTS.ASSIGN_ENTRY, entry);
+        socket
+          .to(String(row))
+          .emit(SERVER_EVENTS.ASSIGN_ENTRY, SocketResponse(false, "ok", entry));
       });
       
       resolve({ entry });

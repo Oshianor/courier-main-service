@@ -13,8 +13,7 @@ class CompanySubscription {
    */
   dispatchAcceptedEntry(entry) {
     return new Promise(async (resolve, reject) => {
-      // socket.emit(SERVER_EVENTS.ENTRY_ACCEPTED, { entry });
-      socket.emit(SERVER_EVENTS.ENTRY_ACCEPTED, SocketResponse(false, "ok", entry));
+      socket.emit(SERVER_EVENTS.ENTRY_ACCEPTED, { entry });
       resolve({ entry });
     });
   }

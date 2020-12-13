@@ -22,5 +22,8 @@ router.get("/basket/completed", Auth, controller.rider.completedOrder);
 //get all trips completed by a rider in the current month
 router.get("/trips", Auth, controller.rider.trips);
 
+router.get("/transaction", Auth, controller.rider.getTransaction);
+
+
 
 module.exports = router;

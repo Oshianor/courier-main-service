@@ -192,6 +192,7 @@ class EntryService {
    */
   uploadArrayOfImages(images) {
     return new Promise(async (resolve, reject) => {
+      // console.log("images", images);
       const img = [];
       await AsyncForEach(images, async (row, rowIndex, arr) => {
         const ObjectId = mongoose.Types.ObjectId();

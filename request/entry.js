@@ -31,7 +31,7 @@ function validateLocalEntry(data) {
           .required()
       )
       .max(4)
-      .required(),
+      .optional(),
     delivery: Joi.array()
       .items({
         email: Joi.string().email().max(50).label("Email").required(),

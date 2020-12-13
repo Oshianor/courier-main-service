@@ -3,6 +3,7 @@ const moment = require("moment");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
 const Rider = require("../models/rider");
 const Company = require("../models/company");
+const Transaction = require("../models/transaction");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
@@ -172,7 +173,7 @@ class RiderSerivice {
 
         resolve(order);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
@@ -210,7 +211,7 @@ class RiderSerivice {
 
         resolve(order);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
@@ -235,17 +236,43 @@ class RiderSerivice {
           rider: user.id,
           status: { $eq: "delivered" },
           createdAt: { $gte: monthStart, $lt: monthEnd },
-        })
-        .select('-_id status estimatedCost estimatedCostCurrency createdAt');
+        }).select("-_id status estimatedCost estimatedCostCurrency createdAt");
 
         resolve(trips);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
 
+  /**
+   * Get rider's transaction for the month
+   * @param {Auth user} user
+   */
+  getRiderTransaction(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: user.id, status: "active" });
+        if (!rider) {
+          reject({ code: 404, msg: "Account not found" });
+          return;
+        }
 
+        const monthStart = moment().startOf("month");
+        const monthEnd = moment().endOf("month");
+
+        const transaction = await Transaction.find({
+          rider: user.id,
+          status: { $eq: "approved" },
+          createdAt: { $gte: monthStart, $lt: monthEnd },
+        })
+
+        resolve({ transaction, rider });
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 module.exports = RiderSerivice;

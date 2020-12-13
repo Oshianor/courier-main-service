@@ -515,3 +515,22 @@ exports.trips = async (req, res) => {
     return
   }
 }
+
+
+/**
+ * Get rider's transaction for the month
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getTransaction = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const { transaction } = await riderInstance.getRiderTransaction(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}

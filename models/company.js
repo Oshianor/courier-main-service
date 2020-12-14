@@ -3,7 +3,7 @@ const Jwt = require("jsonwebtoken");
 const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-
+// git add .;git commit -m "updated company account creating";git checkout dev;git merge abundance;git push;git checkout abundance;
 const companySchema = new mongoose.Schema(
   {
     type: {
@@ -110,7 +110,19 @@ const companySchema = new mongoose.Schema(
       ref: "Vehicle",
       required: true,
     },
-    rcDoc: {
+    cac: {
+      type: String,
+      required: true,
+    },
+    poi: {
+      type: String,
+      required: true,
+    },
+    poa: {
+      type: String,
+      required: true,
+    },
+    insuranceCert: {
       type: String,
       required: true,
     },

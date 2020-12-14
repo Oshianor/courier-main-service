@@ -39,8 +39,6 @@ exports.company = async (req, res) => {
     const { error } = validateCompany(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    await companyInstance.get({$or: [{ email: req.body.email }, { phoneNumber: req.body.phoneNumber }]});
-
     // validate country service
     const country = await countryInstance.getCountryAndState(req.body.country,req.body.state);
     req.body.countryCode = country.cc;

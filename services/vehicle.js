@@ -13,7 +13,7 @@ class VehicleService {
       }).countDocuments();
 
       if (vehicle !== vehicles.length) {
-        reject({ code: 404, msg: "Please provide valid vehicles" });
+        reject({ code: 404, msg: "Please provide a valid vehicle" });
         return;
       }
       resolve(vehicle);

@@ -10,7 +10,8 @@ const { hasRole, ROLES, Auth } = require("../middlewares/auth");
 // create pricing
 router.post("/", Auth, hasRole([ROLES.SUPER_ADMIN]), controller.pricing.create);
 // get all pricing plan
-router.get("/", Auth, hasRole([ROLES.SUPER_ADMIN]), controller.pricing.all);
+// router.get("/", Auth, hasRole([ROLES.SUPER_ADMIN]), controller.pricing.all);
+router.get("/", controller.pricing.all);
 // update a single pricing document
 router.put(
   "/:pricingId",

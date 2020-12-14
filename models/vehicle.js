@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-
 const vehicleSchema = mongoose.Schema(
   {
     ref: {
@@ -12,6 +11,14 @@ const vehicleSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    img: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    }
   },
   {
     timestamps: true,

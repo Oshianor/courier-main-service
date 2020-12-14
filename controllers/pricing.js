@@ -35,9 +35,9 @@ exports.create = async (req, res) => {
 exports.all = async (req, res) => {
   try {
     // check if account exist
-    const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
-    if (!admin)
-      return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
+    // const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
+    // if (!admin)
+    //   return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
 
     const pricing = await Pricing.find();
 

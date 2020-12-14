@@ -92,10 +92,25 @@ const companySchema = new mongoose.Schema(
         default: null,
       },
     },
+    description: {
+      type: String,
+      required: true,
+      maxlength: 3000,
+    },
+    postcode: {
+      type: String,
+      required: true,
+      maxlength: 10,
+    },
     contactName: {
       type: String,
       required: true,
       maxlength: 30,
+    },
+    contactEmail: {
+      type: String,
+      required: true,
+      maxlength: 50,
     },
     contactPhoneNumber: {
       type: String,

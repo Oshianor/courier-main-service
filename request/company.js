@@ -18,6 +18,9 @@ function validateCompany(body) {
     email: Joi.string().email().label("Email Address").max(50).required(),
     address: Joi.string().label("Address").max(225).required(),
     phoneNumber: Joi.string().label("Phone Number").min(10).max(10).required(),
+    contactEmail: Joi.string().email().label("Contact Email Address").max(50).required(),
+    description: Joi.string().label("Description").max(3000).required(),
+    postcode: Joi.number().label("Postal Code").max(99999999).required(),
     contactName: Joi.string().label("Contact Name").max(30).required(),
     contactPhoneNumber: Joi.string()
       .label("Contact Phone Number")
@@ -30,7 +33,11 @@ function validateCompany(body) {
     state: Joi.string().label("State").required(),
     tier: Joi.string().label("Pricing Plan").required(),
     vehicles: Joi.array()
-      .items(Joi.string().regex(/^[0-9a-fA-F]{24}$/).required())
+      .items(
+        Joi.string()
+          .regex(/^[0-9a-fA-F]{24}$/)
+          .required()
+      )
       .required(),
     password: passwordComplexity(complexityOptions)
       .label("Password")

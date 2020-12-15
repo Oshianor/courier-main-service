@@ -1,6 +1,9 @@
 const Admin = require("../models/admin");
 const Vehicle = require("../models/vehicle");
-const { validateVehicle } = require("../request/vehicle");
+const {
+  validateVehicle,
+  validateUpdateVehicle,
+} = require("../request/vehicle");
 const { MSG_TYPES } = require("../constant/types");
 const { JsonResponse } = require("../lib/apiResponse");
 const { UploadFileFromBinary } = require("../utils");
@@ -58,7 +61,7 @@ exports.all = async (req, res) => {
 exports.updateVehicle = async (req, res) => {
   try {
     // validate request
-    const { error } = validateVehicle(req.body);
+    const { error } = validateUpdateVehicle(req.body);
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
@@ -67,12 +70,21 @@ exports.updateVehicle = async (req, res) => {
     if (!admin)
       return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED);
 
+    if (req.files && req.files.img) {
+      const img = await UploadFileFromBinary(
+        req.files.img.data,
+        req.files.img.name
+      );
+      req.body.img = img.key;
+    }
     // create new account record
     const vehicle = await Vehicle.findById(req.params.vehicleId);
     if (!vehicle)
       return JsonResponse(res, 400, MSG_TYPES.NOT_FOUND);
 
-    req.body.ref = req.body.type.toLowerCase().replace(/\s+/g, "_");
+    if (req.body.type) {
+      req.body.ref = req.body.type.toLowerCase().replace(/\s+/g, "_");
+    }
     await vehicle.updateOne(req.body);
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);

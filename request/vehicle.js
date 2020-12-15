@@ -11,7 +11,7 @@ function validateVehicle(data) {
 
 function validateUpdateVehicle(data) {
   const Schema = Joi.object().keys({
-    weight: Joi.number().label("Weight").required(),
+    weight: Joi.number().label("Weight").optional(),
     type: Joi.string().max(30).label("Vehicle Type").optional(),
   });
 

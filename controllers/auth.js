@@ -4,8 +4,8 @@ const bcrypt = require("bcrypt");
 const Company = require("../models/company");
 const Rider = require("../models/rider");
 const Admin = require("../models/admin");
-const { validateAdminLogin } = require("../request/admin");
-const { validateCompanyLogin } = require("../request/company");
+const { validateAdminLogin, validateVerifyAccount } = require("../request/admin");
+const { validateCompanyLogin, validateVerifyCompany } = require("../request/company");
 const { validateRiderLogin } = require("../request/rider");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -211,14 +211,14 @@ exports.accountVerify = async (req, res) => {
  */
 exports.companyVerify = async (req, res) => {
   try {
-    const { error } = validateVerifyCompany(req.body);
+    const { error } = validateVerifyCompany(req.query);
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
     const currentDate = new Date();
     const company = await Company.findOne({
-      email: req.body.email,
-      "rememberToken.token": req.body.token,
+      email: req.query.email,
+      "rememberToken.token": req.query.token,
       verified: false,
       emailVerified: false,
       "rememberToken.expiredDate": { $gte: currentDate },
@@ -232,7 +232,8 @@ exports.companyVerify = async (req, res) => {
       status: "inactive",
     });
 
-    JsonResponse(res, null, MSG_TYPES.AWAIT_ADMIN);
+    // JsonResponse(res, null, MSG_TYPES.AWAIT_ADMIN);
+    return res.send(MSG_TYPES.AWAIT_ADMIN);
   } catch (error) {
     console.log(error);
     return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);

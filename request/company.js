@@ -94,7 +94,7 @@ function validateStatusUpdate(body) {
 function validateVerifyCompany(body) {
   const schema = Joi.object({
     email: Joi.string().email().max(50).required(),
-    token: Joi.string().max(225).required()
+    token: Joi.string().max(225).required(),
   });
 
   return schema.validate(body);

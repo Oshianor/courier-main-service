@@ -3,7 +3,7 @@ const Joi = require("joi");
 function validateVehicle(data) {
   const Schema = Joi.object().keys({
     type: Joi.string().max(30).label("Vehicle Type").required(),
-    description: Joi.string().max(225).label("Description").required(),
+    weight: Joi.number().label("Weight").required(),
   });
 
   return Schema.validate(data);
@@ -11,7 +11,7 @@ function validateVehicle(data) {
 
 function validateUpdateVehicle(data) {
   const Schema = Joi.object().keys({
-    description: Joi.string().max(225).label("Description").required(),
+    weight: Joi.number().label("Weight").required(),
     type: Joi.string().max(30).label("Vehicle Type").optional(),
   });
 

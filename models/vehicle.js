@@ -13,12 +13,12 @@ const vehicleSchema = mongoose.Schema(
     },
     img: {
       type: String,
-      required: true
+      required: true,
     },
-    description: {
-      type: String,
-      required: true
-    }
+    weight: {
+      type: Number,
+      required: true,
+    },
   },
   {
     timestamps: true,

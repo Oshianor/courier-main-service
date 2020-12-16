@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const Pricing = require("../models/pricing");
 const Company = require("../models/company");
 const Organization = require("../models/organization");
+const Transaction = require("../models/transaction");
 const template = require("../templates");
 const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");

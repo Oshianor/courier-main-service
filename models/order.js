@@ -183,11 +183,6 @@ const orderSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    weight: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
     quantity: {
       type: Number,
       required: true,

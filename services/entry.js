@@ -93,8 +93,9 @@ class EntryService {
    * @param {Object} distance google distance api response data
    * @param {Object} setting setting configuration
    * @param {Object} distancePrice setting configuration
+   * @param {Object} vehicle vehicle configuration
    */
-  calculateLocalEntry(body, user, distance, setting, distancePrice) {
+  calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
     return new Promise(async (resolve, reject) => {
       try {
         body.TED = 0;
@@ -151,8 +152,7 @@ class EntryService {
                 parseFloat(singleDistance) * parseFloat(distancePrice.price);
               // calculate the weight of each order for each trip multiplied by our price per weight
               const weight =
-                parseFloat(body.delivery[elemIndex].weight) *
-                parseFloat(setting.weightPrice);
+                parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
               const amount =
                 parseFloat(km) +
                 parseFloat(weight) +
@@ -186,6 +186,8 @@ class EntryService {
     });
   }
 
+  // parseFloat(body.delivery[elemIndex].weight) *
+
   /**
    * Upload array of images
    * @param {Array} images
@@ -197,11 +199,11 @@ class EntryService {
       await AsyncForEach(images, async (row, rowIndex, arr) => {
         const ObjectId = mongoose.Types.ObjectId();
         const file = await UploadFileFromBase64(row, ObjectId);
-        img.push(file.Key)
-      })
+        img.push(file.Key);
+      });
 
-      resolve(img)
-    })
+      resolve(img);
+    });
   }
 
   /**
@@ -390,7 +392,10 @@ class EntryService {
         });
 
         if (entry.company) {
-          reject({ code: 400, msg: "This entry has already been taken. Better luck next time" });
+          reject({
+            code: 400,
+            msg: "This entry has already been taken. Better luck next time",
+          });
           return;
         }
 
@@ -401,7 +406,7 @@ class EntryService {
 
         if (!company.vehicles.includes(entry.vehicle)) {
           reject({ code: 400, msg: MSG_TYPES.VEHICLE_NOT_SUPPORTED });
-          return
+          return;
         }
 
         await entry.updateOne({
@@ -413,7 +418,7 @@ class EntryService {
         await Order.updateMany({ entry: params.entry }, { company: user.id });
 
         await transaction.updateOne({ company: user.id });
-        
+
         resolve(entry);
       } catch (error) {
         console.log("error", error);
@@ -465,22 +470,25 @@ class EntryService {
           vehicle: entry.vehicle,
         });
         if (typeof riders[0] == "undefined") {
-          reject({ code: 404, msg: "No online Rider was found for this order. Please contact your riders" });
+          reject({
+            code: 404,
+            msg:
+              "No online Rider was found for this order. Please contact your riders",
+          });
           return;
         }
 
         const riderIDS = [];
-        const riderEntries= [];
+        const riderEntries = [];
         await AsyncForEach(riders, async (row, index, arr) => {
-          
           // find all orders for ech rider that has not yet been concluded or cancelled
-          const orders = await Order.findOne({ 
-            rider: row._id, 
+          const orders = await Order.findOne({
+            rider: row._id,
             $or: [
-              { status: { $ne: "delivered" } }, 
-              { status: { $ne: "cancelled" } } 
-            ]
-          }).countDocuments()
+              { status: { $ne: "delivered" } },
+              { status: { $ne: "cancelled" } },
+            ],
+          }).countDocuments();
 
           // check how many orders a driver is currently on
           // if the driver is in less than 10 riders then send him to those orders
@@ -509,7 +517,6 @@ class EntryService {
           //   reject({ code: 400, msg: "Rider already has a pending request" });
           //   return;
           // }
-
         });
         // send the request to the driver
         // const newRiderReq = new RiderEntryRequest({
@@ -574,7 +581,6 @@ class EntryService {
           reject({ code: 404, msg: "Entry already taken by another Rider" });
           return;
         }
-
 
         const transaction = await Transaction.findOne({ entry: body.entry });
 
@@ -873,14 +879,17 @@ class EntryService {
 
         // check if the payment method is cash
         if (entry.paymentMethod === "card") {
-          reject({ code: 400, msg: "You can't approve a entry that isn't a cash payment" });
+          reject({
+            code: 400,
+            msg: "You can't approve a entry that isn't a cash payment",
+          });
           return;
         }
 
         const transaction = await Transaction.findOne({
           entry: body.entry,
           paymentMethod: "cash",
-          status: "pending"
+          status: "pending",
         });
 
         if (!transaction) {
@@ -894,7 +903,10 @@ class EntryService {
         // when rider select declined on payment status
         if (body.status === "declined") {
           await transaction.updateOne({ status: "declined" });
-          await entry.updateOne({ status: "cancelled", cancelledAt: new Date() });
+          await entry.updateOne({
+            status: "cancelled",
+            cancelledAt: new Date(),
+          });
           await Order.updateMany(
             { entry: entry._id },
             { status: "cancelled", cancelledAt: new Date() }
@@ -912,10 +924,13 @@ class EntryService {
           );
 
           resolve({
-            entry, 
-            rider, company, transaction,
+            entry,
+            rider,
+            company,
+            transaction,
             code: 200,
-            msg: "You've successfully declined this payment and the order has been cancelled for this trip.",
+            msg:
+              "You've successfully declined this payment and the order has been cancelled for this trip.",
           });
           return;
         }
@@ -949,7 +964,8 @@ class EntryService {
         console.log("error", error);
         reject({
           code: 400,
-          msg: "Something went wrong. You can't confirm the payment for this order",
+          msg:
+            "Something went wrong. You can't confirm the payment for this order",
         });
       }
     });

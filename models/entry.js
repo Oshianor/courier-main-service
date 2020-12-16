@@ -132,10 +132,6 @@ const entrySchema = mongoose.Schema(
       required: true,
       maxLenght: 10,
     },
-    pickupTime: {
-      type: Date,
-      required: true,
-    },
     vehicle: {
       type: ObjectId,
       index: true,

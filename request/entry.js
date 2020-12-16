@@ -9,7 +9,6 @@ function validateLocalEntry(data) {
       .valid("Document", "Parcel", "Edible")
       .required(),
     name: Joi.string().label("Name").required(),
-    pickupTime: Joi.date().label("Pick Up Time").required(),
     pickupLatitude: Joi.number().label("Pick Up Latitude").required(),
     pickupLongitude: Joi.number().label("Pick Up Longitude").required(),
     description: Joi.string().label("Description").required(),
@@ -19,7 +18,7 @@ function validateLocalEntry(data) {
       .required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
-    city: Joi.string().label("City").optional(),
+    city: Joi.string().label("City").required(),
     postCode: Joi.string().label("Post Code").optional(),
     phoneNumber: Joi.string().max(10).required(),
     countryCode: Joi.string().max(5).required(),
@@ -43,9 +42,8 @@ function validateLocalEntry(data) {
         deliveryLongitude: Joi.number().label("Delivery Longitude").required(),
         country: Joi.string().label("Country").required(),
         state: Joi.string().label("State").required(),
-        city: Joi.string().label("City").optional(),
+        city: Joi.string().label("City").required(),
         postCode: Joi.string().label("Post Code").optional(),
-        weight: Joi.number().label("Weight").required(),
         quantity: Joi.number().label("Quantity").required(),
       })
       .max(10)

@@ -22,6 +22,7 @@ const CountryService = require("../services/country");
 const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
+const VehicleService = require("../services/vehicle");
 const EntrySubscription = require("../subscription/entry");
 const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
@@ -45,14 +46,17 @@ exports.localEntry = async (req, res) => {
     const countryInstance = new CountryService();
     const settingInstance = new SettingService();
     const DPInstance = new DPService();
+    const VehicleInstance = new VehicleService();
     const country = await countryInstance.getCountryAndState(
       req.body.country,
       req.body.state
     );
-    
+
+    // find a single vehicle to have access to the weight
+    const vehicle = await VehicleInstance.get(req.body.vehicle);
 
     // check if we have pricing for the location
-    const distancePrice = await DPInstance.get({country: req.body.country,state: req.body.state,vehicle: req.body.vehicle});
+    const distancePrice = await DPInstance.get({country: req.body.country, state: req.body.state, vehicle: req.body.vehicle});
 
     // get admin settings pricing
     const setting = await settingInstance.get({ source: "admin" });
@@ -72,7 +76,8 @@ exports.localEntry = async (req, res) => {
       req.user,
       distance.data,
       setting,
-      distancePrice
+      distancePrice,
+      vehicle
     );
     
     // start our mongoDb transaction

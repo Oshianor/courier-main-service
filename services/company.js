@@ -169,6 +169,9 @@ class CompanyService {
   allTransactions(company, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       const transactions = await Transaction.find({ company })
+        .populate("entry", "status pickupAddress deliveryAddresses")
+        .populate("user", "name")
+        .populate("rider", "name")
         .skip(skip)
         .limit(pageSize);
 

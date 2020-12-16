@@ -153,6 +153,7 @@ const entrySchema = mongoose.Schema(
       required: true,
       text: true,
     },
+    deliveryAddresses: [String],
     TEC: {
       //total estimated cost
       type: Number,

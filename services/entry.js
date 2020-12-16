@@ -97,11 +97,14 @@ class EntryService {
    */
   calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
     return new Promise(async (resolve, reject) => {
+      // console.log("distance", distance);
+      // console.log("distance origin_addresses", distance.destination_addresses);
       try {
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
         body.user = user.id;
+        body.deliveryAddresses = distance.destination_addresses;
         body.pickupAddress = distance.origin_addresses[0];
         body.metaData = {
           distance,

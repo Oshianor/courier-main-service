@@ -46,7 +46,7 @@ exports.vehicle = async (req, res) => {
 
 exports.all = async (req, res) => {
   try {
-    const vehicle = await Vehicle.find();
+    const vehicle = await Vehicle.find().sort({ weight: 1 });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle);
     return;

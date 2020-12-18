@@ -89,7 +89,6 @@ exports.riderArriveAtDelivery = async (req, res) => {
 };
 
 
-
 /**
  * Driver Confirm OTP code for delivery
  * @param {*} req 

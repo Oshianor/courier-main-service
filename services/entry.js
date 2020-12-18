@@ -463,6 +463,8 @@ class EntryService {
           return;
         }
 
+        console.log("entry.vehicle", entry.vehicle);
+
         // find all the online riders for the company with the specific vehicle type
         const riders = await Rider.find({
           company: company._id,
@@ -472,6 +474,9 @@ class EntryService {
           verified: true,
           vehicle: entry.vehicle,
         });
+        
+        console.log("riders", riders);
+
         if (typeof riders[0] == "undefined") {
           reject({
             code: 404,
@@ -480,6 +485,7 @@ class EntryService {
           });
           return;
         }
+
 
         const riderIDS = [];
         const riderEntries = [];

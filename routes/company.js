@@ -51,4 +51,9 @@ router.delete("/distance-price/:dp", Auth, controller.distancePrice.deleteCompan
 router.get("/transactions",Auth,controller.company.allTransactions)
 
 
+// get all entries
+router.get("/entry", Auth, controller.company.entries);
+
+router.get("/entry/:entryId", Auth, controller.company.getSingleEntry);
+
 module.exports = router;

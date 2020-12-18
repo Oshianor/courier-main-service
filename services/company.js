@@ -3,6 +3,7 @@ const moment = require("moment");
 const mongoose = require("mongoose");
 const Pricing = require("../models/pricing");
 const Company = require("../models/company");
+const Entry = require("../models/entry");
 const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
 const template = require("../templates");
@@ -60,8 +61,14 @@ class CompanyService {
         const cac = await UploadFileFromBinary(files.cac.data, files.cac.name);
         const poi = await UploadFileFromBinary(files.poi.data, files.poi.name);
         const poa = await UploadFileFromBinary(files.poa.data, files.poa.name);
-        const insuranceCert = await UploadFileFromBinary(files.insuranceCert.data,files.insuranceCert.name);
-        const logo = await UploadFileFromBinary(files.logo.data,files.logo.name);
+        const insuranceCert = await UploadFileFromBinary(
+          files.insuranceCert.data,
+          files.insuranceCert.name
+        );
+        const logo = await UploadFileFromBinary(
+          files.logo.data,
+          files.logo.name
+        );
         body.logo = logo.Key;
         body.cac = cac.Key;
         body.poi = poi.Key;
@@ -180,6 +187,72 @@ class CompanyService {
       }).countDocuments();
 
       resolve({ transactions, total });
+    });
+  }
+
+  /**
+   * Get all entry accepted by a company
+   * @param {MongoDB ObjectId} authUser
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllEntries(user, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const companyDetails = await Company.findOne({
+          _id: user.id,
+          verified: true,
+          status: "active",
+        });
+
+        if (!companyDetails) {
+          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+          return;
+        }
+
+        const entry = await Entry.find({ company: user.id })
+          .select({ metaData: 0 })
+          .skip(skip)
+          .limit(pageSize);
+
+        const total = await Entry.find({
+          company: user.id,
+        }).countDocuments();
+
+        resolve({ entry, total });
+      } catch (error) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+    });
+  }
+
+  /**
+   * Get a single entry by a company
+   * @param {MongoDB ObjectId} authUser
+   * @param {MongoDB ObjectId} entryId
+   */
+  getSingleEntry(user, entryId) {
+    return new Promise(async (resolve, reject) => {
+      const companyDetails = await Company.findOne({
+        _id: user.id,
+        verified: true,
+        status: "active",
+      });
+
+      if (!companyDetails) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+
+      const entry = await Entry.find({ company: user.id, _id: entryId })
+        .populate("orders")
+        .populate("transaction")
+        .populate("user", "name countryCode phoneNumber")
+        .populate("rider", "email onlineStatus name countryCode phoneNumber")
+        .select({ metaData: 0 })
+
+      resolve({ entry });
     });
   }
 }

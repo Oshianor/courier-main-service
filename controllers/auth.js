@@ -138,6 +138,10 @@ exports.riderLogin = async (req, res) => {
       return JsonResponse(res, 401, MSG_TYPES.SUSPENDED);
     }
 
+    if (!rider.company) {
+      return JsonResponse(res, 400, "You can't login because you've not been assigned to a company");
+    }
+
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, rider.password);
     if (!validPassword)

@@ -433,3 +433,47 @@ exports.allTransactions = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
+
+
+/**
+ * Get all entry accepted by a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.entries = async (req, res) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+
+    const { entry, total } = await companyInstance.getAllEntries(
+      req.user,
+      skip,
+      pageSize
+    );
+    const meta = {
+      total,
+      pagination: { pageSize, page}
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entry, meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+
+/**
+ * Get all entry accepted by a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getSingleEntry = async (req, res) => {
+  try {
+    const { entry } = await companyInstance.getSingleEntry(req.user, req.params.entryId);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entry);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};

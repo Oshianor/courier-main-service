@@ -1,13 +1,15 @@
 const Admin = require("../models/admin");
 const moment = require("moment");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
+const Order = require("../models/order");
+const Entry = require("../models/entry");
 const Rider = require("../models/rider");
+const OnlineHistory = require("../models/onlineHistory");
 const Company = require("../models/company");
 const Transaction = require("../models/transaction");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
-const Order = require("../models/order");
 
 class RiderSerivice {
   /**
@@ -265,11 +267,91 @@ class RiderSerivice {
           rider: user.id,
           status: { $eq: "approved" },
           createdAt: { $gte: monthStart, $lt: monthEnd },
-        })
+        });
 
         resolve({ transaction, rider });
       } catch (error) {
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Rider goline and offline
+   * @param {Object} AuthUser
+   */
+  toggleOnlineStatus(user) {
+    return new Promise(async(resolve, reject) => {
+      const rider = await Rider.findOne({
+        _id: user.id,
+        status: "active",
+        verified: true,
+      });
+      if (!rider) {
+        reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        return
+      } 
+
+      let msg;
+      if (rider.onlineStatus) {
+        // to disable a rider account we need to know if they
+        const entry = await Entry.findOne({
+          rider: user.id,
+          $or: [
+            { status: "driverAccepted" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+            { status: "delivered" },
+          ],
+        });
+
+        if (entry) {
+          reject({ code: 400, msg: "You can't go offline while on a trip." });
+          return
+        }
+
+        msg = "Offline Successfully ";
+        await rider.updateOne({ onlineStatus: false });
+        const newOnelineHistory = new OnlineHistory({
+          rider: user.id,
+          status: "offline",
+        });
+        await newOnelineHistory.save();
+      } else {
+        msg = "Online Successfully ";
+        await rider.updateOne({ onlineStatus: true });
+        const newOnelineHistory = new OnlineHistory({
+          rider: user.id,
+          status: "online",
+        });
+        await newOnelineHistory.save();
+      }
+
+      resolve({ msg, rider });
+    })
+  }
+
+  /**
+   * Get rider's trip status by admin
+   * @param {MongoDB ObjectId} riderId rider id
+   */
+  getDriverTripStatus(riderId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // check if there are no completed orders or cancelled orders
+        const order = await Order.findOne({
+          $or: [
+            { status: { $ne: "delivered" } },
+            { status: { $ne: "cancelled" } },
+          ],
+        });
+
+        resolve({ order });
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

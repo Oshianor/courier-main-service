@@ -1,9 +1,6 @@
 const moment = require("moment");
 const Company = require("../models/company");
 const Rider = require("../models/rider");
-const OnlineHistory = require("../models/onlineHistory");
-const Country = require("../models/countries");
-const Entry = require("../models/entry");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
 const CountryService = require("../services/country");
 const RiderService = require("../services/rider");
@@ -348,53 +345,14 @@ exports.status = async (req, res) => {
 };
 
 /**
- * SRider goline and offline
+ * Rider go online and offline
  * @param {*} req
  * @param {*} res
  */
 exports.online = async (req, res) => {
   try {
-    const rider = await Rider.findOne({
-      _id: req.user.id,
-      status: "active",
-      verified: true,
-    });
-    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, rider);
-
-    let msg;
-    if (rider.onlineStatus) {
-      // to disable a rider account we need to know if they
-      const entry = await Entry.findOne({
-        rider: req.user.id,
-        $or: [
-          { status: "driverAccepted" },
-          { status: "enrouteToPickup" },
-          { status: "arrivedAtPickup" },
-          { status: "pickedup" },
-          { status: "enrouteToDelivery" },
-          { status: "arrivedAtDelivery" },
-          { status: "delivered" },
-        ],
-      });
-
-      if (entry) return JsonResponse(res, 200, "You can't go offline while on a trip.");
-
-      msg = "Offline Successfully ";
-      await rider.updateOne({ onlineStatus: false });
-      const newOnelineHistory = new OnlineHistory({
-        rider: req.user.id,
-        status: "offline",
-      });
-      await newOnelineHistory.save()
-    } else {
-      msg = "Online Successfully ";
-      await rider.updateOne({ onlineStatus: true });
-      const newOnelineHistory = new OnlineHistory({
-        rider: req.user.id,
-        status: "online",
-      });
-      await newOnelineHistory.save();
-    }
+    const riderInstance = new RiderService();
+    const { msg } = await riderInstance.toggleOnlineStatus(req.user);
 
     JsonResponse(res, 200, msg);
     return
@@ -528,6 +486,29 @@ exports.getTransaction = async (req, res) => {
     const { transaction } = await riderInstance.getRiderTransaction(req.user);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+
+/**
+ * Get rider's trip status by admin
+ * @param {*} req
+ * @param {*} res
+ */
+exports.checkDriverTripStatus = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const { order } = await riderInstance.getDriverTripStatus(
+      req.params.riderId
+    );
+    
+    const withPackage = order ? true : false;
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, { withPackage });
     return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

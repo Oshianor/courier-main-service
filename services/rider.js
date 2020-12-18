@@ -343,6 +343,7 @@ class RiderSerivice {
       try {
         // check if there are no completed orders or cancelled orders
         const order = await Order.findOne({
+          rider: riderId,
           $or: [
             { status: { $ne: "delivered" } },
             { status: { $ne: "cancelled" } },

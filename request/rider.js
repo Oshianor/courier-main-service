@@ -36,9 +36,9 @@ function validateRiderSelf(body) {
     vehicle: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
-    company: Joi.string()
-      .regex(/^[0-9a-fA-F]{24}$/)
-      .required(),
+    // company: Joi.string()
+    //   .regex(/^[0-9a-fA-F]{24}$/)
+    //   .required(),
     ECName: Joi.string().max(30).required(),
     ECPhone: Joi.string().max(10).required(),
     ECEmail: Joi.string().email().max(50).required(),

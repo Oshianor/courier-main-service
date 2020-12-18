@@ -11,6 +11,11 @@ const companySchema = new mongoose.Schema(
       enum: ["HQ", "BR"],
       default: "HQ",
     },
+    ownership: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     organization: {
       type: ObjectId,
       required: true,

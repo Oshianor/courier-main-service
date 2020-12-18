@@ -5,7 +5,7 @@ const RiderCompanyRequest = require("../models/riderCompanyRequest");
 const CountryService = require("../services/country");
 const RiderService = require("../services/rider");
 const CompanyService = require("../services/company");
-const { validateStatusUpdate } = require("../models/riderCompanyRequest");
+const { validateStatusUpdate } = require("../request/riderCompanyRequest");
 const {
   validateRider,
   validateRiderSelf,
@@ -73,9 +73,9 @@ exports.createSelf = async (req, res) => {
 
     const companyInstance = new CompanyService();
     const company = await companyInstance.get({
-      _id: req.body.company,
       verified: true,
       status: "active",
+      ownership: true
     });
 
     // add country code.
@@ -235,8 +235,8 @@ exports.requests = async (req, res) => {
       status: "pending",
       company: req.user.id,
     })
-      .populate("rider", "name email address state country img onlineStatus")
-      .populate("company", "name email address state country logo")
+      .populate("rider", "-password")
+      // .populate("company", "name email address state country logo")
       .skip(skip)
       .limit(pageSize)
       .select("-password");

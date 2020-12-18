@@ -28,7 +28,7 @@ router.delete("/riders/:riderId", Auth, controller.rider.destroy);
 
 // Riders Request
 router.get("/request/riders", Auth, controller.rider.requests);
-router.put("/request/:requestId/respond", Auth, controller.rider.respond);
+router.post("/request/:requestId", Auth, controller.rider.respond);
 
 
 // settings

@@ -13,6 +13,11 @@ const organizerSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    ownership: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     publicToken: {
       type: String,
       required: true,

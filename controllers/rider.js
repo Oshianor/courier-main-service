@@ -11,6 +11,7 @@ const {
   validateRiderSelf,
   validateRiderFCMToken,
   validateRiderLocation,
+  validateRiderStatus
 } = require("../request/rider");
 const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");

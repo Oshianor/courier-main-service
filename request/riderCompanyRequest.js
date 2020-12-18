@@ -12,3 +12,4 @@ function validateStatusUpdate(body) {
 module.exports = {
   validateStatusUpdate,
 };
+

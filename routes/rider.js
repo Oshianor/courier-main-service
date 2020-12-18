@@ -11,7 +11,7 @@ router.post("/", controller.rider.createSelf);
 // update rider location
 router.patch("/location", Auth, controller.rider.location);
 // go online/offline
-router.patch("/online", Auth, controller.rider.online);
+router.post("/online", Auth, controller.rider.online);
 
 router.patch("/fcmtoken", Auth, controller.rider.FCMToken);
 //get all orders by a rider for the day

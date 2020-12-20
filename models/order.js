@@ -114,30 +114,10 @@ const orderSchema = mongoose.Schema(
       type: Number,
       default: 0.0,
     },
-    deliveryLatitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    deliveryLongitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
     deliveryAddress: {
       type: String,
       required: true,
       text: true,
-    },
-    pickupLatitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    pickupLongitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
     },
     pickupAddress: {
       type: String,

@@ -136,8 +136,6 @@ class EntryService {
               body.delivery[elemIndex].deliveryAddress =
                 distance.destination_addresses[elemIndex];
               // add pickup details for each order
-              body.delivery[elemIndex].pickupLatitude = body.pickupLatitude;
-              body.delivery[elemIndex].pickupLongitude = body.pickupLongitude;
               body.delivery[elemIndex].pickupAddress =
                 distance.origin_addresses[0];
               // set duration of an order from the pick up point to the delivery point
@@ -163,11 +161,11 @@ class EntryService {
                 parseFloat(setting.baseFare);
 
               // set price for each order
-              body.delivery[elemIndex].estimatedCost = parseFloat(amount);
+              body.delivery[elemIndex].estimatedCost = parseFloat(amount).toFixed(2);
               // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
 
               // set total price for the entry
-              body.TEC = body.TEC + parseFloat(amount);
+              body.TEC = body.TEC + parseFloat(amount).toFixed(2);
             } else {
               // very questionable
               // just for test only
@@ -217,16 +215,11 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         // get all coords locations and sort them.
-        const origins = [
-          { lat: body.pickupLatitude, lng: body.pickupLongitude },
-        ];
+        const origins = [body.address];
         const destinations = [];
         // get all origin and destination
         await AsyncForEach(body.delivery, (data, index, arr) => {
-          destinations.push({
-            lat: data.deliveryLatitude,
-            lng: data.deliveryLongitude,
-          });
+          destinations.push(data.address);
         });
 
         console.log("origins", origins);
@@ -247,6 +240,11 @@ class EntryService {
             avoidTolls: false,
           },
         });
+
+        if (distance.data.status !== "OK") {
+          reject({ code: 500, msg: "Address provided is invalid" });
+          return
+        }
 
         resolve(distance);
       } catch (error) {

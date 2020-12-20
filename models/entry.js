@@ -138,16 +138,6 @@ const entrySchema = mongoose.Schema(
       required: true,
       ref: "Vehicle",
     },
-    pickupLatitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    pickupLongitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
     pickupAddress: {
       type: String,
       required: true,

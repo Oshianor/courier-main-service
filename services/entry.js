@@ -97,9 +97,10 @@ class EntryService {
    */
   calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
     return new Promise(async (resolve, reject) => {
-      // console.log("distance", distance);
-      // console.log("distance origin_addresses", distance.destination_addresses);
       try {
+        const pickup = await this.getGooglePlace(body.address);
+        body.pickupLatitude = pickup.results[0].geometry.location.lat;
+        body.pickupLongitude = pickup.results[0].geometry.location.lng;
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
@@ -121,9 +122,22 @@ class EntryService {
           itemTypePrice = setting.parcelPrice;
         }
 
+        const devy = await this.getGooglePlace(distance.destination_addresses.join(","));
+
         await AsyncForEach(distance.rows, async (row, rowIndex, rowsArr) => {
-          await AsyncForEach(row.elements, (element, elemIndex, elemArr) => {
+          await AsyncForEach(row.elements, async (element, elemIndex, elemArr) => {
             if (element.status === "OK") {
+
+              // set the coordinates for each deverly address
+              body.delivery[elemIndex].deliveryLatitude =
+                devy.results[elemIndex].geometry.location.lat;
+              body.delivery[elemIndex].deliveryLongitude =
+                devy.results[elemIndex].geometry.location.lng;
+
+                // set the coordinates for pickup address
+              body.delivery[elemIndex].pickupLatitude = pickup.results[0].geometry.location.lat;
+              body.delivery[elemIndex].pickupLongitude = pickup.results[0].geometry.location.lng;
+
               const time = parseFloat(element.duration.value / 60);
               const singleDistance = parseFloat(element.distance.value / 1000);
               // add user id
@@ -243,13 +257,44 @@ class EntryService {
 
         if (distance.data.status !== "OK") {
           reject({ code: 500, msg: "Address provided is invalid" });
-          return
+          return;
         }
 
         resolve(distance);
       } catch (error) {
         console.log(error);
         reject({ err: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Find the address on google maps
+   * @param {string} address
+   */
+  getGooglePlace(address) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const distance = await client.geocode({
+          params: {
+            address,
+            language: "en",
+            key: config.get("googleMap.key"),
+          },
+        });
+
+        console.log("distance", JSON.stringify(distance.data));
+        console.log("distance", distance.data);
+
+        if (distance.data.status !== "OK") {
+          reject({ code: 400, msg: "Your address couldn't be verified" });
+          return 
+        }
+
+        resolve(distance.data);
+      } catch (error) {
+        console.log("error distance", error);
+        reject({ code: 400, msg: "Your address couldn't be verified" });
       }
     });
   }
@@ -472,7 +517,7 @@ class EntryService {
           verified: true,
           vehicle: entry.vehicle,
         });
-        
+
         console.log("riders", riders);
 
         if (typeof riders[0] == "undefined") {
@@ -483,7 +528,6 @@ class EntryService {
           });
           return;
         }
-
 
         const riderIDS = [];
         const riderEntries = [];

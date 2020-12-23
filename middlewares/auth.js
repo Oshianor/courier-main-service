@@ -118,5 +118,5 @@ module.exports = {
   hasRole,
   ROLES,
   UserAuth,
-  SocketAuth,
+  SocketAuth
 };

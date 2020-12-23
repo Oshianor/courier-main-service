@@ -7,9 +7,10 @@ const Admin = require("../models/admin");
 const { validateAdminLogin, validateVerifyAccount } = require("../request/admin");
 const { validateCompanyLogin, validateVerifyCompany } = require("../request/company");
 const { validateRiderLogin } = require("../request/rider");
+const { validatePasswordUpdate, validateForgotPassword } = require("../request/auth");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-
+const AuthService = require("../services/auth");
 /**
  * Company Login
  * @param {*} req
@@ -49,7 +50,7 @@ exports.companyLogin = async (req, res) => {
       return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID);
 
     const token = company.generateToken();
-    
+
     company.password = "";
     res.header("x-auth-token", token);
     JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, company, null);
@@ -241,5 +242,88 @@ exports.companyVerify = async (req, res) => {
   } catch (error) {
     console.log(error);
     return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+/**
+ * Update password
+ * @param {*} req
+ * @param {*} res
+ */
+exports.updatePassword = async (req, res) => {
+  try {
+    const { error } = validatePasswordUpdate(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    req.body.rider = req.user.id
+
+    const authInstance = new AuthService();
+    await authInstance.updatePassword(req.body)
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * Validate Forgot-Pass Email
+ * @param {*} req
+ * @param {*} res
+ */
+exports.validateEmail = async (req, res) => {
+  try {
+    const { error } = validateForgotPassword(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    await authInstance.forgotPassEmailValidate(req.body.email)
+
+    return JsonResponse(res, 200, "An OTP has been sent to your email");
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+/**
+ * Validate Forgot-Pass OTP
+ * @param {*} req
+ * @param {*} res
+ */
+exports.validateOTP = async (req, res) => {
+  try {
+    const { error } = validateForgotPassword(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    await authInstance.forgotPassOTPValidate(req.body.email, req.body.otp)
+
+    return JsonResponse(res, 200, "Validation Successfull");
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+/**
+ * Validate Forgot-Pass OTP
+ * @param {*} req
+ * @param {*} res
+ */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { error } = validateForgotPassword(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    await authInstance.resetPassword(req.body.email, req.body.password)
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
   }
 };

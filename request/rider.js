@@ -1,4 +1,15 @@
 const Joi = require("joi");
+const passwordComplexity = require("joi-password-complexity");
+
+const complexityOptions = {
+  min: 6,
+  max: 20,
+  lowerCase: 1,
+  upperCase: 1,
+  numeric: 1,
+  symbol: 1,
+  requirementCount: 2,
+};
 
 function validateRider(body) {
   const schema = Joi.object({
@@ -76,6 +87,7 @@ function validateRiderLogin(body) {
   return schema.validate(body);
 }
 
+
 function validateRiderStatus(body) {
   const schema = Joi.object({
     status: Joi.string().valid("active", "suspended").required(),
@@ -110,5 +122,5 @@ module.exports = {
   validateRiderLogin,
   validateRiderStatus,
   validateRiderLocation,
-  validateRiderFCMToken,
+  validateRiderFCMToken
 };

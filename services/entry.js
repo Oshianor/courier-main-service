@@ -335,7 +335,7 @@ class EntryService {
             authorization_code: card.data.token,
             email: user.email,
             // email: "abundance@gmail.com",
-            amount: entry.TEC,
+            amount: parseFloat(entry.TEC).toFixed(2) * 100,
           });
           console.log("trans", trans);
 

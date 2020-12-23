@@ -5,6 +5,8 @@ const Pricing = require("../models/pricing");
 const Setting = require("../models/settings");
 const Country = require("../models/countries");
 const CountryService = require("../services/country");
+const SubscriptionService = require("../services/subscription");
+const PricingService = require("../services/pricing");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
 const { Container } = require("typedi");
@@ -40,13 +42,29 @@ exports.company = async (req, res) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     // validate country service
-    const country = await countryInstance.getCountryAndState(req.body.country,req.body.state);
+    const country = await countryInstance.getCountryAndState(req.body.country, req.body.state);
     req.body.countryCode = country.cc;
 
     // validate the array for supported vehicle list
     await vehicleInstance.validateAllVehiclesFromList(req.body.vehicles);
 
-    await companyInstance.create(req.body, req.files);
+    const { company, organization } = await companyInstance.create(req.body, req.files);
+
+    // const subscriptionInstance = new SubscriptionService();
+    // const pricingInstance = new PricingService();
+
+    // const freemiumPlan = pricingInstance.getPricing({ type: "freemium" })
+    // const startDate = new Date();
+    // const duration = 30;
+
+    // const subObject = {
+    //   company: company._id,
+    //   pricing: freemiumPlan._id,
+    //   startDate,
+    //   duration,
+    //   endDate: moment(startDate).add(30, 'days').format('YYYY-MM-DD HH:mm:mm')
+    // }
+    // await subscriptionInstance.create(subObject)
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
     return;
@@ -63,7 +81,7 @@ exports.company = async (req, res) => {
  */
 exports.branch = async (req, res) => {
   try {
-    
+
     return;
   } catch (error) {
     console.log(error);
@@ -420,11 +438,11 @@ exports.allTransactions = async (req, res) => {
     }
 
     const { transactions, total } = await companyInstance.allTransactions(
-      company, skip,pageSize
+      company, skip, pageSize
     )
     const meta = {
       total,
-      pagination: { pageSize, page}
+      pagination: { pageSize, page }
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
@@ -451,7 +469,7 @@ exports.entries = async (req, res) => {
     );
     const meta = {
       total,
-      pagination: { pageSize, page}
+      pagination: { pageSize, page }
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, entry, meta);

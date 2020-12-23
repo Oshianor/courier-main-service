@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const controllers = require("../controllers");
+const { Auth } = require("../middlewares/auth");
 
 // login as a company
 router.post("/company", controllers.auth.companyLogin);
@@ -10,6 +11,15 @@ router.post("/rider", controllers.auth.riderLogin);
 router.post("/verify", controllers.auth.accountVerify);
 // verify company account
 router.get("/verify/company", controllers.auth.companyVerify);
+// change password
+router.post("/update-password", [Auth], controllers.auth.updatePassword);
+
+// FORGOT PASSWORD
+router.post("/validate-email", controllers.auth.validateEmail);
+
+router.post("/validate-otp", controllers.auth.validateOTP);
+
+router.post("/reset-password", controllers.auth.resetPassword);
 
 
 module.exports = router;

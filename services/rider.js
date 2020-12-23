@@ -281,7 +281,7 @@ class RiderSerivice {
    * @param {Object} AuthUser
    */
   toggleOnlineStatus(user) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const rider = await Rider.findOne({
         _id: user.id,
         status: "active",
@@ -290,7 +290,7 @@ class RiderSerivice {
       if (!rider) {
         reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
         return
-      } 
+      }
 
       let msg;
       if (rider.onlineStatus) {
@@ -354,6 +354,45 @@ class RiderSerivice {
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
+    });
+  }
+
+  /**
+ * Update password
+ * @param {Object} body request body object
+ */
+  updatePassword(body) {
+    return new Promise(async (resolve, reject) => {
+      const activeUser = await User.findOne({
+        _id: body.rider,
+        verified: true,
+        status: "active",
+      });
+
+      if (!activeUser) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+
+      let validPassword = await bcrypt.compare(
+        body.oldPassword,
+        activeUser.password
+      );
+      if (!validPassword) {
+        reject({ code: 400, msg: "Wrong Password Entered" });
+        return;
+      }
+      const updatedPassword = await bcrypt.hash(body.newPassword, 13);
+      const updateUser = await User.updateOne(
+        { _id: user.id },
+        {
+          $set: {
+            password: updatedPassword,
+          },
+        }
+      );
+
+      resolve({ updateUser });
     });
   }
 }

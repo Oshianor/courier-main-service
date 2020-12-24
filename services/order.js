@@ -398,11 +398,11 @@ class OrderService {
 
         await entry.save();
         await order.save();
-
+        console.log("Got Here")
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createOrderLog(
           "delivered",
-          entry.orders,
+          order._id,
           rider._id,
           entry.user,
           entry._id,

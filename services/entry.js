@@ -518,7 +518,7 @@ class EntryService {
           vehicle: entry.vehicle,
         });
 
-        console.log("riders", riders);
+        // console.log("riders", riders);
 
         if (typeof riders[0] == "undefined") {
           reject({
@@ -569,14 +569,17 @@ class EntryService {
           //   return;
           // }
         });
-        // send the request to the driver
-        // const newRiderReq = new RiderEntryRequest({
-        //   entry: entry._id,
-        //   company: company._id,
-        //   rider: body.rider,
-        // });
 
-        // await newRiderReq.save();
+        console.log("riderEntries", riderEntries);
+
+        if (typeof riderEntries[0] === "undefined") {
+          reject({
+            code: 404,
+            msg:
+              "No free Rider was found for this order. Please contact your riders",
+          });
+          return;
+        }
 
         const newRiderReq = await RiderEntryRequest.create(riderEntries);
 
@@ -1173,3 +1176,13 @@ class EntryService {
 
 
 module.exports = EntryService;
+
+
+        // send the request to the driver
+        // const newRiderReq = new RiderEntryRequest({
+        //   entry: entry._id,
+        //   company: company._id,
+        //   rider: body.rider,
+        // });
+
+        // await newRiderReq.save();

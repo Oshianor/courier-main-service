@@ -124,6 +124,26 @@ const orderSchema = mongoose.Schema(
       required: true,
       text: true,
     },
+    pickupLatitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
+    pickupLongitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
+    deliveryLatitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
+    deliveryLongitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
     metaData: {
       type: Object,
       default: {},

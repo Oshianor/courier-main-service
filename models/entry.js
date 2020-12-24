@@ -144,6 +144,16 @@ const entrySchema = mongoose.Schema(
       text: true,
     },
     deliveryAddresses: [String],
+    pickupLatitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
+    pickupLongitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
     TEC: {
       //total estimated cost
       type: Number,

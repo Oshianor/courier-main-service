@@ -65,6 +65,7 @@ class TripLogService {
   createOrderLog(type, order, rider, user, entry, latitude, longitude, metaData = {}) {
     return new Promise(async (resolve, reject) => {
       try {
+        console.log("Got Here and did this")
         const newTripLog = new TripLog({
           type,
           rider,
@@ -75,7 +76,7 @@ class TripLogService {
           longitude,
           metaData,
         });
-
+        console.log("Got Here and did this", newTripLog)
         await newTripLog.save();
 
         resolve(newTripLog);

@@ -33,10 +33,21 @@ exports.FCMToken = async (req, res) => {
  */
 exports.pending = async (req, res) => {
   try {
-    const userInstance = new UserService();
-    const orders = await userInstance.getUserPendingOrder(req.user);
+    const { page, pageSize, skip } = paginate(req);
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
+    const userInstance = new UserService();
+    const { orders, total } = await userInstance.getUserPendingOrder(
+      req.user,
+      skip,
+      pageSize
+    );
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return 
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

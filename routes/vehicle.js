@@ -11,6 +11,8 @@ const { hasRole, ROLES, Auth } = require("../middlewares/auth");
 router.post("/", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.vehicle.vehicle);
 // get all vehicle 
 router.get("/", controller.vehicle.all);
+// get a single vehicle
+router.get("/:vehicleId", controller.vehicle.single);
 // update a single vehicle document
 router.put(
   "/:vehicleId",

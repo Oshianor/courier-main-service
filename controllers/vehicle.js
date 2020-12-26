@@ -58,6 +58,19 @@ exports.all = async (req, res) => {
 };
 
 
+exports.single = async (req, res) => {
+  try {
+    const vehicle = await Vehicle.findOne({ _id: req.user.id });
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle);
+    return;
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    return;
+  }
+};
+
 exports.updateVehicle = async (req, res) => {
   try {
     // validate request

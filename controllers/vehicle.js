@@ -60,7 +60,7 @@ exports.all = async (req, res) => {
 
 exports.single = async (req, res) => {
   try {
-    const vehicle = await Vehicle.findOne({ _id: req.user.id });
+    const vehicle = await Vehicle.findById(req.params.vehicleId);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle);
     return;

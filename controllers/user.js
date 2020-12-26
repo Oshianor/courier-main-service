@@ -65,7 +65,7 @@ exports.completed = async (req, res) => {
   try {
     const { page, pageSize, skip } = paginate(req);
     const userInstance = new UserService();
-    const {order, total} = await userInstance.getUserDeliveredOrder(
+    const { orders, total } = await userInstance.getUserDeliveredOrder(
       req.user,
       skip,
       pageSize
@@ -75,7 +75,7 @@ exports.completed = async (req, res) => {
       total,
       pagination: { pageSize, page },
     };
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, order, meta);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return 
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

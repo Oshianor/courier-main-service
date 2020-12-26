@@ -7,6 +7,7 @@ const NotificationService = require("./notification");
 const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
 const { OTPCode } = require("../templates");
+const TripLog = require("../models/tripLog");
 
 
 class OrderService {
@@ -398,7 +399,7 @@ class OrderService {
 
         await entry.save();
         await order.save();
-        console.log("Got Here")
+        console.log("Got Here");
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createOrderLog(
           "delivered",
@@ -416,17 +417,25 @@ class OrderService {
           status: { $ne: "delivered" },
         });
 
-
         if (!orderNotDelivered) {
           entry.status = "completed";
           await entry.save();
-          resolve({ entry, rider, company, msg: "Congrats!. All orders has been completed" });
-          return
+          resolve({
+            entry,
+            rider,
+            company,
+            msg: "Congrats!. All orders has been completed",
+          });
+          return;
         } else {
-          resolve({ entry, rider, company, msg: `Delivery for order #${order.orderId} confirmed. ` });
-          return
+          resolve({
+            entry,
+            rider,
+            company,
+            msg: `Delivery for order #${order.orderId} confirmed. `,
+          });
+          return;
         }
-
       } catch (error) {
         console.log("error", error);
         reject({
@@ -437,11 +446,10 @@ class OrderService {
     });
   }
 
-
   /**
- * Get order details
- * @param {Object} filter
- */
+   * Get order details
+   * @param {Object} filter
+   */
   getOrderDetails(filter = {}) {
     return new Promise(async (resolve, reject) => {
       // check if we have pricing for the location
@@ -458,9 +466,20 @@ class OrderService {
 
       if (!order) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
 
-
       resolve(order);
     });
+  }
+
+  /**
+   * Get order history
+   * @param {Object} orderId order id to find transaction history
+   */
+  getOrderHistory(orderId) {
+    return new Promise(async (resolve, reject) => {
+      const logs = await TripLog.find({ order: orderId }).sort({ createdAt: 1 });
+
+      resolve(logs);
+    })
   }
 }
 

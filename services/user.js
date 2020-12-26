@@ -139,10 +139,6 @@ class UserService {
             "entry",
             "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
-          .populate(
-            "company",
-            "name email phoneNumber type logo address countryCode"
-          )
           .populate("transaction")
           .skip(skip)
           .limit(pageSize)
@@ -181,15 +177,11 @@ class UserService {
           user: user.id,
           status: "delivered",
         })
-          .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
             "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
-          .populate(
-            "company",
-            "name email phoneNumber type logo address countryCode"
-          )
+          .populate("rider", "name email phoneNumber countryCode img")
           .populate("transaction")
           .skip(skip)
           .limit(pageSize)

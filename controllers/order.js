@@ -16,6 +16,7 @@ const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
 const { paginate } = require("../utils");
 const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 const { validateRiderID } = require("../request/rating");
 const moment = require("moment");
 
@@ -160,3 +161,22 @@ exports.orderOverview = async (req, res) => {
     return JsonResponse(res, error.code, error.msg);
   }
 };  
+
+
+exports.orderHistory = async (req, res) => {
+  try {
+    if (!ObjectId.isValid(req.params.orderId)) {
+      return JsonResponse(res, 400, "Please provide a valid order ID");
+    }
+
+    const orderInstance = new OrderService();
+    const orderDetails = await orderInstance.getOrderHistory(
+      req.params.orderId
+    );
+
+    JsonResponse(res, 200, 'Order details retrieved successfully', orderDetails);
+    return;
+  } catch (error) {
+    return JsonResponse(res, error.code, error.msg);
+  }
+};

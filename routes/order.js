@@ -10,8 +10,11 @@ router.post("/arrived-delivery", Auth, controller.order.riderArriveAtDelivery);
 
 router.post("/confirm-delivery", Auth, controller.order.confirmDelivery);
 
-router.post("/order-details", Auth, controller.order.orderDetails);
-
 router.get("/weekly-overview", Auth, controller.order.orderOverview);
+
+router.post("/order-details", controller.order.orderDetails);
+
+router.get("/order-history/:orderId", controller.order.orderHistory);
+
 
 module.exports = router;

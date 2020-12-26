@@ -54,6 +54,7 @@ const Auth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
+    console.log(decoded)
 
     req.user = decoded;
     next();
@@ -92,7 +93,7 @@ const UserAuth = async (req, res, next) => {
     // call user account service to get details
     const userParent = await userInstance.get(token);
 
-    // need to find a better solution    
+    // need to find a better solution
     const user = await User.findById(userParent.data._id);
     if (!user) {
       // userParent.data.userId = userParent.data._id;

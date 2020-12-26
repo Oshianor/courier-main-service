@@ -126,14 +126,18 @@ class UserService {
         const orders = await Order.find({
           user: user.id,
           $or: [
-            { status: { $ne: "delivered" } },
-            { status: { $ne: "cancelled" } },
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" }
           ],
         })
           .populate("rider", "name email phoneNumber countryCode img")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
           .populate(
             "company",
@@ -147,8 +151,12 @@ class UserService {
         const total = await Order.find({
           user: user.id,
           $or: [
-            { status: { $ne: "delivered" } },
-            { status: { $ne: "cancelled" } },
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
           ],
         }).countDocuments();
 
@@ -170,13 +178,13 @@ class UserService {
     return new Promise(async (resolve, reject) => {
       try {
         const orders = await Order.find({
-          rider: user.id,
+          user: user.id,
           status: "delivered",
         })
           .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
           .populate(
             "company",

@@ -16,14 +16,16 @@ const company = require("../routes/company");
 const rider = require("../routes/rider");
 const user = require("../routes/user");
 const rating = require("../routes/rating");
+const bank = require("../routes/bank");
+const subscription = require("../routes/subscription");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "50mb", extended: true }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "100mb", extended: true }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(express.static("public"));
 app.use(fileUpload());
 
@@ -38,6 +40,8 @@ app.use("/api/v1/rider", rider);
 app.use("/api/v1/user", user);
 app.use("/api/v1/order", order);
 app.use("/api/v1/rating", rating);
+app.use("/api/v1/bank", bank);
+app.use("/api/v1/subscription", subscription);
 app.use(error);
 
 module.exports = app;

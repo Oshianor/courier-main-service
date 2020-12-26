@@ -132,30 +132,27 @@ const entrySchema = mongoose.Schema(
       required: true,
       maxLenght: 10,
     },
-    pickupTime: {
-      type: Date,
-      required: true,
-    },
     vehicle: {
       type: ObjectId,
       index: true,
       required: true,
       ref: "Vehicle",
     },
-    pickupLatitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    pickupLongitude: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
     pickupAddress: {
       type: String,
       required: true,
       text: true,
+    },
+    deliveryAddresses: [String],
+    pickupLatitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
+    },
+    pickupLongitude: {
+      type: Number,
+      default: 0.0,
+      required: true,
     },
     TEC: {
       //total estimated cost

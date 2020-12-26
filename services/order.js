@@ -398,11 +398,11 @@ class OrderService {
 
         await entry.save();
         await order.save();
-
+        console.log("Got Here")
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createOrderLog(
           "delivered",
-          entry.orders,
+          order._id,
           rider._id,
           entry.user,
           entry._id,
@@ -446,12 +446,15 @@ class OrderService {
     return new Promise(async (resolve, reject) => {
       // check if we have pricing for the location
       const order = await Order.findOne(filter)
-        .select('-_id status company transaction rider entry weight quantity name email itemName country state user deliveryAddress pickupAddress estimatedDistanceUnit')
-        .populate('user', ' -_id name email phoneNumber')
-        .populate('company', '-_id name email phoneNumber')
-        .populate('rider', ' -_id name email phoneNumber plateNumber')
-        .populate('transaction', ' -_id status paymentMethod amount')
-        .populate('entry', '-_id itemType status orders type source ');
+        .select({ OTPRecord: 0, OTPCode: 0 })
+        .populate("user", " -_id name email phoneNumber img countryCode")
+        .populate("company", "-_id name email phoneNumber logo")
+        .populate(
+          "rider",
+          " -_id name email phoneNumber plateNumber img countryCode"
+        )
+        .populate("transaction", " -_id status paymentMethod amount")
+        .populate("entry", "-_id itemType status type source type");
 
       if (!order) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
 

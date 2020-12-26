@@ -15,12 +15,20 @@ const entryInstance = Container.get(EntrySubscription);
 
 io.use(SocketAuth);
 io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
-  console.log("socket.io connection");
+  console.log("socket.io connection", socket.user);
   // register everybody to a room of their account ID
   if (socket.user.type === "rider") {
-    socket.join(socket.user.id);
-    socket.emit(SERVER_EVENTS.ASSIGN_ENTRY, await entryInstance.getAssignEntry(socket))
+    // subcribe individual riders to their IDs
+    socket.join(String(socket.user.id));
+    socket
+      .to(String(socket.user.id))
+      .emit(
+        SERVER_EVENTS.ASSIGN_ENTRY,
+        await entryInstance.getAssignEntry(socket)
+      );
   } else if (socket.user.type === "company") {
+    // subcribe companies to their state
+    socket.join(String(socket.user.state));
     socket.emit(SERVER_EVENTS.LISTEN_POOL, await entryInstance.getPool(socket));
   } else if (socket.user.type === "admin") {
     socket.join("admin");

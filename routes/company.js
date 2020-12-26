@@ -28,7 +28,7 @@ router.delete("/riders/:riderId", Auth, controller.rider.destroy);
 
 // Riders Request
 router.get("/request/riders", Auth, controller.rider.requests);
-router.put("/request/:requestId/respond", Auth, controller.rider.respond);
+router.post("/request/:requestId", Auth, controller.rider.respond);
 
 
 // settings
@@ -50,5 +50,10 @@ router.delete("/distance-price/:dp", Auth, controller.distancePrice.deleteCompan
 //get all transactions for a company
 router.get("/transactions",Auth,controller.company.allTransactions)
 
+
+// get all entries
+router.get("/entry", Auth, controller.company.entries);
+
+router.get("/entry/:entryId", Auth, controller.company.getSingleEntry);
 
 module.exports = router;

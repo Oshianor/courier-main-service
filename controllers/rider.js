@@ -1,16 +1,19 @@
 const moment = require("moment");
 const Company = require("../models/company");
 const Rider = require("../models/rider");
-const OnlineHistory = require("../models/onlineHistory");
-const Country = require("../models/countries");
-const Entry = require("../models/entry");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
 const CountryService = require("../services/country");
 const RiderService = require("../services/rider");
 const CompanyService = require("../services/company");
-const { validateStatusUpdate } = require("../models/riderCompanyRequest");
-const { validateRider, validateRiderSelf, validateRiderFCMToken } = require("../request/rider");
-const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
+const { validateStatusUpdate } = require("../request/riderCompanyRequest");
+const {
+  validateRider,
+  validateRiderSelf,
+  validateRiderFCMToken,
+  validateRiderLocation,
+  validateRiderStatus
+} = require("../request/rider");
+const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { Verification } = require("../templates");
@@ -71,9 +74,9 @@ exports.createSelf = async (req, res) => {
 
     const companyInstance = new CompanyService();
     const company = await companyInstance.get({
-      _id: req.body.company,
       verified: true,
       status: "active",
+      ownership: true
     });
 
     // add country code.
@@ -233,8 +236,8 @@ exports.requests = async (req, res) => {
       status: "pending",
       company: req.user.id,
     })
-      .populate("rider", "name email address state country img onlineStatus")
-      .populate("company", "name email address state country logo")
+      .populate("rider", "-password")
+      // .populate("company", "name email address state country logo")
       .skip(skip)
       .limit(pageSize)
       .select("-password");
@@ -343,53 +346,14 @@ exports.status = async (req, res) => {
 };
 
 /**
- * SRider goline and offline
+ * Rider go online and offline
  * @param {*} req
  * @param {*} res
  */
 exports.online = async (req, res) => {
   try {
-    const rider = await Rider.findOne({
-      _id: req.user.id,
-      status: "active",
-      verified: true,
-    });
-    if (!rider) return JsonResponse(res, 200, MSG_TYPES.NOT_FOUND, rider);
-
-    let msg;
-    if (rider.onlineStatus) {
-      // to disable a rider account we need to know if they
-      const entry = await Entry.findOne({
-        rider: req.user.id,
-        $or: [
-          { status: "driverAccepted" },
-          { status: "enrouteToPickup" },
-          { status: "arrivedAtPickup" },
-          { status: "pickedup" },
-          { status: "enrouteToDelivery" },
-          { status: "arrivedAtDelivery" },
-          { status: "delivered" },
-        ],
-      });
-
-      if (entry) return JsonResponse(res, 200, "You can't go offline while on a trip.");
-
-      msg = "Offline Successfully ";
-      await rider.updateOne({ onlineStatus: false });
-      const newOnelineHistory = new OnlineHistory({
-        rider: req.user.id,
-        status: "offline",
-      });
-      await newOnelineHistory.save()
-    } else {
-      msg = "Online Successfully ";
-      await rider.updateOne({ onlineStatus: true });
-      const newOnelineHistory = new OnlineHistory({
-        rider: req.user.id,
-        status: "online",
-      });
-      await newOnelineHistory.save();
-    }
+    const riderInstance = new RiderService();
+    const { msg } = await riderInstance.toggleOnlineStatus(req.user);
 
     JsonResponse(res, 200, msg);
     return
@@ -504,6 +468,48 @@ exports.trips = async (req, res) => {
     const trips = await riderInstance.getRiderTrips(req.user);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, trips);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+
+/**
+ * Get rider's transaction for the month
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getTransaction = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const { transaction } = await riderInstance.getRiderTransaction(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+
+/**
+ * Get rider's trip status by admin
+ * @param {*} req
+ * @param {*} res
+ */
+exports.checkDriverTripStatus = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const { order } = await riderInstance.getDriverTripStatus(
+      req.params.riderId
+    );
+    
+    const withPackage = order ? true : false;
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, { withPackage });
     return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

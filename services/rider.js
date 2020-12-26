@@ -1,12 +1,15 @@
 const Admin = require("../models/admin");
 const moment = require("moment");
 const RiderCompanyRequest = require("../models/riderCompanyRequest");
+const Order = require("../models/order");
+const Entry = require("../models/entry");
 const Rider = require("../models/rider");
+const OnlineHistory = require("../models/onlineHistory");
 const Company = require("../models/company");
+const Transaction = require("../models/transaction");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
-const Order = require("../models/order");
 
 class RiderSerivice {
   /**
@@ -172,7 +175,7 @@ class RiderSerivice {
 
         resolve(order);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
@@ -210,7 +213,7 @@ class RiderSerivice {
 
         resolve(order);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
@@ -235,17 +238,163 @@ class RiderSerivice {
           rider: user.id,
           status: { $eq: "delivered" },
           createdAt: { $gte: monthStart, $lt: monthEnd },
-        })
-        .select('-_id status estimatedCost estimatedCostCurrency createdAt');
+        }).select("-_id status estimatedCost estimatedCostCurrency createdAt");
 
         resolve(trips);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
 
+  /**
+   * Get rider's transaction for the month
+   * @param {Auth user} user
+   */
+  getRiderTransaction(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: user.id, status: "active" });
+        if (!rider) {
+          reject({ code: 404, msg: "Account not found" });
+          return;
+        }
 
+        const monthStart = moment().startOf("month");
+        const monthEnd = moment().endOf("month");
+
+        const transaction = await Transaction.find({
+          rider: user.id,
+          status: { $eq: "approved" },
+          createdAt: { $gte: monthStart, $lt: monthEnd },
+        });
+
+        resolve({ transaction, rider });
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Rider goline and offline
+   * @param {Object} AuthUser
+   */
+  toggleOnlineStatus(user) {
+    return new Promise(async (resolve, reject) => {
+      const rider = await Rider.findOne({
+        _id: user.id,
+        status: "active",
+        verified: true,
+      });
+      if (!rider) {
+        reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        return
+      }
+
+      let msg;
+      if (rider.onlineStatus) {
+        // to disable a rider account we need to know if they
+        const entry = await Entry.findOne({
+          rider: user.id,
+          $or: [
+            { status: "driverAccepted" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+            { status: "delivered" },
+          ],
+        });
+
+        if (entry) {
+          reject({ code: 400, msg: "You can't go offline while on a trip." });
+          return
+        }
+
+        msg = "Offline Successfully ";
+        await rider.updateOne({ onlineStatus: false });
+        const newOnelineHistory = new OnlineHistory({
+          rider: user.id,
+          status: "offline",
+        });
+        await newOnelineHistory.save();
+      } else {
+        msg = "Online Successfully ";
+        await rider.updateOne({ onlineStatus: true });
+        const newOnelineHistory = new OnlineHistory({
+          rider: user.id,
+          status: "online",
+        });
+        await newOnelineHistory.save();
+      }
+
+      resolve({ msg, rider });
+    })
+  }
+
+  /**
+   * Get rider's trip status by admin
+   * @param {MongoDB ObjectId} riderId rider id
+   */
+  getDriverTripStatus(riderId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // check if there are no completed orders or cancelled orders
+        const order = await Order.findOne({
+          rider: riderId,
+          $or: [
+            { status: { $ne: "delivered" } },
+            { status: { $ne: "cancelled" } },
+          ],
+        });
+
+        resolve({ order });
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+ * Update password
+ * @param {Object} body request body object
+ */
+  updatePassword(body) {
+    return new Promise(async (resolve, reject) => {
+      const activeUser = await User.findOne({
+        _id: body.rider,
+        verified: true,
+        status: "active",
+      });
+
+      if (!activeUser) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+
+      let validPassword = await bcrypt.compare(
+        body.oldPassword,
+        activeUser.password
+      );
+      if (!validPassword) {
+        reject({ code: 400, msg: "Wrong Password Entered" });
+        return;
+      }
+      const updatedPassword = await bcrypt.hash(body.newPassword, 13);
+      const updateUser = await User.updateOne(
+        { _id: user.id },
+        {
+          $set: {
+            password: updatedPassword,
+          },
+        }
+      );
+
+      resolve({ updateUser });
+    });
+  }
 }
 
 module.exports = RiderSerivice;

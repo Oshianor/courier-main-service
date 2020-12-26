@@ -3,7 +3,9 @@ const moment = require("moment");
 const mongoose = require("mongoose");
 const Pricing = require("../models/pricing");
 const Company = require("../models/company");
+const Entry = require("../models/entry");
 const Organization = require("../models/organization");
+const Transaction = require("../models/transaction");
 const template = require("../templates");
 const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
@@ -19,32 +21,59 @@ class CompanyService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
+        const companyExist = await Company.findOne({
+          $or: [{ email: body.email }, { phoneNumber: body.phoneNumber }],
+        });
+        if (companyExist) {
+          reject({ code: 404, msg: "Account already exist." });
+          return;
+        }
+
         const pricing = await Pricing.findOne({ _id: body.tier });
         if (!pricing) {
           reject({ code: 404, msg: MSG_TYPES.FREEMIUM });
           return;
         }
+        if (!files.cac) {
+          reject({ code: 404, msg: "CAC Document is required" });
+          return;
+        }
+        if (!files.poi) {
+          reject({ code: 404, msg: "Proof of Identity Document is required" });
+          return;
+        }
+        if (!files.poa) {
+          reject({ code: 404, msg: "Proof of Address Document is required" });
+          return;
+        }
+        if (!files.insuranceCert) {
+          reject({
+            code: 404,
+            msg: "Insurance Certificate Document is required",
+          });
+          return;
+        }
+        if (!files.logo) {
+          reject({ code: 404, msg: "Company Logo is required" });
+          return;
+        }
 
-        if (files.rcDoc) {
-          const rcDoc = await UploadFileFromBinary(
-            files.rcDoc.data,
-            files.rcDoc.name
-          );
-          body.rcDoc = rcDoc.Key;
-        } else {
-          reject({ code: 404, msg: "Document is required" });
-          return;
-        }
-        if (files.logo) {
-          const logo = await UploadFileFromBinary(
-            files.logo.data,
-            files.logo.name
-          );
-          body.logo = logo.Key;
-        } else {
-          reject({ code: 404, msg: "Document is required" });
-          return;
-        }
+        const cac = await UploadFileFromBinary(files.cac.data, files.cac.name);
+        const poi = await UploadFileFromBinary(files.poi.data, files.poi.name);
+        const poa = await UploadFileFromBinary(files.poa.data, files.poa.name);
+        const insuranceCert = await UploadFileFromBinary(
+          files.insuranceCert.data,
+          files.insuranceCert.name
+        );
+        const logo = await UploadFileFromBinary(
+          files.logo.data,
+          files.logo.name
+        );
+        body.logo = logo.Key;
+        body.cac = cac.Key;
+        body.poi = poi.Key;
+        body.poa = poa.Key;
+        body.insuranceCert = insuranceCert.Key;
 
         session.startTransaction();
         const token = GenerateToken(225);
@@ -143,19 +172,88 @@ class CompanyService {
    * @param {MongoDB ObjectId} company
    * @param {number} skip
    * @param {number} pageSize
-  */
-  allTransactions(company,skip,pageSize){
-    return new Promise(async(resolve,reject) => {
-      const transactions = await Transaction.find({company})
+   */
+  allTransactions(company, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      const transactions = await Transaction.find({ company })
+        .populate("entry", "status pickupAddress deliveryAddresses")
+        .populate("user", "name")
+        .populate("rider", "name")
         .skip(skip)
-        .limit(pageSize)
-      
+        .limit(pageSize);
+
       const total = await Transaction.find({
-        company
+        company,
       }).countDocuments();
 
-      resolve({transactions,total})
-    })
+      resolve({ transactions, total });
+    });
+  }
+
+  /**
+   * Get all entry accepted by a company
+   * @param {MongoDB ObjectId} authUser
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllEntries(user, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const companyDetails = await Company.findOne({
+          _id: user.id,
+          verified: true,
+          status: "active",
+        });
+
+        if (!companyDetails) {
+          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+          return;
+        }
+
+        const entry = await Entry.find({ company: user.id })
+          .select({ metaData: 0 })
+          .skip(skip)
+          .limit(pageSize);
+
+        const total = await Entry.find({
+          company: user.id,
+        }).countDocuments();
+
+        resolve({ entry, total });
+      } catch (error) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+    });
+  }
+
+  /**
+   * Get a single entry by a company
+   * @param {MongoDB ObjectId} authUser
+   * @param {MongoDB ObjectId} entryId
+   */
+  getSingleEntry(user, entryId) {
+    return new Promise(async (resolve, reject) => {
+      const companyDetails = await Company.findOne({
+        _id: user.id,
+        verified: true,
+        status: "active",
+      });
+
+      if (!companyDetails) {
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+
+      const entry = await Entry.find({ company: user.id, _id: entryId })
+        .populate("orders")
+        .populate("transaction")
+        .populate("user", "name countryCode phoneNumber")
+        .populate("rider", "email onlineStatus name countryCode phoneNumber")
+        .select({ metaData: 0 })
+
+      resolve({ entry });
+    });
   }
 }
 

@@ -117,26 +117,50 @@ class UserService {
   /**
    * Get user pending order list
    * @param {Auth user} user
+   * @param {number} skip
+   * @param {number} pageSize
    */
-  getUserPendingOrder(user) {
+  getUserPendingOrder(user, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const order = await Order.find({
+        const orders = await Order.find({
           user: user.id,
-          status: { $ne: "delivered" },
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" }
+          ],
         })
-          .populate("rider", "name email phoneNumber countryCode")
+          .populate("rider", "name email phoneNumber countryCode img")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
           .populate(
             "company",
             "name email phoneNumber type logo address countryCode"
           )
-          .populate("transaction");
+          .populate("transaction")
+          .skip(skip)
+          .limit(pageSize)
+          .sort({ createdAt: -1 });
 
-        resolve(order);
+        const total = await Order.find({
+          user: user.id,
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        }).countDocuments();
+
+        resolve({ orders, total });
       } catch (error) {
         console.log("error", error);
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
@@ -153,14 +177,14 @@ class UserService {
   getUserDeliveredOrder(user, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const order = await Order.find({
-          rider: user.id,
+        const orders = await Order.find({
+          user: user.id,
           status: "delivered",
         })
           .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
           .populate(
             "company",
@@ -168,14 +192,15 @@ class UserService {
           )
           .populate("transaction")
           .skip(skip)
-          .limit(pageSize);
+          .limit(pageSize)
+          .sort({ createdAt: -1 });
 
         const total = await Order.find({
           rider: user.id,
           status: "delivered",
         }).countDocuments();
 
-        resolve({ order, total });
+        resolve({ orders, total });
       } catch (error) {
         console.log("error", error);
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });

@@ -5,6 +5,8 @@ const Pricing = require("../models/pricing");
 const Setting = require("../models/settings");
 const Country = require("../models/countries");
 const CountryService = require("../services/country");
+const SubscriptionService = require("../services/subscription");
+const PricingService = require("../services/pricing");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
 const { Container } = require("typedi");
@@ -39,16 +41,30 @@ exports.company = async (req, res) => {
     const { error } = validateCompany(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    await companyInstance.get({$or: [{ email: req.body.email }, { phoneNumber: req.body.phoneNumber }]});
-
     // validate country service
-    const country = await countryInstance.getCountryAndState(req.body.country,req.body.state);
+    const country = await countryInstance.getCountryAndState(req.body.country, req.body.state);
     req.body.countryCode = country.cc;
 
     // validate the array for supported vehicle list
     await vehicleInstance.validateAllVehiclesFromList(req.body.vehicles);
 
-    await companyInstance.create(req.body, req.files);
+    const { company, organization } = await companyInstance.create(req.body, req.files);
+
+    // const subscriptionInstance = new SubscriptionService();
+    // const pricingInstance = new PricingService();
+
+    // const freemiumPlan = pricingInstance.getPricing({ type: "freemium" })
+    // const startDate = new Date();
+    // const duration = 30;
+
+    // const subObject = {
+    //   company: company._id,
+    //   pricing: freemiumPlan._id,
+    //   startDate,
+    //   duration,
+    //   endDate: moment(startDate).add(30, 'days').format('YYYY-MM-DD HH:mm:mm')
+    // }
+    // await subscriptionInstance.create(subObject)
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
     return;
@@ -65,7 +81,7 @@ exports.company = async (req, res) => {
  */
 exports.branch = async (req, res) => {
   try {
-    
+
     return;
   } catch (error) {
     console.log(error);
@@ -422,14 +438,58 @@ exports.allTransactions = async (req, res) => {
     }
 
     const { transactions, total } = await companyInstance.allTransactions(
-      company, skip,pageSize
+      company, skip, pageSize
     )
     const meta = {
       total,
-      pagination: { pageSize, page}
+      pagination: { pageSize, page }
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+
+/**
+ * Get all entry accepted by a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.entries = async (req, res) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+
+    const { entry, total } = await companyInstance.getAllEntries(
+      req.user,
+      skip,
+      pageSize
+    );
+    const meta = {
+      total,
+      pagination: { pageSize, page }
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entry, meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+
+/**
+ * Get all entry accepted by a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getSingleEntry = async (req, res) => {
+  try {
+    const { entry } = await companyInstance.getSingleEntry(req.user, req.params.entryId);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entry);
   } catch (error) {
     console.log(error);
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);

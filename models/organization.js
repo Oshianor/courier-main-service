@@ -13,6 +13,11 @@ const organizerSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    ownership: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     publicToken: {
       type: String,
       required: true,
@@ -34,9 +39,21 @@ const organizerSchema = new mongoose.Schema(
       type: [ObjectId],
       ref: "Company",
       required: true,
-      default: []
+      default: [],
     },
-    rcDoc: {
+    cac: {
+      type: String,
+      required: true,
+    },
+    poi: {
+      type: String,
+      required: true,
+    },
+    poa: {
+      type: String,
+      required: true,
+    },
+    insuranceCert: {
       type: String,
       required: true,
     },

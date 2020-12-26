@@ -51,6 +51,7 @@ const Mailer = (to, subject, html, from = config.get("mail.email")) => {
   });
 };
 
+
 const UploadFileFormLocal = async (file, churchId) => {
   try {
     console.log("start");
@@ -77,7 +78,7 @@ const UploadFileFormLocal = async (file, churchId) => {
   }
 };
 
-  /**
+/**
    * Upload a binary file to S3
    * @param {Binary} fileInBanary
    * @param {String} fileName
@@ -93,8 +94,7 @@ const UploadFileFromBinary = async (fileInBanary, fileName) => {
   return upload;
 };
 
-
-  /**
+/**
    * Upload a binary file to S3
    * @param {Binary} fileInBanary
    * @param {String} fileName
@@ -112,6 +112,7 @@ const UploadFileFromBase64 = async (fileInBanary, fileName) => {
   console.log("Upload Data:", upload);
   return upload;
 };
+
 
 const paginate = (req) => {
   const page =

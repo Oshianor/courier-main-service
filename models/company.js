@@ -3,13 +3,18 @@ const Jwt = require("jsonwebtoken");
 const config = require("config");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-
+// git add .;git commit -m "updated company account creating";git checkout dev;git merge abundance;git push;git checkout abundance;
 const companySchema = new mongoose.Schema(
   {
     type: {
       type: String,
       enum: ["HQ", "BR"],
       default: "HQ",
+    },
+    ownership: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     organization: {
       type: ObjectId,
@@ -92,10 +97,25 @@ const companySchema = new mongoose.Schema(
         default: null,
       },
     },
+    description: {
+      type: String,
+      required: true,
+      maxlength: 3000,
+    },
+    postcode: {
+      type: String,
+      required: true,
+      maxlength: 10,
+    },
     contactName: {
       type: String,
       required: true,
       maxlength: 30,
+    },
+    contactEmail: {
+      type: String,
+      required: true,
+      maxlength: 50,
     },
     contactPhoneNumber: {
       type: String,
@@ -110,7 +130,19 @@ const companySchema = new mongoose.Schema(
       ref: "Vehicle",
       required: true,
     },
-    rcDoc: {
+    cac: {
+      type: String,
+      required: true,
+    },
+    poi: {
+      type: String,
+      required: true,
+    },
+    poa: {
+      type: String,
+      required: true,
+    },
+    insuranceCert: {
       type: String,
       required: true,
     },
@@ -160,6 +192,7 @@ companySchema.methods.generateToken = function () {
       id: this._id,
       email: this.email,
       type: "company",
+      state: this.state,
     },
     config.get("application.jwt.key"),
     { expiresIn: "1w" }

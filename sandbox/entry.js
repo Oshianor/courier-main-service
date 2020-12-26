@@ -93,19 +93,14 @@ class EntryService {
    * @param {Object} distance google distance api response data
    * @param {Object} setting setting configuration
    * @param {Object} distancePrice setting configuration
-   * @param {Object} vehicle vehicle configuration
    */
-  calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
+  calculateLocalEntry(body, user, distance, setting, distancePrice) {
     return new Promise(async (resolve, reject) => {
       try {
-        const pickup = await this.getGooglePlace(body.address);
-        body.pickupLatitude = pickup.results[0].geometry.location.lat;
-        body.pickupLongitude = pickup.results[0].geometry.location.lng;
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
         body.user = user.id;
-        body.deliveryAddresses = distance.destination_addresses;
         body.pickupAddress = distance.origin_addresses[0];
         body.metaData = {
           distance,
@@ -122,22 +117,9 @@ class EntryService {
           itemTypePrice = setting.parcelPrice;
         }
 
-        const devy = await this.getGooglePlace(distance.destination_addresses.join(","));
-
         await AsyncForEach(distance.rows, async (row, rowIndex, rowsArr) => {
-          await AsyncForEach(row.elements, async (element, elemIndex, elemArr) => {
+          await AsyncForEach(row.elements, (element, elemIndex, elemArr) => {
             if (element.status === "OK") {
-
-              // set the coordinates for each deverly address
-              body.delivery[elemIndex].deliveryLatitude =
-                devy.results[elemIndex].geometry.location.lat;
-              body.delivery[elemIndex].deliveryLongitude =
-                devy.results[elemIndex].geometry.location.lng;
-
-                // set the coordinates for pickup address
-              body.delivery[elemIndex].pickupLatitude = pickup.results[0].geometry.location.lat;
-              body.delivery[elemIndex].pickupLongitude = pickup.results[0].geometry.location.lng;
-
               const time = parseFloat(element.duration.value / 60);
               const singleDistance = parseFloat(element.distance.value / 1000);
               // add user id
@@ -150,6 +132,8 @@ class EntryService {
               body.delivery[elemIndex].deliveryAddress =
                 distance.destination_addresses[elemIndex];
               // add pickup details for each order
+              body.delivery[elemIndex].pickupLatitude = body.pickupLatitude;
+              body.delivery[elemIndex].pickupLongitude = body.pickupLongitude;
               body.delivery[elemIndex].pickupAddress =
                 distance.origin_addresses[0];
               // set duration of an order from the pick up point to the delivery point
@@ -167,7 +151,8 @@ class EntryService {
                 parseFloat(singleDistance) * parseFloat(distancePrice.price);
               // calculate the weight of each order for each trip multiplied by our price per weight
               const weight =
-                parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
+                parseFloat(body.delivery[elemIndex].weight) *
+                parseFloat(setting.weightPrice);
               const amount =
                 parseFloat(km) +
                 parseFloat(weight) +
@@ -201,24 +186,21 @@ class EntryService {
     });
   }
 
-  // parseFloat(body.delivery[elemIndex].weight) *
-
   /**
    * Upload array of images
    * @param {Array} images
    */
   uploadArrayOfImages(images) {
     return new Promise(async (resolve, reject) => {
-      // console.log("images", images);
       const img = [];
       await AsyncForEach(images, async (row, rowIndex, arr) => {
         const ObjectId = mongoose.Types.ObjectId();
         const file = await UploadFileFromBase64(row, ObjectId);
-        img.push(file.Key);
-      });
+        img.push(file.Key)
+      })
 
-      resolve(img);
-    });
+      resolve(img)
+    })
   }
 
   /**
@@ -229,11 +211,16 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         // get all coords locations and sort them.
-        const origins = [body.address];
+        const origins = [
+          { lat: body.pickupLatitude, lng: body.pickupLongitude },
+        ];
         const destinations = [];
         // get all origin and destination
         await AsyncForEach(body.delivery, (data, index, arr) => {
-          destinations.push(data.address);
+          destinations.push({
+            lat: data.deliveryLatitude,
+            lng: data.deliveryLongitude,
+          });
         });
 
         console.log("origins", origins);
@@ -255,46 +242,10 @@ class EntryService {
           },
         });
 
-        if (distance.data.status !== "OK") {
-          reject({ code: 500, msg: "Address provided is invalid" });
-          return;
-        }
-
         resolve(distance);
       } catch (error) {
         console.log(error);
         reject({ err: 400, msg: MSG_TYPES.SERVER_ERROR });
-      }
-    });
-  }
-
-  /**
-   * Find the address on google maps
-   * @param {string} address
-   */
-  getGooglePlace(address) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const distance = await client.geocode({
-          params: {
-            address,
-            language: "en",
-            key: config.get("googleMap.key"),
-          },
-        });
-
-        console.log("distance", JSON.stringify(distance.data));
-        console.log("distance", distance.data);
-
-        if (distance.data.status !== "OK") {
-          reject({ code: 400, msg: "Your address couldn't be verified" });
-          return 
-        }
-
-        resolve(distance.data);
-      } catch (error) {
-        console.log("error distance", error);
-        reject({ code: 400, msg: "Your address couldn't be verified" });
       }
     });
   }
@@ -335,7 +286,7 @@ class EntryService {
             authorization_code: card.data.token,
             email: user.email,
             // email: "abundance@gmail.com",
-            amount: parseFloat(entry.TEC).toFixed(2) * 100,
+            amount: entry.TEC,
           });
           console.log("trans", trans);
 
@@ -433,26 +384,13 @@ class EntryService {
         // const currentDate = new Date();
         const entry = await this.get({
           _id: params.entry,
-          // status: "pending",
-          // company: null,
+          status: "pending",
+          company: null,
         });
-
-        if (entry.company) {
-          reject({
-            code: 400,
-            msg: "This entry has already been taken. Better luck next time",
-          });
-          return;
-        }
-
-        if (entry.status !== "pending") {
-          reject({ code: 400, msg: "This entry doesn't exist" });
-          return;
-        }
 
         if (!company.vehicles.includes(entry.vehicle)) {
           reject({ code: 400, msg: MSG_TYPES.VEHICLE_NOT_SUPPORTED });
-          return;
+          return
         }
 
         await entry.updateOne({
@@ -464,7 +402,7 @@ class EntryService {
         await Order.updateMany({ entry: params.entry }, { company: user.id });
 
         await transaction.updateOne({ company: user.id });
-
+        
         resolve(entry);
       } catch (error) {
         console.log("error", error);
@@ -481,10 +419,38 @@ class EntryService {
   riderAsignEntry(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        // find the company
+        const rider = await Rider.findOne({
+          company: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "Rider Not Found" });
+          return;
+        }
+
+        const reqEntry = await RiderEntryRequest.findOne({
+          rider: body.rider,
+          status: "pending",
+        });
+
+        // if he has any pending at all
+        if (reqEntry) {
+          // if rider has already been sent this request and it's pending
+          if (String(reqEntry.entry) === body.entry) {
+            reject({ code: 400, msg: "Rider already assigned this entry." });
+            return;
+          }
+
+          reject({ code: 400, msg: "Rider already has a pending request" });
+          return;
+        }
+
         const companyInstance = new CompanyService();
         const company = await companyInstance.get({
           _id: user.id,
+          // $or: [{ status: "active" }, { status: "inactive" }],
           status: "active",
           verified: true,
         });
@@ -506,84 +472,16 @@ class EntryService {
           return;
         }
 
-        console.log("entry.vehicle", entry.vehicle);
-
-        // find all the online riders for the company with the specific vehicle type
-        const riders = await Rider.find({
+        // send the request to the driver
+        const newRiderReq = new RiderEntryRequest({
+          entry: entry._id,
           company: company._id,
-          deleted: false,
-          onlineStatus: true,
-          status: "active",
-          verified: true,
-          vehicle: entry.vehicle,
+          rider: body.rider,
         });
 
-        // console.log("riders", riders);
+        await newRiderReq.save();
 
-        if (typeof riders[0] == "undefined") {
-          reject({
-            code: 404,
-            msg:
-              "No online Rider was found for this order. Please contact your riders",
-          });
-          return;
-        }
-
-        const riderIDS = [];
-        const riderEntries = [];
-        await AsyncForEach(riders, async (row, index, arr) => {
-          // find all orders for ech rider that has not yet been concluded or cancelled
-          const orders = await Order.findOne({
-            rider: row._id,
-            $or: [
-              { status: { $ne: "delivered" } },
-              { status: { $ne: "cancelled" } },
-            ],
-          }).countDocuments();
-
-          // check how many orders a driver is currently on
-          // if the driver is in less than 10 riders then send him to those orders
-          if (orders < 10) {
-            riderIDS.push(row._id);
-            riderEntries.push({
-              entry: entry._id,
-              company: company._id,
-              rider: row._id,
-            });
-          }
-
-          // const reqEntry = await RiderEntryRequest.findOne({
-          //   rider: body.rider,
-          //   status: "pending",
-          // });
-
-          // // if he has any pending at all
-          // if (reqEntry) {
-          //   // if rider has already been sent this request and it's pending
-          //   if (String(reqEntry.entry) === body.entry) {
-          //     reject({ code: 400, msg: "Rider already assigned this entry." });
-          //     return;
-          //   }
-
-          //   reject({ code: 400, msg: "Rider already has a pending request" });
-          //   return;
-          // }
-        });
-
-        console.log("riderEntries", riderEntries);
-
-        if (typeof riderEntries[0] === "undefined") {
-          reject({
-            code: 404,
-            msg:
-              "No free Rider was found for this order. Please contact your riders",
-          });
-          return;
-        }
-
-        const newRiderReq = await RiderEntryRequest.create(riderEntries);
-
-        resolve({ entry, company, riders, newRiderReq, riderIDS });
+        resolve(entry);
       } catch (error) {
         console.log("error", error);
         reject(error);
@@ -635,6 +533,7 @@ class EntryService {
           reject({ code: 404, msg: "Entry already taken by another Rider" });
           return;
         }
+
 
         const transaction = await Transaction.findOne({ entry: body.entry });
 
@@ -933,17 +832,14 @@ class EntryService {
 
         // check if the payment method is cash
         if (entry.paymentMethod === "card") {
-          reject({
-            code: 400,
-            msg: "You can't approve a entry that isn't a cash payment",
-          });
+          reject({ code: 400, msg: "You can't approve a entry that isn't a cash payment" });
           return;
         }
 
         const transaction = await Transaction.findOne({
           entry: body.entry,
           paymentMethod: "cash",
-          status: "pending",
+          status: "pending"
         });
 
         if (!transaction) {
@@ -957,10 +853,7 @@ class EntryService {
         // when rider select declined on payment status
         if (body.status === "declined") {
           await transaction.updateOne({ status: "declined" });
-          await entry.updateOne({
-            status: "cancelled",
-            cancelledAt: new Date(),
-          });
+          await entry.updateOne({ status: "cancelled", cancelledAt: new Date() });
           await Order.updateMany(
             { entry: entry._id },
             { status: "cancelled", cancelledAt: new Date() }
@@ -978,13 +871,10 @@ class EntryService {
           );
 
           resolve({
-            entry,
-            rider,
-            company,
-            transaction,
+            entry, 
+            rider, company, transaction,
             code: 200,
-            msg:
-              "You've successfully declined this payment and the order has been cancelled for this trip.",
+            msg: "You've successfully declined this payment and the order has been cancelled for this trip.",
           });
           return;
         }
@@ -1018,8 +908,7 @@ class EntryService {
         console.log("error", error);
         reject({
           code: 400,
-          msg:
-            "Something went wrong. You can't confirm the payment for this order",
+          msg: "Something went wrong. You can't confirm the payment for this order",
         });
       }
     });
@@ -1176,13 +1065,3 @@ class EntryService {
 
 
 module.exports = EntryService;
-
-
-        // send the request to the driver
-        // const newRiderReq = new RiderEntryRequest({
-        //   entry: entry._id,
-        //   company: company._id,
-        //   rider: body.rider,
-        // });
-
-        // await newRiderReq.save();

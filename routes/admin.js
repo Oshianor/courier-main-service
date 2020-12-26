@@ -38,6 +38,13 @@ router.get("/:company/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), co
 router.get("/rider/:rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleRider);
 // suspend a rider account
 router.patch("/rider/:rider/status", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.rider.status);
+// check if a rider is with package or not
+router.get(
+  "/rider/withpackage/:riderId",
+  Auth,
+  hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]),
+  controller.rider.checkDriverTripStatus
+);
 
 
 

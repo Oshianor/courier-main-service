@@ -33,10 +33,21 @@ exports.FCMToken = async (req, res) => {
  */
 exports.pending = async (req, res) => {
   try {
-    const userInstance = new UserService();
-    const orders = await userInstance.getUserPendingOrder(req.user);
+    const { page, pageSize, skip } = paginate(req);
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
+    const userInstance = new UserService();
+    const { orders, total } = await userInstance.getUserPendingOrder(
+      req.user,
+      skip,
+      pageSize
+    );
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return 
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
@@ -54,7 +65,7 @@ exports.completed = async (req, res) => {
   try {
     const { page, pageSize, skip } = paginate(req);
     const userInstance = new UserService();
-    const {order, total} = await userInstance.getUserDeliveredOrder(
+    const { orders, total } = await userInstance.getUserDeliveredOrder(
       req.user,
       skip,
       pageSize
@@ -64,7 +75,7 @@ exports.completed = async (req, res) => {
       total,
       pagination: { pageSize, page },
     };
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, order, meta);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return 
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

@@ -89,7 +89,6 @@ exports.riderArriveAtDelivery = async (req, res) => {
 };
 
 
-
 /**
  * Driver Confirm OTP code for delivery
  * @param {*} req 
@@ -150,6 +149,8 @@ exports.orderOverview = async (req, res) => {
   try {
     const { error } = validateRiderID({ rider: req.user.id });
     if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    
     const beginningOfWeek = moment().startOf('isoWeek').toDate();
     const tripInstance = new TripLogService();
     const orderDetails = await tripInstance.getOverview({ rider: mongoose.Types.ObjectId(req.user.id), type: 'delivered', createdAt: { $gte: beginningOfWeek } });

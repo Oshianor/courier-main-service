@@ -36,10 +36,10 @@ const GenerateOTP = (num) => {
 
 /**
  * Send Mail to an Email
- * @param {string} to 
- * @param {string} subject 
- * @param {HTML} html 
- * @param {string} from 
+ * @param {string} to
+ * @param {string} subject
+ * @param {HTML} html
+ * @param {string} from
  */
 const Mailer = (to, subject, html, from = config.get("mail.email")) => {
   sgMail.setApiKey(config.get("mail.key"));

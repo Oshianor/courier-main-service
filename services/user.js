@@ -131,7 +131,7 @@ class UserService {
             { status: "arrivedAtPickup" },
             { status: "pickedup" },
             { status: "enrouteToDelivery" },
-            { status: "arrivedAtDelivery" }
+            { status: "arrivedAtDelivery" },
           ],
         })
           .populate("rider", "name email phoneNumber countryCode img")
@@ -140,6 +140,7 @@ class UserService {
             "status type source paymentMethod transaction itemType TEC TED TET vehicle"
           )
           .populate("transaction")
+          .populate("vehicle")
           .skip(skip)
           .limit(pageSize)
           .sort({ createdAt: -1 });
@@ -183,6 +184,7 @@ class UserService {
           )
           .populate("rider", "name email phoneNumber countryCode img")
           .populate("transaction")
+          .populate("vehicle")
           .skip(skip)
           .limit(pageSize)
           .sort({ createdAt: -1 });

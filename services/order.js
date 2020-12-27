@@ -455,14 +455,16 @@ class OrderService {
       // check if we have pricing for the location
       const order = await Order.findOne(filter)
         .select({ OTPRecord: 0, OTPCode: 0 })
-        .populate("user", " -_id name email phoneNumber img countryCode")
-        .populate("company", "-_id name email phoneNumber logo")
         .populate(
           "rider",
           " -_id name email phoneNumber plateNumber img countryCode"
         )
-        .populate("transaction", " -_id status paymentMethod amount")
-        .populate("entry", "-_id itemType status type source type");
+        .populate("vehicle")
+        .populate("transaction")
+        .populate(
+          "entry",
+          "status type source paymentMethod transaction itemType TEC TED TET vehicle"
+        );
 
       if (!order) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
 

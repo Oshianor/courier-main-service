@@ -142,6 +142,7 @@ class EntryService {
               const singleDistance = parseFloat(element.distance.value / 1000);
               // add user id
               body.delivery[elemIndex].user = user.id;
+              body.delivery[elemIndex].vehicle = body.vehicle;
 
               // orderId
               body.delivery[elemIndex].orderId = nanoid(8);
@@ -200,8 +201,6 @@ class EntryService {
       }
     });
   }
-
-  // parseFloat(body.delivery[elemIndex].weight) *
 
   /**
    * Upload array of images

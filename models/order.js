@@ -79,6 +79,12 @@ const orderSchema = mongoose.Schema(
       ref: "Rider",
       default: null,
     },
+    vehicle: {
+      type: ObjectId,
+      index: true,
+      required: true,
+      ref: "Vehicle",
+    },
     OTPCode: {
       type: String,
       default: null,

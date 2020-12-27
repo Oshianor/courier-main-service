@@ -21,6 +21,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    lastAccountUpdateDate: {
+      type: Date,
+      required: true
+    }
   },
   {
     timestamps: true,

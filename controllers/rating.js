@@ -6,27 +6,18 @@ const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
 
 /**
- * Rate a user
+ * Rate a user/rider
  * @param {*} req 
  * @param {*} res 
  */
 exports.rateUser = async (req, res) => {
   try {
-
-    const entryInstance = new EntryService();
-    const entry = await entryInstance.get({ _id: req.body.entry }, 'user');
-    const ratingObj = {
-      rider: req.user.id,
-      user: `${entry.user}`,
-      source: req.body.source,
-      entry: req.body.entry,
-      rating: req.body.rating,
-      comment: req.body.comment || 'No comment'
-    }
-    const { error } = validateRating(ratingObj);
+    const { error } = validateRating(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
+
     const ratingInstance = new RatingService();
-    await ratingInstance.createRating(ratingObj);
+    await ratingInstance.createUserRating(req.body, req.user);
+
     JsonResponse(res, 200, MSG_TYPES.RATING_DONE);
     return;
   } catch (error) {
@@ -47,10 +38,10 @@ exports.getAllRiderRatings = async (req, res) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const ratingInstance = new RatingService();
-    const { totalRating, rating } = await ratingInstance.getAllRatings({ rider: req.user.id, source: 'user' }, skip, pageSize);
+    const { total, rating } = await ratingInstance.getAllRatings({ rider: req.user.id, source: 'user' }, skip, pageSize);
 
     const meta = {
-      totalRating,
+      total,
       pagination: { pageSize, page },
     };
 

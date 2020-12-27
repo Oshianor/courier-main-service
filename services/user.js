@@ -185,6 +185,7 @@ class UserService {
           .populate("rider", "name email phoneNumber countryCode img")
           .populate("transaction")
           .populate("vehicle")
+          .populate("userRating")
           .skip(skip)
           .limit(pageSize)
           .sort({ createdAt: -1 });

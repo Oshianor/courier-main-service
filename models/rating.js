@@ -7,22 +7,24 @@ const ratingSchema = new mongoose.Schema(
       type: ObjectId,
       index: true,
       ref: "Rider",
-      required: true,
+      required: true
     },
     user: {
       type: ObjectId,
       index: true,
       ref: "User",
-      required: true,
+      required: true
     },
     source: {
       type: String,
-      enum: ["rider", "user"]
+      enum: ["rider", "user"],
+      required: true,
     },
-    entry: {
+    order: {
       type: ObjectId,
       index: true,
-      ref: "Entry"
+      ref: "Order",
+      required: true,
     },
     rating: {
       type: Number,
@@ -32,6 +34,8 @@ const ratingSchema = new mongoose.Schema(
     },
     comment: {
       type: String,
+      default: "",
+      maxlength: 225
     },
   },
   {

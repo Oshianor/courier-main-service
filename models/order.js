@@ -194,6 +194,24 @@ const orderSchema = mongoose.Schema(
       required: true,
       default: 0.0,
     },
+    riderRated: {
+      type: Boolean,
+      default: false,
+    },
+    riderRating: {
+      type: ObjectId,
+      default: null,
+      ref: "Rating"
+    },
+    userRating: {
+      type: ObjectId,
+      default: null,
+      ref: "Rating"
+    },
+    userRated: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

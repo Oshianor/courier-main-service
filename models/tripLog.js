@@ -56,6 +56,10 @@ const tripLogSchema = new mongoose.Schema(
       type: Object,
       default: {},
     },
+    address: {
+      type: String,
+      required: true
+    },
   },
   {
     timestamps: true,

@@ -1,16 +1,9 @@
-const mongoose = require("mongoose");
 const config = require("config");
-const moment = require("moment");
-const Entry = require("../models/entry");
-const Order = require("../models/order");
-const Company = require("../models/company");
-const Transaction = require("../models/transaction");
-const RiderEntryRequest = require("../models/riderEntryRequest");
-const Rider = require("../models/rider");
 const TripLog = require("../models/tripLog")
 const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach } = require("../utils");
-
+const { Client } = require("@googlemaps/google-maps-services-js");
+const client = new Client({});
 
 
 class TripLogService {
@@ -24,10 +17,26 @@ class TripLogService {
    * @param {Number} longitude
    * @param {metaData} metaData
    */
-  createLog(type, order, rider, user, entry, latitude, longitude, metaData = {}) {
+  createLog(
+    type,
+    order,
+    rider,
+    user,
+    entry,
+    latitude,
+    longitude,
+    metaData = {}
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
         const triplogged = [];
+        const add = await this.getGooglePlaceFromCoords(
+          `${latitude},${longitude}`
+        );
+
+        console.log("add", add);
+        metaData.address = add;
+
         await AsyncForEach(order, (data, index, arr) => {
           triplogged.push({
             type,
@@ -37,6 +46,7 @@ class TripLogService {
             order: data,
             latitude: latitude,
             longitude: longitude,
+            address: add.results[0].formatted_address,
             metaData,
           });
         });
@@ -51,7 +61,6 @@ class TripLogService {
     });
   }
 
-
   /**
    * Log Order delivery initiation data
    * @param {ObjectID} rider
@@ -62,10 +71,22 @@ class TripLogService {
    * @param {Number} longitude
    * @param {metaData} metaData
    */
-  createOrderLog(type, order, rider, user, entry, latitude, longitude, metaData = {}) {
+  createOrderLog(
+    type,
+    order,
+    rider,
+    user,
+    entry,
+    latitude,
+    longitude,
+    metaData = {}
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log("Got Here and did this")
+        const add = await this.getGooglePlaceFromCoords(
+          `${latitude},${longitude}`
+        );
+        metaData.address = add;
         const newTripLog = new TripLog({
           type,
           rider,
@@ -75,14 +96,40 @@ class TripLogService {
           latitude,
           longitude,
           metaData,
+          address: add.results[0].formatted_address,
         });
-        console.log("Got Here and did this", newTripLog)
         await newTripLog.save();
 
         resolve(newTripLog);
       } catch (error) {
         console.log("error", error);
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Find the address by the coordinates
+   * @param {string} latlng
+   */
+  getGooglePlaceFromCoords(latlng) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const distance = await client.geocode({
+          params: {
+            latlng,
+            language: "en",
+            key: config.get("googleMap.key"),
+          },
+        });
+
+        // console.log("distance", JSON.stringify(distance.data));
+        // console.log("distance", distance.data);
+
+        resolve(distance.data);
+      } catch (error) {
+        console.log("error distance", error);
+        reject({ code: 400, msg: "Your address couldn't be verified" });
       }
     });
   }
@@ -123,33 +170,47 @@ class TripLogService {
           { $match: filter },
           {
             $lookup: {
-              from: 'orders',
-              localField: 'order',
-              foreignField: '_id',
-              as: 'order'
-            }
+              from: "orders",
+              localField: "order",
+              foreignField: "_id",
+              as: "order",
+            },
           },
-          { $unwind: '$order' },
+          { $unwind: "$order" },
           {
             $sort: {
-              createdAt: -1
-            }
+              createdAt: -1,
+            },
           },
           {
             $group: {
               _id: {
                 month: { $month: "$createdAt" },
                 day: { $dayOfMonth: "$createdAt" },
-                year: { $year: "$createdAt" }
+                year: { $year: "$createdAt" },
               },
               totalOrders: { $sum: 1 },
               totalIncome: { $sum: "$order.estimatedCost" },
               totalDistance: { $sum: "$order.estimatedDistance" },
-              data: { $push: "$$ROOT" }
-            }
+              data: { $push: "$$ROOT" },
+            },
           },
-          { $project: { "data": { "order": { "estimatedCostCurrency": 1, "estimatedCost": 1, "estimatedDistanceUnit": 1, "estimatedDistance": 1 }, }, "totalOrders": 1, "totalIncome": 1, "totalDistance": 1 } }
-        ])
+          {
+            $project: {
+              data: {
+                order: {
+                  estimatedCostCurrency: 1,
+                  estimatedCost: 1,
+                  estimatedDistanceUnit: 1,
+                  estimatedDistance: 1,
+                },
+              },
+              totalOrders: 1,
+              totalIncome: 1,
+              totalDistance: 1,
+            },
+          },
+        ]);
 
         if (!orderLog) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
 

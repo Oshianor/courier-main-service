@@ -28,8 +28,8 @@ exports.FCMToken = async (req, res) => {
 
 /**
  * Get user pending/request orders
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.pending = async (req, res) => {
   try {
@@ -48,7 +48,7 @@ exports.pending = async (req, res) => {
     };
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
-    return 
+    return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
     return
@@ -58,8 +58,8 @@ exports.pending = async (req, res) => {
 
 /**
  * Get rider completed order for the day
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.completed = async (req, res) => {
   try {
@@ -76,9 +76,21 @@ exports.completed = async (req, res) => {
       pagination: { pageSize, page },
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
-    return 
+    return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
     return
+  }
+}
+
+
+exports.updateUserAccount = async (req, res, next) => {
+  try {
+    const userService = new UserService();
+    await userService.updateAccount(req.params.userId, req.body);
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    next(error);
   }
 }

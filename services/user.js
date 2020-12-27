@@ -241,6 +241,30 @@ class UserService {
   //     }
   //   })
   // }
+
+  /**
+   * Update a user's account details
+   * @param {ObjectId} userId
+   * @param {Object - {name, phoneNumber}} data
+   */
+  updateAccount(userId, data) {
+    return new Promise(async (resolve, reject) => {
+      try{
+        const user = await User.findOne({_id: userId})
+        if(!user){
+          return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
+        }
+
+        const updatedUser = await User.updateOne({ _id: userId }, { $set: data });
+        if(!updatedUser){
+         return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        }
+        resolve(updatedUser);
+      } catch(error){
+        return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
 }
 
 

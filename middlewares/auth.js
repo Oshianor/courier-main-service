@@ -114,10 +114,19 @@ const UserAuth = async (req, res, next) => {
   }
 };
 
+const isExaltService = async (req, res, next) => {
+  const serviceKey = req.header("api-key");
+  if(serviceKey && serviceKey === config.get("api.key")){
+    return next();
+  }
+  return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
+}
+
 module.exports = {
   Auth,
   hasRole,
   ROLES,
   UserAuth,
-  SocketAuth
+  SocketAuth,
+  isExaltService
 };

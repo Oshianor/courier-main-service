@@ -3,17 +3,23 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const ratingSchema = new mongoose.Schema(
   {
+    company: {
+      type: ObjectId,
+      index: true,
+      ref: "Company",
+      required: true,
+    },
     rider: {
       type: ObjectId,
       index: true,
       ref: "Rider",
-      required: true
+      required: true,
     },
     user: {
       type: ObjectId,
       index: true,
       ref: "User",
-      required: true
+      required: true,
     },
     source: {
       type: String,
@@ -30,12 +36,12 @@ const ratingSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 1,
-      max: 10,
+      max: 5,
     },
     comment: {
       type: String,
       default: "",
-      maxlength: 225
+      maxlength: 225,
     },
   },
   {

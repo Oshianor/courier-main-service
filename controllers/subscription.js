@@ -32,6 +32,7 @@ exports.createSubscription = async (req, res, next) => {
  */
 exports.getSubscription = async (req, res, next) => {
   try {
+    console.log('Request', req.body)
     const subscription = await subscriptionInstance.getSubscription(req.body)
     JsonResponse(res, 200, MSG_TYPES.FETCHED, subscription);
     return;

@@ -50,21 +50,23 @@ exports.company = async (req, res) => {
 
     const { company, organization } = await companyInstance.create(req.body, req.files);
 
-    // const subscriptionInstance = new SubscriptionService();
-    // const pricingInstance = new PricingService();
+    const subscriptionInstance = new SubscriptionService();
+    const pricingInstance = new PricingService();
 
-    // const freemiumPlan = pricingInstance.getPricing({ type: "freemium" })
-    // const startDate = new Date();
-    // const duration = 30;
+    const freemiumPlan = pricingInstance.getPricing({ type: "freemium" })
+    const startDate = new Date();
+    const duration = 30;
+    var endDate = new Date();
+    endDate.setDate(endDate.getDate() + duration);
 
-    // const subObject = {
-    //   company: company._id,
-    //   pricing: freemiumPlan._id,
-    //   startDate,
-    //   duration,
-    //   endDate: moment(startDate).add(30, 'days').format('YYYY-MM-DD HH:mm:mm')
-    // }
-    // await subscriptionInstance.create(subObject)
+    const subObject = {
+      company: company._id,
+      pricing: freemiumPlan._id,
+      startDate,
+      duration,
+      endDate
+    }
+    await subscriptionInstance.create(subObject)
 
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
     return;

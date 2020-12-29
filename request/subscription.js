@@ -2,6 +2,7 @@ const Joi = require("joi");
 
 function validateSubscription(body) {
   const schema = Joi.object({
+    company: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
     pricing: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
     startDate: Joi.date().required(),
     endDate: Joi.date().required(),

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const subscriptionSchema = new mongoose.Schema(
+const subscriptionHistorySchema = new mongoose.Schema(
   {
     company: {
       type: ObjectId,
@@ -15,14 +15,6 @@ const subscriptionSchema = new mongoose.Schema(
       ref: "Pricing",
       required: true,
     },
-    status: {
-      type: String,
-      enum: ["running", "expired", "ontrial"],
-      default: "running",
-    },
-    duration: {
-      type: Number
-    },
     startDate: {
       type: Date,
       required: true
@@ -31,25 +23,15 @@ const subscriptionSchema = new mongoose.Schema(
       type: Date,
       required: true
     },
-    nextPaidPlan: {
-      type: ObjectId,
-      ref: "Pricing"
-    },
-    nextRetry: {
-      type: Date,
-    },
-    retryCount: {
+    duration: {
       type: Number
     },
-    trialDays: {
-      type: Number
-    }
   },
   {
     timestamps: true,
   }
 );
 
-const Subscription = mongoose.model("Subscription", subscriptionSchema);
+const subscriptionHistory = mongoose.model("subscriptionHistory", subscriptionHistorySchema);
 
-module.exports = Subscription;
+module.exports = subscriptionHistory;

@@ -13,11 +13,10 @@ function validateSubscription(body) {
 
 function validateUpdateubscription(body) {
   const schema = Joi.object({
-    subscription: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
-    pricing: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
-    startDate: Joi.date().optional(),
-    endDate: Joi.date().optional(),
-    duration: Joi.number().optional(),
+    company: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    card: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    pricing: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    startEndOfCurrentPlan: Joi.boolean().optional()
   });
 
   return schema.validate(body);

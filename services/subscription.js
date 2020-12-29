@@ -58,10 +58,10 @@ class SubscriptionService {
 
 
   /**
-  * Create subscription
+  * Update subscription now
   * @param {Object} body
  */
-  update(body) {
+  updateNow(body) {
     return new Promise(async (resolve, reject) => {
       try {
         const company = await Company.findById(body.company)
@@ -70,8 +70,6 @@ class SubscriptionService {
         if (!card) return reject({ statusCode: 400, msg: "Card not found" })
 
         const transaction = await paystack.transaction.charge({ reference: card.txRef, authorization_code: card.token, email: company.email, amount: pricing.transactionCost * 100 });
-
-        console.log('transaction', transaction)
 
         if (!transaction.status) {
           reject({ code: 400, msg: "Payment Error" });
@@ -88,20 +86,13 @@ class SubscriptionService {
         var endDate = new Date();
         endDate.setDate(endDate.getDate() + duration);
 
-        if (body.startEndOfCurrentPlan) {
-          const nextPaidPlan = pricing._id;
-          updateObject = {
-            nextPaidPlan,
-            duration
-          }
-        } else {
-          updateObject = {
-            startDate,
-            duration,
-            endDate,
-            pricing: pricing._id
-          }
+        updateObject = {
+          startDate,
+          duration,
+          endDate,
+          pricing: pricing._id
         }
+
         const updatedSubscription = await Subscription.updateOne(
           { company: body.company },
           {
@@ -126,7 +117,50 @@ class SubscriptionService {
     })
   }
 
+  /**
+  * Update subscription later
+  * @param {Object} body
+ */
+  updateLater(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const company = await Company.findById(body.company)
+        const pricing = await Pricing.findById(body.pricing)
+        const card = await Card.find({ _id: body.card, company: body.company })
+        if (!card) return reject({ statusCode: 400, msg: "Card not found" })
 
+        const transaction = await paystack.transaction.charge({ reference: card.txRef, authorization_code: card.token, email: company.email, amount: pricing.transactionCost * 100 });
+
+        if (!transaction.status) {
+          reject({ code: 400, msg: "Payment Error" });
+          return;
+        }
+        if (transaction.data.status !== "success") {
+          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+          return;
+        }
+        // const subscription = await Subscription.find({ company: body.company })
+        const nextPaidPlan = pricing._id;
+        updateObject = {
+          nextPaidPlan,
+          duration
+        }
+
+        const updatedSubscription = await Subscription.updateOne(
+          { company: body.company },
+          {
+            $set: updateObject,
+          }
+        );
+        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        resolve({ updatedSubscription, logSubscription })
+
+      } catch (error) {
+        reject({ statusCode: error.code, msg: error.msg });
+        return
+      }
+    })
+  }
 
 
   /**

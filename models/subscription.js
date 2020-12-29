@@ -15,7 +15,19 @@ const subscriptionSchema = new mongoose.Schema(
       ref: "Pricing",
       required: true,
     },
+    status: {
+      type: String,
+      enum: ["running", "expired", "ontrial"],
+      default: "running",
+    },
+    duration: {
+      type: Number
+    },
     startDate: {
+      type: Date,
+      required: true
+    },
+    endDate: {
       type: Date,
       required: true
     },
@@ -23,14 +35,15 @@ const subscriptionSchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Pricing"
     },
-    endDate: {
+    nextRetry: {
       type: Date,
-      required: true
     },
-    // Up for review
-    duration: {
+    retryCount: {
       type: Number
     },
+    trialDays: {
+      type: Number
+    }
   },
   {
     timestamps: true,

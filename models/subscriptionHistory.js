@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const subscriptionSchema = new mongoose.Schema(
+const subscriptionHistorySchema = new mongoose.Schema(
   {
     company: {
       type: ObjectId,
@@ -19,15 +19,10 @@ const subscriptionSchema = new mongoose.Schema(
       type: Date,
       required: true
     },
-    nextPaidPlan: {
-      type: ObjectId,
-      ref: "Pricing"
-    },
     endDate: {
       type: Date,
       required: true
     },
-    // Up for review
     duration: {
       type: Number
     },
@@ -37,6 +32,6 @@ const subscriptionSchema = new mongoose.Schema(
   }
 );
 
-const Subscription = mongoose.model("Subscription", subscriptionSchema);
+const subscriptionHistory = mongoose.model("subscriptionHistory", subscriptionHistorySchema);
 
-module.exports = Subscription;
+module.exports = subscriptionHistory;

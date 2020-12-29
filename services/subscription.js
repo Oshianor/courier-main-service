@@ -1,5 +1,10 @@
 const Subscription = require('../models/subscription');
+const SubscriptionHistory = require('../models/subscriptionHistory');
 const Company = require('../models/company');
+const Pricing = require('../models/pricing');
+const Card = require('../models/company');
+const config = require("config");
+const paystack = require("paystack")(config.get("paystack.secret"));
 const { MSG_TYPES } = require('../constant/types');
 
 class SubscriptionService {
@@ -51,6 +56,79 @@ class SubscriptionService {
     })
   }
 
+
+  /**
+  * Create subscription
+  * @param {Object} body
+ */
+  update(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const company = await Company.findById(body.company)
+        const pricing = await Pricing.findById(body.pricing)
+        const card = await Card.find({ _id: body.card, company: body.company })
+        if (!card) return reject({ statusCode: 400, msg: "Card not found" })
+
+        const transaction = await paystack.transaction.charge({ reference: card.txRef, authorization_code: card.token, email: company.email, amount: pricing.transactionCost * 100 });
+
+        console.log('transaction', transaction)
+
+        if (!transaction.status) {
+          reject({ code: 400, msg: "Payment Error" });
+          return;
+        }
+        if (transaction.data.status !== "success") {
+          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+          return;
+        }
+        // const subscription = await Subscription.find({ company: body.company })
+        let updateObject;
+        const startDate = new Date();
+        const duration = body.duration;
+        var endDate = new Date();
+        endDate.setDate(endDate.getDate() + duration);
+
+        if (body.startEndOfCurrentPlan) {
+          const nextPaidPlan = pricing._id;
+          updateObject = {
+            nextPaidPlan,
+            duration
+          }
+        } else {
+          updateObject = {
+            startDate,
+            duration,
+            endDate,
+            pricing: pricing._id
+          }
+        }
+        const updatedSubscription = await Subscription.updateOne(
+          { company: body.company },
+          {
+            $set: updateObject,
+          }
+        );
+
+        const logSubscription = await SubscriptionHistory.create({
+          company: body.company,
+          pricing: pricing._id,
+          startDate,
+          endDate,
+          duration,
+        })
+        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        resolve({ updatedSubscription, logSubscription })
+
+      } catch (error) {
+        reject({ statusCode: error.code, msg: error.msg });
+        return
+      }
+    })
+  }
+
+
+
+
   /**
    * update subscription
    * @param {Object} company
@@ -69,7 +147,7 @@ class SubscriptionService {
           }
         );
 
-        if (!updatedSubscription) return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND })
+        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
         resolve(updatedSubscription)
       } catch (error) {
         reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })

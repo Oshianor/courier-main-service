@@ -18,6 +18,7 @@ const user = require("../routes/user");
 const rating = require("../routes/rating");
 const bank = require("../routes/bank");
 const subscription = require("../routes/subscription");
+const card = require("../routes/card");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
@@ -42,6 +43,7 @@ app.use("/api/v1/order", order);
 app.use("/api/v1/rating", rating);
 app.use("/api/v1/bank", bank);
 app.use("/api/v1/subscription", subscription);
+app.use("/api/v1/card", card);
 app.use(error);
 
 module.exports = app;

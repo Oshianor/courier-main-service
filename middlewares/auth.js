@@ -3,6 +3,7 @@ const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const User = require("../models/users");
+const Company = require("../models/company");
 const { Container } = require("typedi");
 const AdminService = require("../services/admin");
 const UserService = require("../services/user");
@@ -67,6 +68,29 @@ const Auth = async (req, res, next) => {
   }
 };
 
+// company auth middleware
+const CompanyAuth = async (req, res, next) => {
+  const token = req.header("x-auth-token");
+  if (!token)
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+  try {
+    const decoded = jwt.verify(token, config.get("application.jwt.key"));
+    req.user = decoded;
+
+    const company = await Company.findById(decoded.id);
+    if (!company) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+
+    req.body.company = decoded.id
+    next();
+  } catch (ex) {
+    console.log(ex);
+    if (ex.msg) {
+      return JsonResponse(res, 401, ex.msg, null, null);
+    }
+    res.status(406).send();
+  }
+};
+
 const SocketAuth = (socket, next) => {
   try {
     const token = socket.handshake.query.token ?? "";
@@ -116,7 +140,7 @@ const UserAuth = async (req, res, next) => {
 
 const isExaltService = async (req, res, next) => {
   const serviceKey = req.header("api-key");
-  if(serviceKey && serviceKey === config.get("api.key")){
+  if (serviceKey && serviceKey === config.get("api.key")) {
     return next();
   }
   return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
@@ -128,5 +152,6 @@ module.exports = {
   ROLES,
   UserAuth,
   SocketAuth,
-  isExaltService
+  isExaltService,
+  CompanyAuth
 };

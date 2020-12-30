@@ -104,7 +104,7 @@ class UserService {
   updateFCMToken(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        await User.updateOne({ userId: user.id }, { FCMToken: body.FCMToken });
+        await User.updateOne({ _id: user.id }, { FCMToken: body.FCMToken });
 
         resolve(null);
       } catch (error) {

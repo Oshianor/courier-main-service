@@ -333,7 +333,6 @@ class EntryService {
             reference: nanoid(20),
             authorization_code: card.data.token,
             email: user.email,
-            // email: "abundance@gmail.com",
             amount: parseFloat(entry.TEC).toFixed(2) * 100,
           });
           console.log("trans", trans);

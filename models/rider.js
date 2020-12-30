@@ -86,6 +86,10 @@ const riderSchema = new mongoose.Schema(
       index: true,
       required: true,
     },
+    rating: {
+      type: Number,
+      default: 0,
+    },
     latitude: {
       type: Number,
       default: 0.0,

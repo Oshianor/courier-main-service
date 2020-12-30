@@ -1,6 +1,8 @@
 const Rating = require("../models/rating")
 const Order = require("../models/order");
 const { MSG_TYPES } = require("../constant/types");
+const Rider = require("../models/rider");
+const Company = require("../models/company");
 
 class RatingService {
   /**
@@ -28,9 +30,20 @@ class RatingService {
 
         body.user = user.id;
         body.rider = order.rider;
+        body.company = order.company;
         const createRating = await Rating.create(body);
 
         await order.updateOne({ userRated: true, userRating: createRating._id });
+
+        // calculate rider avarage rating 
+        const riderRating = await this.calculateRiderAverageRating(order.rider);
+        const companyRating = await this.calculateCompanyAverageRating(order.company);
+
+        await Rider.updateOne({ _id: order.rider }, { rating: riderRating });
+        await Company.updateOne(
+          { _id: order.company },
+          { rating: companyRating }
+        );
 
         resolve(createRating);
       } catch (error) {
@@ -60,6 +73,49 @@ class RatingService {
 
       resolve({ total, rating });
     });
+  }
+
+
+  /**
+   * Get the average for a rider
+   * @param {ObjectId} rider 
+   */
+  calculateRiderAverageRating(rider) {
+    return new Promise(async (resolve, reject) => {
+      const star5 = await Rating.findOne({ rating: 5, rider, source: "user" }).countDocuments();
+      const star4 = await Rating.findOne({ rating: 4, rider, source: "user" }).countDocuments();
+      const star3 = await Rating.findOne({ rating: 3, rider, source: "user" }).countDocuments();
+      const star2 = await Rating.findOne({ rating: 2, rider, source: "user" }).countDocuments();
+      const star1 = await Rating.findOne({ rating: 1, rider, source: "user" }).countDocuments();
+
+      const weight = star5 * 5 + star4 * 4 + star3 * 3 + star2 * 2 + star1 * 1;
+      const total = star5 + star4 + star3 + star2 + star1;
+
+      const average = weight / total;
+
+      resolve(average);
+    })
+  }
+
+    /**
+   * Get the average for a company
+   * @param {ObjectId} company 
+   */
+  calculateCompanyAverageRating(company) {
+    return new Promise(async (resolve, reject) => {
+      const star5 = await Rating.findOne({ rating: 5, company }).countDocuments();
+      const star4 = await Rating.findOne({ rating: 4, company }).countDocuments();
+      const star3 = await Rating.findOne({ rating: 3, company }).countDocuments();
+      const star2 = await Rating.findOne({ rating: 2, company }).countDocuments();
+      const star1 = await Rating.findOne({ rating: 1, company }).countDocuments();
+
+      const weight = star5 * 5 + star4 * 4 + star3 * 3 + star2 * 2 + star1 * 1;
+      const total = star5 + star4 + star3 + star2 + star1;
+
+      const average = weight / total;
+
+      resolve(average);
+    })
   }
 }
 

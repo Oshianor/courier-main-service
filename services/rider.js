@@ -278,9 +278,10 @@ class RiderSerivice {
 
   /**
    * Rider goline and offline
+   * @param {Object} body
    * @param {Object} AuthUser
    */
-  toggleOnlineStatus(user) {
+  toggleOnlineStatus(body, user) {
     return new Promise(async (resolve, reject) => {
       const rider = await Rider.findOne({
         _id: user.id,
@@ -289,7 +290,7 @@ class RiderSerivice {
       });
       if (!rider) {
         reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
-        return
+        return;
       }
 
       let msg;
@@ -310,28 +311,40 @@ class RiderSerivice {
 
         if (entry) {
           reject({ code: 400, msg: "You can't go offline while on a trip." });
-          return
+          return;
         }
 
         msg = "Offline Successfully ";
-        await rider.updateOne({ onlineStatus: false });
+        await rider.updateOne({
+          onlineStatus: false,
+          latitude: body.latitude,
+          longitude: body.longitude,
+        });
         const newOnelineHistory = new OnlineHistory({
           rider: user.id,
           status: "offline",
+          latitude: body.latitude,
+          longitude: body.longitude,
         });
         await newOnelineHistory.save();
       } else {
         msg = "Online Successfully ";
-        await rider.updateOne({ onlineStatus: true });
+        await rider.updateOne({
+          onlineStatus: true,
+          latitude: body.latitude,
+          longitude: body.longitude,
+        });
         const newOnelineHistory = new OnlineHistory({
           rider: user.id,
           status: "online",
+          latitude: body.latitude,
+          longitude: body.longitude,
         });
         await newOnelineHistory.save();
       }
 
       resolve({ msg, rider });
-    })
+    });
   }
 
   /**
@@ -358,9 +371,9 @@ class RiderSerivice {
   }
 
   /**
- * Update password
- * @param {Object} body request body object
- */
+   * Update password
+   * @param {Object} body request body object
+   */
   updatePassword(body) {
     return new Promise(async (resolve, reject) => {
       const activeUser = await User.findOne({

@@ -352,8 +352,11 @@ exports.status = async (req, res) => {
  */
 exports.online = async (req, res) => {
   try {
+    const { error } = validateRiderLocation(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
     const riderInstance = new RiderService();
-    const { msg } = await riderInstance.toggleOnlineStatus(req.user);
+    const { msg } = await riderInstance.toggleOnlineStatus(req.body, req.user);
 
     JsonResponse(res, 200, msg);
     return

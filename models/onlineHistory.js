@@ -15,6 +15,14 @@ const riderSchema = new mongoose.Schema(
       enum: ["online", "offline"],
       default: "online",
     },
+    latitude: {
+      type: Number,
+      default: 0.0,
+    },
+    longitude: {
+      type: Number,
+      default: 0.0,
+    },
   },
   {
     timestamps: true,

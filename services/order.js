@@ -479,9 +479,52 @@ class OrderService {
   getOrderHistory(orderId) {
     return new Promise(async (resolve, reject) => {
       const logs = await TripLog.find({ order: orderId }).sort({ createdAt: 1 });
-
       resolve(logs);
     })
+  }
+
+  /**
+ * Get total orders
+ * @param {Object} filter
+ */
+  totalOrders(filter = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const total = await Order.countDocuments(filter)
+        if (total < 0) {
+          reject({ code: 404, msg: "No Orders" });
+        }
+        resolve(total);
+      } catch (error) {
+        reject(error)
+        return
+      }
+    });
+  }
+
+  /**
+   * Get revenue
+   */
+  revenue() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // const totalRevenue = Order.aggregate(
+        //   [
+        //     {
+        //       $group:
+        //       {
+        //         totalAmount: { $sum: "$estimatedCost" },
+        //         count: { $sum: 1 }
+        //       }
+        //     }
+        //   ]
+        // )
+        // resolve(totalRevenue);
+      } catch (error) {
+        reject(error)
+        return
+      }
+    });
   }
 }
 

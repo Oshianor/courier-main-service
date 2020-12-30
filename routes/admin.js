@@ -67,5 +67,11 @@ router.patch("/:adminId/enable", Auth, hasRole(), controller.admin.enable);
 router.delete("/:adminId", Auth, hasRole(), controller.admin.destroy);
 
 
+// INFO-METRICS
+//orders
+router.get("/info/order-stats", Auth, hasRole([ROLES.ADMIN]), controller.info.orderStatistics);
+//revenue
+router.get("/info/revenue", Auth, hasRole([ROLES.ADMIN]), controller.info.revenue);
+
 
 module.exports = router;

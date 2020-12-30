@@ -91,12 +91,29 @@ class CardService {
 
   /**
    * Get a single card
-   * @param {Mongoose objectId} cardId request body object
+   * @param {Mongoose objectId} cardId card _id
   */
   get(cardId) {
     return new Promise(async (resolve, reject) => {
       try {
         const card = await Card.findById(cardId)
+        if (!card) return reject({ statusCode: 400, msg: MSG_TYPES.NOT_FOUND })
+        resolve(card)
+      } catch (error) {
+        reject({ code: error.code, msg: error.msg });
+        return
+      }
+    })
+  }
+
+  /**
+ * Remove a card
+ * @param {Mongoose objectId} cardId card _id
+*/
+  delete(cardId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const card = await Card.deleteOne({ _id: cardId })
         if (!card) return reject({ statusCode: 400, msg: MSG_TYPES.NOT_FOUND })
         resolve(card)
       } catch (error) {

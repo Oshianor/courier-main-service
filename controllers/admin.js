@@ -188,7 +188,7 @@ exports.updateMe = async (req, res) => {
       return JsonResponse(res, 400, error.details[0].message);
 
     const admin = await adminInstance.get({ _id: req.user.id });
-    
+
     await admin.updateOne(req.body);
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
@@ -235,7 +235,7 @@ exports.disable = async (req, res) => {
   } catch (error) {
     console.log(error);
     JsonResponse(res, error.code, error.msg);
-    return 
+    return
   }
 };
 
@@ -255,6 +255,28 @@ exports.enable = async (req, res) => {
   } catch (error) {
     console.log(error);
     JsonResponse(res, error.code, error.msg);
+    return
+  }
+};
+
+// ADMIN INFO-METRICS 
+
+/**
+ * Get all orders
+ * @param {*} req
+ * @param {*} res
+ */
+exports.enable = async (req, res, next) => {
+  try {
+    const admin = await adminInstance.get({ _id: req.params.adminId });
+
+    admin.status = "active";
+    await admin.save();
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return
+  } catch (error) {
+    console.log(error);
+    next(error)
     return
   }
 };

@@ -31,7 +31,6 @@ function validateCompany(body) {
     TIN: Joi.string().label("T.I.N").required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
-    tier: Joi.string().label("Pricing Plan").required(),
     vehicles: Joi.array()
       .items(
         Joi.string()

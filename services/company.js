@@ -1,7 +1,6 @@
 const bcrypt = require("bcrypt");
 const moment = require("moment");
 const mongoose = require("mongoose");
-const Pricing = require("../models/pricing");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Organization = require("../models/organization");
@@ -26,12 +25,6 @@ class CompanyService {
         });
         if (companyExist) {
           reject({ code: 404, msg: "Account already exist." });
-          return;
-        }
-
-        const pricing = await Pricing.findOne({ _id: body.tier });
-        if (!pricing) {
-          reject({ code: 404, msg: MSG_TYPES.FREEMIUM });
           return;
         }
         if (!files.cac) {
@@ -82,7 +75,6 @@ class CompanyService {
           expiredDate: moment().add(2, "days"),
         };
         body.publicToken = nanoid(50);
-        body.tier = pricing;
         body.password = await bcrypt.hash(body.password, 10);
         const organization = new Organization(body);
         const company = new Company(body);

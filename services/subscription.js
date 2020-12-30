@@ -1,8 +1,9 @@
+const { nanoid } = require("nanoid");
 const Subscription = require('../models/subscription');
 const SubscriptionHistory = require('../models/subscriptionHistory');
 const Company = require('../models/company');
 const Pricing = require('../models/pricing');
-const Card = require('../models/company');
+const Card = require('../models/card');
 const config = require("config");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { MSG_TYPES } = require('../constant/types');
@@ -66,10 +67,16 @@ class SubscriptionService {
       try {
         const company = await Company.findById(body.company)
         const pricing = await Pricing.findById(body.pricing)
-        const card = await Card.find({ _id: body.card, company: body.company })
+        const card = await Card.findOne({ _id: body.card, company: body.company })
         if (!card) return reject({ statusCode: 400, msg: "Card not found" })
 
-        const transaction = await paystack.transaction.charge({ reference: card.txRef, authorization_code: card.token, email: company.email, amount: pricing.transactionCost * 100 });
+        const paymentObject = {
+          reference: nanoid(20),
+          authorization_code: card.token,
+          email: company.email,
+          amount: pricing.transactionCost * 100,
+        };
+        const transaction = await paystack.transaction.charge(paymentObject);
 
         if (!transaction.status) {
           reject({ code: 400, msg: "Payment Error" });
@@ -79,7 +86,6 @@ class SubscriptionService {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
           return;
         }
-        // const subscription = await Subscription.find({ company: body.company })
         let updateObject;
         const startDate = new Date();
         const duration = body.duration;
@@ -129,7 +135,13 @@ class SubscriptionService {
         const card = await Card.find({ _id: body.card, company: body.company })
         if (!card) return reject({ statusCode: 400, msg: "Card not found" })
 
-        const transaction = await paystack.transaction.charge({ reference: card.txRef, authorization_code: card.token, email: company.email, amount: pricing.transactionCost * 100 });
+        const paymentObject = {
+          reference: nanoid(20),
+          authorization_code: card.token,
+          email: company.email,
+          amount: pricing.transactionCost * 100,
+        };
+        const transaction = await paystack.transaction.charge(paymentObject);
 
         if (!transaction.status) {
           reject({ code: 400, msg: "Payment Error" });
@@ -139,13 +151,11 @@ class SubscriptionService {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
           return;
         }
-        // const subscription = await Subscription.find({ company: body.company })
         const nextPaidPlan = pricing._id;
         updateObject = {
           nextPaidPlan,
           duration
         }
-
         const updatedSubscription = await Subscription.updateOne(
           { company: body.company },
           {

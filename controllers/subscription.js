@@ -58,7 +58,7 @@ exports.updateSubscription = async (req, res, next) => {
     } else {
       subscription = await subscriptionInstance.updateLater(req.body)
     }
-    JsonResponse(res, 200, "Successfully updated subscription", subscription);
+    JsonResponse(res, 200, "Successfully updated subscription");
     return;
   } catch (error) {
     next(error)

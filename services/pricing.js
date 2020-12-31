@@ -10,7 +10,7 @@ class PricingService {
   getPricing(filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-        const pricing = await Pricing.find(filter);
+        const pricing = await Pricing.findOne(filter);
         if (pricing.length < 1) return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
         resolve(pricing);
       } catch (error) {

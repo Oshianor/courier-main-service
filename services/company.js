@@ -91,12 +91,12 @@ class CompanyService {
         const subject = "Welcome to Exalt Logistics";
         const html = template.Verification(token, body.email, "company");
         Mailer(body.email, subject, html);
-
         resolve({ company, organization });
       } catch (error) {
         session.abortTransaction();
         console.log("error", error);
         reject({ code: 500, msg: "Server Error" });
+        return
       }
     });
   }

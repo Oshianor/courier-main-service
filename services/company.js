@@ -247,6 +247,29 @@ class CompanyService {
       resolve({ entry });
     });
   }
+
+
+  /**
+  * Update company
+  * @param {Object} updateObject
+  */
+  updateCompany(company, updateObject) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const updatedCompany = await Company.updateOne(
+          { _id: company },
+          {
+            $set: updateObject,
+          }
+        );
+        resolve(updatedCompany)
+      } catch (error) {
+        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        return
+      }
+    })
+  }
+
 }
 
 module.exports = CompanyService;

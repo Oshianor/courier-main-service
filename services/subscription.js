@@ -57,16 +57,16 @@ class SubscriptionService {
     })
   }
 
-
   /**
-  * Update subscription now
+  * Update subscription
   * @param {Object} body
  */
-  updateNow(body) {
+  update(body) {
     return new Promise(async (resolve, reject) => {
       try {
         const company = await Company.findById(body.company)
         const pricing = await Pricing.findById(body.pricing)
+        if (!pricing) return reject({ code: 400, msg: "Pricing plan not available" });
         const card = await Card.findOne({ _id: body.card, company: body.company })
         if (!card) return reject({ statusCode: 400, msg: "Card not found" })
 
@@ -76,7 +76,43 @@ class SubscriptionService {
           email: company.email,
           amount: pricing.transactionCost * 100,
         };
-        const transaction = await paystack.transaction.charge(paymentObject);
+        // check if already on the current plan and subscription active
+        if (!body.startEndOfCurrentPlan) {
+          const activeSub = await Subscription.findOne({ company: body.company, pricing: body.pricing, status: "active" })
+          if (activeSub) return reject({ statusCode: 400, msg: "Already an active subscription on this plan" })
+        }
+
+        if (body.startEndOfCurrentPlan) {
+          const activeSub = await Subscription.findOne({ company: body.company, status: "active" })
+          if (activeSub.nextPaidPlan != null || activeSub.nextPaidPlan != undefined) return reject({ statusCode: 400, msg: "Already paid for a subscription plan starting end of current plan" })
+        }
+
+        // charge company
+        await this.subscriptionCharge(paymentObject)
+
+        // update subscription
+        let subscription;
+        if (!body.startEndOfCurrentPlan) {
+          subscription = await this.updateNow(body, pricing)
+        } else {
+          subscription = await this.updateLater(body, pricing)
+        }
+        resolve(subscription)
+      } catch (error) {
+        reject({ statusCode: error.code, msg: error.msg });
+        return
+      }
+    })
+  }
+
+  /**
+ * paystack payment charge
+ * @param {Object} chargeObject
+*/
+  subscriptionCharge(chargeObject) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const transaction = await paystack.transaction.charge(chargeObject);
 
         if (!transaction.status) {
           reject({ code: 400, msg: "Payment Error" });
@@ -86,15 +122,59 @@ class SubscriptionService {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
           return;
         }
-        let updateObject;
-        const startDate = new Date();
-        const duration = body.duration;
-        var endDate = new Date();
-        endDate.setDate(endDate.getDate() + duration);
+        resolve()
+      } catch (error) {
+        reject({ statusCode: error.code, msg: error.msg })
+        return
+      }
+    })
+  }
 
-        updateObject = {
+
+  /**
+  * update end of current plan
+  * @param {Object} body
+  * @param {Object} pricing
+  */
+  updateLater(body, pricing) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const nextPaidPlan = pricing._id;
+        const updateObject = {
+          nextPaidPlan,
+          duration: body.duration
+        }
+        const updatedSubscription = await Subscription.updateOne(
+          { company: body.company },
+          {
+            $set: updateObject,
+          }
+        );
+        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+
+        resolve(updatedSubscription)
+
+      } catch (error) {
+        reject({ statusCode: error.code, msg: error.msg })
+        return
+      }
+    })
+  }
+
+  /**
+  * Update subscription now
+  * @param {Object} body
+  */
+  updateNow(body, pricing) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const startDate = new Date();
+        var endDate = new Date();
+        endDate.setDate(endDate.getDate() + body.duration);
+
+        const updateObject = {
           startDate,
-          duration,
+          duration: body.duration,
           endDate,
           pricing: pricing._id
         }
@@ -106,97 +186,45 @@ class SubscriptionService {
           }
         );
 
-        const logSubscription = await SubscriptionHistory.create({
+        await SubscriptionHistory.create({
           company: body.company,
           pricing: pricing._id,
           startDate,
           endDate,
           duration,
         })
-        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
-        resolve({ updatedSubscription, logSubscription })
-
+        resolve(updatedSubscription)
       } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg });
+        reject({ statusCode: error.code, msg: error.msg })
         return
       }
     })
   }
 
   /**
-  * Update subscription later
-  * @param {Object} body
- */
-  updateLater(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const company = await Company.findById(body.company)
-        const pricing = await Pricing.findById(body.pricing)
-        const card = await Card.find({ _id: body.card, company: body.company })
-        if (!card) return reject({ statusCode: 400, msg: "Card not found" })
-
-        const paymentObject = {
-          reference: nanoid(20),
-          authorization_code: card.token,
-          email: company.email,
-          amount: pricing.transactionCost * 100,
-        };
-        const transaction = await paystack.transaction.charge(paymentObject);
-
-        if (!transaction.status) {
-          reject({ code: 400, msg: "Payment Error" });
-          return;
-        }
-        if (transaction.data.status !== "success") {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-        const nextPaidPlan = pricing._id;
-        updateObject = {
-          nextPaidPlan,
-          duration
-        }
-        const updatedSubscription = await Subscription.updateOne(
-          { company: body.company },
-          {
-            $set: updateObject,
-          }
-        );
-        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
-        resolve({ updatedSubscription, logSubscription })
-
-      } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg });
-        return
-      }
-    })
-  }
-
-
-  /**
-   * update subscription
+   * update subscription 
    * @param {Object} company
    * @param {ObjectI} updateObject
   */
   editSubscription(company, updateObject) {
     return new Promise(async (resolve, reject) => {
-      try {
-        const validSubscription = await Subscription.findOne(company)
-        if (!validSubscription) return reject({ statusCode: 400, msg: MSG_TYPES.NOT_FOUND })
+      // try {
+      //   const validSubscription = await Subscription.findOne(company)
+      //   if (!validSubscription) return reject({ statusCode: 400, msg: MSG_TYPES.NOT_FOUND })
 
-        const updatedSubscription = await Subscription.updateOne(
-          company,
-          {
-            $set: updateObject,
-          }
-        );
+      //   const updatedSubscription = await Subscription.updateOne(
+      //     company,
+      //     {
+      //       $set: updateObject,
+      //     }
+      //   );
 
-        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
-        resolve(updatedSubscription)
-      } catch (error) {
-        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
-        return
-      }
+      //   if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+      //   resolve(updatedSubscription)
+      // } catch (error) {
+      //   reject({ statusCode: error.code, msg: error.msg })
+      //   return
+      // }
     })
   }
 

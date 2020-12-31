@@ -1,5 +1,6 @@
 const { nanoid } = require("nanoid");
 const Subscription = require('../models/subscription');
+const CompanyService = require("../services/company");
 const SubscriptionHistory = require('../models/subscriptionHistory');
 const Company = require('../models/company');
 const Pricing = require('../models/pricing');
@@ -7,6 +8,8 @@ const Card = require('../models/card');
 const config = require("config");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { MSG_TYPES } = require('../constant/types');
+
+const companyInstance = new CompanyService();
 
 class SubscriptionService {
 
@@ -193,6 +196,7 @@ class SubscriptionService {
           endDate,
           duration,
         })
+        companyInstance.updateCompany(body.company, { teir: pricing._id });
         resolve(updatedSubscription)
       } catch (error) {
         reject({ statusCode: error.code, msg: error.msg })

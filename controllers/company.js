@@ -53,7 +53,7 @@ exports.company = async (req, res) => {
     const subscriptionInstance = new SubscriptionService();
     const pricingInstance = new PricingService();
 
-    const freemiumPlan = pricingInstance.getPricing({ type: "freemium" })
+    const freemiumPlan = await pricingInstance.getPricing({ type: "freemium" })
     const startDate = new Date();
     const duration = 30;
     var endDate = new Date();
@@ -66,9 +66,9 @@ exports.company = async (req, res) => {
       duration,
       endDate
     }
-    await subscriptionInstance.create(subObject)
 
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
+    await subscriptionInstance.create(subObject)
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, company);
     return;
   } catch (error) {
     console.log(error);

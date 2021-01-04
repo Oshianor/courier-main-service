@@ -10,6 +10,25 @@ const UserSchema = new mongoose.Schema(
       minlength: 5,
       maxlength: 50,
     },
+    role: {
+      type: String,
+      required: true,
+      enum: ["owner", "branch", "maintainer", "default"],
+      default: "default",
+    },
+    group: {
+      type: String,
+      enum: ["commercial", "enterprise"],
+      required: true,
+      default: "commercial",
+      index: true,
+    },
+    enterprise: {
+      type: ObjectId,
+      default: null,
+      index: true,
+      ref: "Enterprise"
+    },
     phoneNumber: String,
     name: String,
     country: String,
@@ -23,8 +42,8 @@ const UserSchema = new mongoose.Schema(
     },
     lastAccountUpdateDate: {
       type: Date,
-      required: true
-    }
+      required: true,
+    },
   },
   {
     timestamps: true,

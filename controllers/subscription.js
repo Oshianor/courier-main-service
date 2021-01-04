@@ -52,13 +52,8 @@ exports.updateSubscription = async (req, res, next) => {
     const { error } = validateUpdateubscription(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
     req.body.duration = 30;
-    let subscription;
-    if (!req.body.startEndOfCurrentPlan) {
-      subscription = await subscriptionInstance.updateNow(req.body)
-    } else {
-      subscription = await subscriptionInstance.updateLater(req.body)
-    }
-    JsonResponse(res, 200, "Successfully updated subscription", subscription);
+    await subscriptionInstance.update(req.body)
+    JsonResponse(res, 200, "Successfully updated subscription");
     return;
   } catch (error) {
     next(error)

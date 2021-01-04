@@ -138,6 +138,12 @@ const companySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    tier: {
+      type: ObjectId,
+      ref: "Pricing",
+      index: true,
+      required: true,
+    },
     poi: {
       type: String,
       required: true,
@@ -153,12 +159,6 @@ const companySchema = new mongoose.Schema(
     logo: {
       type: String,
       required: true,
-    },
-    tier: {
-      type: ObjectId,
-      ref: "Pricing",
-      required: true,
-      index: true,
     },
     totalRiders: {
       type: Number,

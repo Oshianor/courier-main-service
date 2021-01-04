@@ -47,13 +47,14 @@ exports.company = async (req, res) => {
 
     // validate the array for supported vehicle list
     await vehicleInstance.validateAllVehiclesFromList(req.body.vehicles);
+    const pricingInstance = new PricingService();
+    const freemiumPlan = await pricingInstance.getPricing({ type: "freemium" })
+    req.body.tier = freemiumPlan._id;
 
     const { company, organization } = await companyInstance.create(req.body, req.files);
-
     const subscriptionInstance = new SubscriptionService();
-    const pricingInstance = new PricingService();
 
-    const freemiumPlan = pricingInstance.getPricing({ type: "freemium" })
+
     const startDate = new Date();
     const duration = 30;
     var endDate = new Date();
@@ -67,8 +68,7 @@ exports.company = async (req, res) => {
       endDate
     }
     await subscriptionInstance.create(subObject)
-
-    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
+    JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, company);
     return;
   } catch (error) {
     console.log(error);

@@ -1,7 +1,9 @@
+const config = require("config");
 const moment = require("moment");
 const bcrypt = require("bcrypt");
 const axios = require("axios");
 const Rider = require("../models/rider");
+const User = require("../models/users");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
@@ -199,3 +201,68 @@ class AuthSerivice {
 }
 
 module.exports = AuthSerivice;
+
+
+
+  // loginUser(body) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const response = await axios.post(
+  //         `${config.get("api.base")}/auth/login`,
+  //         body
+  //       );
+  //       console.log("response", response);
+  //       if (response.status == 200) {
+  //         const token = response.headers["x-auth-token"];
+  //         const exaltUser = response.data.data;
+  //         const logisticUser = await User.findById(exaltUser._id);
+  //         if (logisticUser) {
+  //           resolve({ user: logisticUser, token });
+  //         } else {
+  //           const user = await User.create(exaltUser);
+  //           resolve({ user, token });
+  //         }
+  //       } else {
+  //         return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+  //       }
+  //     } catch (error) {
+  //       reject({
+  //         code: error.response.status,
+  //         msg: error.response.data.msg,
+  //       });
+  //       return;
+  //     }
+  //   });
+  // }
+
+
+    // loginUser(body) {
+  //   return new Promise(async (resolve, reject) => {
+  //     axios.post(
+  //       `${config.get("api.base")}/auth/login`,
+  //       body
+  //     ).then(async res => {
+  //       console.log("res", res);
+  //       if (res.status == 200) {
+  //         const token = res.headers["x-auth-token"];
+  //         const exaltUser = res.data.data;
+  //         const logisticUser = await User.findById(exaltUser._id);
+  //         if (logisticUser) {
+  //           resolve({ user: logisticUser, token });
+  //         } else {
+  //           const user = await User.create(exaltUser);
+  //           resolve({ user, token });
+  //         }
+  //       } else {
+  //         return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+  //       }
+  //     }).catch ((error) => {
+  //       console.log("error", error);
+  //       reject({
+  //         code: error.response.status,
+  //         msg: error.response.data.msg,
+  //       });
+  //       return;
+  //     })
+  //   });
+  // }

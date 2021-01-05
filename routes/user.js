@@ -4,7 +4,7 @@ const controller = require("../controllers");
 const { UserAuth, isExaltService } = require("../middlewares/auth");
 
 //create a user account
-router.post("/user", controller.auth.userLogin);
+router.post("/", controller.user.createUser);
 // get my data
 router.patch("/fcmtoken", UserAuth, controller.user.FCMToken);
 

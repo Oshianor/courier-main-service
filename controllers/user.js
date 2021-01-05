@@ -6,8 +6,32 @@ const { MSG_TYPES } = require("../constant/types");
 const { validateRiderFCMToken } = require("../request/rider");
 const { paginate } = require("../utils");
 
+
+
+
+
 /**
- * Create Rider
+ * Create a user
+ * @param {*} req
+ * @param {*} res
+ */
+exports.createUser = async (req, res) => {
+  try {
+    const userInstance = new UserService();
+    const { user } = await userInstance.createUser(req.body);
+
+    user.password = "";
+    JsonResponse(res, 200, MSG_TYPES.ACCOUNT_CREATED, user);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+
+/**
+ * Update user FCM Token
  * @param {*} req
  * @param {*} res
  */

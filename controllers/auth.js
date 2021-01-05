@@ -28,6 +28,7 @@ exports.userLogin = async (req, res) => {
     
     const authInstance = new AuthService();
     const { user, token } = await authInstance.loginUser(req.body);
+
     res.header("x-auth-token", token);
     return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, user);
   } catch (error) {

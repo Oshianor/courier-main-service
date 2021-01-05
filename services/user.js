@@ -12,6 +12,35 @@ const { OTPCode } = require("../templates")
  * User service class
  */
 class UserService {
+  /**
+   * create a user
+   * @param {String} token
+   */
+  createUser(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(
+          `${config.get("api.base")}/user`,
+          body
+        );
+        if (response.status == 200) {
+          const user = await User.create({
+            ...response.data.data,
+          });
+          resolve({ user });
+        } else {
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        }
+      } catch (error) {
+        reject({
+          code: error.response.status,
+          msg: error.response.data.msg,
+        });
+        return;
+      }
+    })
+  }
+
 
   /**
    * Get a user by it's token

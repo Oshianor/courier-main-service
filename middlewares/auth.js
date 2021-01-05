@@ -116,13 +116,12 @@ const UserAuth = async (req, res, next) => {
   try {
     // call user account service to get details
     const userParent = await userInstance.get(token);
-
-    // need to find a better solution
-    const user = await User.findById(userParent.data._id);
-    if (!user) {
-      // userParent.data.userId = userParent.data._id;
-      await User.create(userParent.data);
-    }
+    // // need to find a better solution
+    // const user = await User.findById(userParent.data._id);
+    // if (!user) {
+    //   // userParent.data.userId = userParent.data._id;
+    //   await User.create(userParent.data);
+    // }
 
     req.user = userParent.data;
     req.user.id = req.user._id;

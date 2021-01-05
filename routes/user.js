@@ -3,6 +3,8 @@ const router = express.Router();
 const controller = require("../controllers");
 const { UserAuth, isExaltService } = require("../middlewares/auth");
 
+//create a user account
+router.post("/user", controller.auth.userLogin);
 // get my data
 router.patch("/fcmtoken", UserAuth, controller.user.FCMToken);
 

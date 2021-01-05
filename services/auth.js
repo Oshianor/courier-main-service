@@ -1,5 +1,6 @@
 const moment = require("moment");
 const bcrypt = require("bcrypt");
+const axios = require("axios");
 const Rider = require("../models/rider");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
@@ -7,6 +8,41 @@ const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
 const OTPCode = require("../templates/otpCode");
 
 class AuthSerivice {
+  /**
+   * Login user
+   * @param {Object} body
+   */
+  loginUser(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(
+          `${config.get("api.base")}/auth/login`,
+          body
+        );
+        console.log("response", response);
+        if (response.status == 200) {
+          const token = response.headers["x-auth-token"];
+          const exaltUser = response.data.data;
+          const logisticUser = await User.findById(exaltUser._id);
+          if (logisticUser) {
+            resolve({ user: logisticUser, token });
+          } else {
+            const user = await User.create(exaltUser);
+            resolve({ user, token });
+          }
+        } else {
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+        }
+      } catch (error) {
+        reject({
+          code: error.response.status,
+          msg: error.response.data.msg,
+        });
+        return;
+      }
+    });
+  }
+
   /**
    * Validate forgot password email and send OTP
    * @param {String} email
@@ -48,12 +84,11 @@ class AuthSerivice {
     });
   }
 
-
   /**
- * Validate forgot password OTP
- * @param {String} email
- * @param {String} otp
- */
+   * Validate forgot password OTP
+   * @param {String} email
+   * @param {String} otp
+   */
   forgotPassOTPValidate(email, otp) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -68,7 +103,7 @@ class AuthSerivice {
           return;
         }
         if (moment(rider.forgotPassOTPExpiredDate).isSameOrAfter(moment())) {
-          reject({ code: 400, msg: 'OTP Expired Try Again' });
+          reject({ code: 400, msg: "OTP Expired Try Again" });
           return;
         }
         const updateRider = await Rider.updateOne(
@@ -119,12 +154,10 @@ class AuthSerivice {
     });
   }
 
-
-
   /**
- * Update password
- * @param {Object} body request body object
- */
+   * Update password
+   * @param {Object} body request body object
+   */
   updatePassword(body) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -161,7 +194,6 @@ class AuthSerivice {
         reject({ code: error.code, msg: error.msg });
         return;
       }
-
     });
   }
 }

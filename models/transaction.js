@@ -11,6 +11,7 @@ const transactionSchema = new mongoose.Schema(
       type: ObjectId,
       index: true,
       required: true,
+      ref: "Entry",
     },
     user: {
       type: ObjectId,
@@ -34,11 +35,17 @@ const transactionSchema = new mongoose.Schema(
       ref: "Company",
       default: null,
     },
+    enterprise: {
+      type: ObjectId,
+      index: true,
+      ref: "Enterprise",
+      default: null,
+    },
     paymentMethod: {
       type: String,
       required: true,
       default: "card",
-      enum: ["card", "cash"],
+      enum: ["card", "cash", "wallet", "credit"],
     },
     amount: {
       type: Number,

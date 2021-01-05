@@ -1,5 +1,4 @@
 const config = require("config");
-const objectPath = require("object-path");
 const bcrypt = require("bcrypt");
 const Company = require("../models/company");
 const Rider = require("../models/rider");
@@ -7,10 +6,36 @@ const Admin = require("../models/admin");
 const { validateAdminLogin, validateVerifyAccount } = require("../request/admin");
 const { validateCompanyLogin, validateVerifyCompany } = require("../request/company");
 const { validateRiderLogin } = require("../request/rider");
-const { validatePasswordUpdate, validateForgotPassword } = require("../request/auth");
+const {
+  validatePasswordUpdate,
+  validateForgotPassword,
+  validateUserLogin,
+} = require("../request/auth");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const AuthService = require("../services/auth");
+
+
+/**
+ * Company Login
+ * @param {*} req
+ * @param {*} res
+ */
+exports.userLogin = async (req, res) => {
+  try {
+    const { error } = validateUserLogin(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+    
+    const authInstance = new AuthService();
+    const { user, token } = await authInstance.loginUser(req.body);
+    res.header("x-auth-token", token);
+    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, user);
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
+  }
+}
+
 /**
  * Company Login
  * @param {*} req

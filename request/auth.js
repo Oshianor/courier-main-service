@@ -11,10 +11,19 @@ const complexityOptions = {
   requirementCount: 2,
 };
 
+function validateUserLogin(body) {
+  const schema = Joi.object({
+    email: Joi.string().required(),
+    password: Joi.string().min(6).required(),
+  });
+
+  return schema.validate(body);
+}
+
 function validateRiderLogin(body) {
   const schema = Joi.object({
     email: Joi.string().required(),
-    password: Joi.string().required(),
+    password: passwordComplexity(complexityOptions).required(),
   });
 
   return schema.validate(body);
@@ -41,9 +50,9 @@ function validateForgotPassword(body) {
 
 
 
-
 module.exports = {
   validateRiderLogin,
   validatePasswordUpdate,
-  validateForgotPassword
+  validateForgotPassword,
+  validateUserLogin,
 };

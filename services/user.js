@@ -12,6 +12,7 @@ const { OTPCode } = require("../templates")
  * User service class
  */
 class UserService {
+
   /**
    * Get a user by it's token
    * @param {String} token
@@ -244,21 +245,24 @@ class UserService {
    */
   updateAccount(userId, data) {
     return new Promise(async (resolve, reject) => {
-      try{
-        const user = await User.findOne({_id: userId})
-        if(!user){
+      try {
+        const user = await User.findOne({ _id: userId });
+        if (!user) {
           return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
         }
 
-        const updatedUser = await User.updateOne({ _id: userId }, { $set: data });
-        if(!updatedUser){
-         return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        const updatedUser = await User.updateOne(
+          { _id: userId },
+          { $set: data }
+        );
+        if (!updatedUser) {
+          return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
         }
         resolve(updatedUser);
-      } catch(error){
+      } catch (error) {
         return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
-    })
+    });
   }
 }
 

@@ -11,7 +11,6 @@ const CardSchema = new mongoose.Schema(
     company: {
       type: ObjectId,
       index: true,
-      required: true,
       ref: "Company",
     },
     txRef: {
@@ -34,6 +33,7 @@ const CardSchema = new mongoose.Schema(
     bin: { type: String, required: true },
     source: { type: String, default: "paystack", enum: ["paystack"] },
     default: { type: Boolean, required: true, default: false },
+    email: { type: String, required: true },
   },
   {
     timestamps: true,

@@ -7,8 +7,6 @@ const Company = require("../models/company");
 const { Container } = require("typedi");
 const AdminService = require("../services/admin");
 const UserService = require("../services/user");
-const adminInstance = Container.get(AdminService);
-const userInstance = Container.get(UserService);
 
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
@@ -21,6 +19,8 @@ const ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
+
+    const adminInstance = new AdminService();
     const admin = await adminInstance.get({
       _id: req.user.id,
       status: "active",
@@ -115,13 +115,8 @@ const UserAuth = async (req, res, next) => {
 
   try {
     // call user account service to get details
+    const userInstance = new UserService();
     const userParent = await userInstance.get(token);
-    // // need to find a better solution
-    // const user = await User.findById(userParent.data._id);
-    // if (!user) {
-    //   // userParent.data.userId = userParent.data._id;
-    //   await User.create(userParent.data);
-    // }
 
     req.user = userParent.data;
     req.user.id = req.user._id;
@@ -137,6 +132,19 @@ const UserAuth = async (req, res, next) => {
   }
 };
 
+
+const EnterpriseAuth = async (req, res, next) => {
+  try {
+
+    if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
+    
+    const 
+    next();
+  } catch (ex) {
+    res.status(406).send();
+  }
+};
+
 const isExaltService = async (req, res, next) => {
   const serviceKey = req.header("api-key");
   if (serviceKey && serviceKey === config.get("api.key")) {
@@ -145,6 +153,7 @@ const isExaltService = async (req, res, next) => {
   return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
 }
 
+
 module.exports = {
   Auth,
   hasRole,
@@ -152,5 +161,6 @@ module.exports = {
   UserAuth,
   SocketAuth,
   isExaltService,
-  CompanyAuth
+  CompanyAuth,
+  EnterpriseAuth,
 };

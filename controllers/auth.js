@@ -25,7 +25,7 @@ exports.userLogin = async (req, res) => {
   try {
     const { error } = validateUserLogin(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
-    
+
     const authInstance = new AuthService();
     const { user, token } = await authInstance.loginUser(req.body);
 
@@ -370,6 +370,29 @@ exports.setPassword = async (req, res, next) => {
     return JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     next(error);
+    return
+  }
+};
+
+/**
+ * Enterprise login
+ * @param {*} req
+ * @param {*} res
+ */
+exports.enterpriseLogin = async (req, res, next) => {
+  try {
+    const { error } = validateUserLogin(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    const { logisticsUser, token } = await authInstance.enterpriseLogin(req.body)
+
+    res.header("x-auth-token", token);
+    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, logisticsUser);
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    next(error)
     return
   }
 };

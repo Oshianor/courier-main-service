@@ -132,7 +132,6 @@ const UserAuth = async (req, res, next) => {
   }
 };
 
-
 const EnterpriseAuth = async (req, res, next) => {
   try {
 

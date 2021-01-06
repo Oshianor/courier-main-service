@@ -14,7 +14,7 @@ const ROLES = {
   ACCOUNTANT: "accountant",
 };
 
-const ENTERPRISE_ROLES = {
+const E_ROLES = {
   OWNER: "owner",
   BRANCH: "branch",
   MAINTAINER: "maintainer",
@@ -65,6 +65,7 @@ const Auth = async (req, res, next) => {
     console.log(decoded)
 
     req.user = decoded;
+    req.token = token;
     next();
   } catch (ex) {
     console.log(ex);
@@ -117,8 +118,7 @@ const SocketAuth = (socket, next) => {
 
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
-  if (!token)
-    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
+  if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
 
   try {
     // call user account service to get details
@@ -135,45 +135,39 @@ const UserAuth = async (req, res, next) => {
     if (ex.msg) {
       return JsonResponse(res, 401, ex.msg);
     }
-    return JsonResponse(res, 406);
+    return JsonResponse(res, 406, MSG_TYPES.SERVER_ERROR);
   }
 };
 
 
-const EnterpriseAuth = async (roles=[]) => {
+const EnterpriseAuth = (roles=[]) => {
   return async (req, res, next) => {
-    try {
-      if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
-      
-      const user = await User.findOne({
-        _id: req.user.id,
-        enterprise: { $ne: null },
-        group: "enterprise"
-      });
+    if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
+    
+    const user = await User.findOne({
+      _id: req.user.id,
+      enterprise: { $ne: null },
+      group: "enterprise"
+    });
 
-      if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
+    if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
 
-      req.user.enterprise = user.enterprise;
-      req.user.role = user.role;
+    req.user.enterprise = user.enterprise;
+    req.user.role = user.role;
 
-      if (user.role === ENTERPRISE_ROLES.SUPER_ADMIN) {
-        next();
-      } else {
-        if (roles.length < 1) {
+    if (user.role === E_ROLES.OWNER) {
+      next();
+    } else {
+      if (roles.length < 1) {
+        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+      }
+      for (let role of roles) {
+        if (user.role === role) {
+          next();
+        } else {
           return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
         }
-        for (let role of ENTERPRISE_ROLES) {
-          if (admin.role === role) {
-            next();
-          } else {
-            return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-          }
-        }
       }
-
-      // next();
-    } catch (ex) {
-      return JsonResponse(res, 400, MSG_TYPES.NOT_ALLOWED);
     }
   }
 };
@@ -196,4 +190,5 @@ module.exports = {
   isExaltService,
   CompanyAuth,
   EnterpriseAuth,
+  E_ROLES,
 };

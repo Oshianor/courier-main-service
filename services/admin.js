@@ -1,4 +1,5 @@
 const Admin = require("../models/admin");
+const Enterprise = require("../models/enterprise");
 const moment = require("moment")
 const Rider = require("../models/rider");
 const { Mailer, GenerateToken } = require("../utils");
@@ -122,6 +123,35 @@ class AdminSerivice {
         await admin.save();
 
         resolve(admin);
+      } catch (error) {
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+ * Verify branch
+ * @param {Object} body
+ */
+  verifyBranch(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const branch = await Enterprise.get({ _id: body.branch });
+        if (!branch) {
+          reject({ code: 400, msg: "Branch does not exist" });
+          return;
+        }
+        if (branch.verified == true) {
+          reject({ code: 400, msg: "Already Verified" });
+          return;
+        }
+        const updatedEnterprise = await Enterprise.updateOne(
+          company,
+          {
+            $set: { verified: true },
+          }
+        );
+        resolve(updatedEnterprise);
       } catch (error) {
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }

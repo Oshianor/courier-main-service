@@ -59,6 +59,7 @@ class UserService {
             "x-auth-token": token,
           },
         });
+        // console.log("response", response);
         resolve(response.data);
       } catch (error) {
         reject(error.response.data);

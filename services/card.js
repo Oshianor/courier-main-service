@@ -61,6 +61,7 @@ class CardService {
           company: body.company,
           txRef: body.txRef,
           accountName: trans.account_name ? trans.account_name : company.name,
+          email: transaction.data.customer.email,
         });
 
         await newCard.save();

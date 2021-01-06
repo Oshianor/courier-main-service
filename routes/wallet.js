@@ -5,10 +5,15 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers");
-const { UserAuth, EnterpriseAuth } = require("../middlewares/auth");
+const { UserAuth, EnterpriseAuth, E_ROLES } = require("../middlewares/auth");
 
 // create vehicle
-router.post("/fund", UserAuth, EnterpriseAuth(["owner", "branch"]), controller.vehicle.vehicle);
+router.post(
+  "/fund",
+  UserAuth,
+  EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.OWNER]),
+  controller.wallet.fundWallet
+);
 
 
 module.exports = router;

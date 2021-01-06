@@ -23,5 +23,9 @@ router.post("/validate-otp", controllers.auth.validateOTP);
 
 router.post("/reset-password", controllers.auth.resetPassword);
 
+// SET PASSWORD
+router.patch("/set-password", controllers.auth.setPassword);
+
+router.post("/enterprise-login", controllers.auth.enterpriseLogin);
 
 module.exports = router;

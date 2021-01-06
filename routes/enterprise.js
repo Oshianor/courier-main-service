@@ -1,0 +1,31 @@
+const express = require("express");
+const router = express.Router();
+const controller = require("../controllers");
+const {
+  hasRole,
+  ROLES,
+  Auth,
+  EnterpriseAuth,
+  E_ROLES,
+  UserAuth,
+} = require("../middlewares/auth");
+
+// create organisation
+router.post("/create-organization", [Auth, hasRole([ROLES.ADMIN])], controller.enterprise.createOrganization);
+
+// create branch
+router.post("/create-branch", [Auth, hasRole([ROLES.ADMIN])], controller.enterprise.createBranch);
+
+// create maintainer
+router.post("/create-maintainer", [Auth, hasRole([ROLES.ADMIN])], controller.enterprise.createMaintainer);
+
+// Add card by enterprise owner and branch
+router.post(
+  "/card/add",
+  UserAuth,
+  EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH]),
+  controller.enterprise.addCard
+);
+
+
+module.exports = router;

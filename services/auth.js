@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const axios = require("axios");
 const Rider = require("../models/rider");
 const User = require("../models/users");
+const Enterprise = require("../models/enterprise");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
@@ -46,7 +47,7 @@ class AuthSerivice {
   }
 
   /**
-   * Validate forgot password email and send OTP
+   * Validate forgot password email and send OTP (FORGOT PASSWORD MODULE)
    * @param {String} email
    */
   forgotPassEmailValidate(email) {
@@ -62,14 +63,18 @@ class AuthSerivice {
           return;
         }
         const forgotPassOTP = GenerateOTP(4);
-        const forgotPassOTPExpiredDate = moment().add(20, "minutes");
+        const currentDate = new Date();
+        const forgotPassOTPExpiredDate = moment(currentDate).add(4, 'm').toDate();
+
 
         const updateRider = await Rider.updateOne(
           { email: email },
           {
             $set: {
-              forgotPassOTP: forgotPassOTP,
-              forgotPassOTPExpiredDate: forgotPassOTPExpiredDate,
+              rememberToken: {
+                token: forgotPassOTP,
+                expiredDate: forgotPassOTPExpiredDate
+              }
             },
           }
         );
@@ -87,38 +92,37 @@ class AuthSerivice {
   }
 
   /**
-   * Validate forgot password OTP
-   * @param {String} email
-   * @param {String} otp
-   */
+ * Validate forgot password OTP (FORGOT PASSWORD MODULE)
+ * @param {String} email
+ * @param {String} otp
+ */
   forgotPassOTPValidate(email, otp) {
     return new Promise(async (resolve, reject) => {
       try {
         const rider = await Rider.findOne({
           email: email,
-          forgotPassOTP: otp,
           verified: true,
           status: "active",
         });
-        if (!rider) {
+        if (rider.rememberToken.token !== otp) {
           reject({ code: 400, msg: "OTP invalid" });
           return;
         }
-        if (moment(rider.forgotPassOTPExpiredDate).isSameOrAfter(moment())) {
-          reject({ code: 400, msg: "OTP Expired Try Again" });
+        if (moment(rider.rememberToken.expiredDate).isSameOrAfter(moment())) {
+          reject({ code: 400, msg: 'OTP Expired Try Again' });
           return;
         }
         const updateRider = await Rider.updateOne(
           { email: email },
           {
             $set: {
-              forgotPassOTP: null,
-              forgotPassOTPExpiredDate: null,
+              rememberToken: null
             },
           }
         );
         resolve(updateRider);
       } catch (error) {
+        console.log(error)
         reject({ code: error.code, msg: error.msg });
         return;
       }
@@ -126,7 +130,7 @@ class AuthSerivice {
   }
 
   /**
-   * Reset password
+   * Reset password (FORGOT PASSWORD MODULE)
    * @param {String} email
    * @param {String} password
    */
@@ -153,6 +157,36 @@ class AuthSerivice {
       );
 
       resolve(updateRider);
+    });
+  }
+
+  /**
+   * Set password (ENTERPRISE SETUP)
+   * @param {Object} body
+   */
+
+  setPassword(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const userObject = {
+          email: body.email,
+          password: body.password,
+          defaultPassword: "Opendoor12345"
+        }
+        const response = await axios.post(`${config.get("api.base")}/auth/set-password`, userObject);
+        if (response.status == 200) {
+          resolve(response.data);
+        }
+        return reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+
+      } catch (error) {
+        if (error.response) {
+          return reject({ code: error.response.status, msg: error.response.data.msg });
+        }
+        return reject({ code: error.code, msg: error.msg });
+
+      }
+
     });
   }
 
@@ -195,6 +229,39 @@ class AuthSerivice {
       } catch (error) {
         reject({ code: error.code, msg: error.msg });
         return;
+      }
+    });
+  }
+
+  /**
+   * Enterprise login
+   * @param {Object} body
+   */
+  enterpriseLogin(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(
+          `${config.get("api.base")}/auth/login`,
+          body
+        );
+        if (response.status == 200) {
+          const token = response.headers["x-auth-token"];
+          const exaltUser = response.data.data;
+          const logisticsUser = await User.findById(exaltUser._id).populate('enterprise');
+          if (logisticsUser.role == "default") {
+            return reject({ code: 400, msg: "Not an Enterprise Account, You need to be careful" });
+          }
+          resolve({ logisticsUser, token });
+          return
+        } else {
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+        }
+      } catch (error) {
+        if (error.response) {
+          return reject({ code: error.response.status, msg: error.response.data.msg });
+        }
+        reject({ code: error.code, msg: error.msg });
+        return
       }
     });
   }

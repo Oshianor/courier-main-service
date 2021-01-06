@@ -27,7 +27,8 @@ class EnterpriseService {
           "countryCode": body.countryCode,
           "password": "Opendoor12345",
           "phoneNumber": body.phoneNumber,
-          "platform": "web"
+          "platform": "web",
+          "group": "enterprise"
         }
         const user = await this.createExaltUser(userObject)
         if (!user) {
@@ -91,7 +92,8 @@ class EnterpriseService {
           "countryCode": body.countryCode,
           "password": "Opendoor12345",
           "phoneNumber": body.phoneNumber,
-          "platform": "web"
+          "platform": "web",
+          "group": "enterprise"
         }
         const user = await this.createExaltUser(userObject)
         if (!user) {
@@ -150,6 +152,7 @@ class EnterpriseService {
           "name": body.name,
           "email": body.email,
           "type": "Logistics",
+          "group": "enterprise",
           "countryCode": body.countryCode,
           "password": "Opendoor12345",
           "phoneNumber": body.phoneNumber,

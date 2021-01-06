@@ -20,6 +20,21 @@ const enterPriseSchema = new mongoose.Schema(
       required: true,
       enum: ["HQ", "Branch"],
     },
+    email: {
+      type: String,
+      maxlength: 50,
+      required: true,
+    },
+    phoneNumber: {
+      type: String,
+      maxlength: 50,
+      required: true,
+    },
+    address: {
+      type: String,
+      maxlength: 150,
+      required: true,
+    },
     logo: {
       type: String,
       required: true,
@@ -27,7 +42,7 @@ const enterPriseSchema = new mongoose.Schema(
     primaryColors: [String],
     secondaryColors: [String],
     motto: { type: String, maxlength: 225, default: "" },
-    type: {
+    industry: {
       type: String,
       enum: ["banking", "agric"],
       default: "banking",
@@ -37,12 +52,11 @@ const enterPriseSchema = new mongoose.Schema(
     branchIDSWithHQ: [{ type: ObjectId, ref: "Enterprise", index: true }],
     HQ: {
       type: ObjectId,
-      required: true,
       index: true,
     },
     status: {
       type: String,
-      enum: ["active", "suspended"],
+      enum: ["inactive", "active", "suspended"],
       default: "inactive",
     },
     verified: {

@@ -295,7 +295,7 @@ exports.updatePassword = async (req, res) => {
 
 
 /**
- * Validate Forgot-Pass Email
+ * Forgot-Pass email verification
  * @param {*} req
  * @param {*} res
  */
@@ -315,7 +315,7 @@ exports.validateEmail = async (req, res) => {
 };
 
 /**
- * Validate Forgot-Pass OTP
+ * Forgot-Pass OTP validation
  * @param {*} req
  * @param {*} res
  */
@@ -335,7 +335,7 @@ exports.validateOTP = async (req, res) => {
 };
 
 /**
- * Validate Forgot-Pass OTP
+ * Forgot-Pass password reset
  * @param {*} req
  * @param {*} res
  */
@@ -351,5 +351,25 @@ exports.resetPassword = async (req, res) => {
   } catch (error) {
     console.log(error);
     return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+/**
+ * Set Pass - For enterprise set-up
+ * @param {*} req
+ * @param {*} res
+ */
+exports.setPassword = async (req, res, next) => {
+  try {
+    const { error } = validateForgotPassword(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    await authInstance.setPassword(req.body)
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    next(error);
+    return
   }
 };

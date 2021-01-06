@@ -137,8 +137,6 @@ const EnterpriseAuth = async (req, res, next) => {
   try {
 
     if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
-    
-    const 
     next();
   } catch (ex) {
     res.status(406).send();

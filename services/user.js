@@ -5,8 +5,8 @@ const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
 const NotificationService = require("./notification");
-const { GenerateOTP, Mailer } = require("../utils")
-const { OTPCode } = require("../templates")
+const { GenerateOTP, Mailer } = require("../utils");
+const { OTPCode } = require("../templates");
 
 /**
  * User service class
@@ -19,9 +19,15 @@ class UserService {
   createUser(body) {
     return new Promise(async (resolve, reject) => {
       try {
+        body.group = "commercial";
         const response = await axios.post(
           `${config.get("api.base")}/user`,
-          body
+          body,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
         );
         if (response.status == 200) {
           const user = await User.create({
@@ -38,9 +44,8 @@ class UserService {
         });
         return;
       }
-    })
+    });
   }
-
 
   /**
    * Get a user by it's token
@@ -294,6 +299,5 @@ class UserService {
     });
   }
 }
-
 
 module.exports = UserService;

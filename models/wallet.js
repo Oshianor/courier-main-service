@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const SettingSchema = mongoose.Schema(
+const WalletSchema = mongoose.Schema(
   {
     source: {
       type: String,
@@ -36,6 +36,6 @@ const SettingSchema = mongoose.Schema(
   }
 );
 
-const Setting = mongoose.model("Setting", SettingSchema);
+const Wallet = mongoose.model("Wallet", WalletSchema);
 
-module.exports = Setting;
+module.exports = Wallet;

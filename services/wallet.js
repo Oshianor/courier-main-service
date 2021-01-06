@@ -41,8 +41,6 @@ class WalletService {
           amount: body.amount,
         });
 
-        console.log("trans", trans);
-
         if (!trans.status) {
           reject({
             code: 404,
@@ -61,8 +59,21 @@ class WalletService {
         const wallet = await Wallet.findOne({ enterprise: user.enterprise });
 
         if (!wallet) return reject({ code: 400, msg: "No wallet was found on your account" });
+
+        await wallet.updateOne({
+          $inc: { balance: body.amount, totalDeposited: body.amount },
+        });
         
-        const newWalletHistory = new WalletHistory();
+        // add wallet history
+        const newWalletHistory = new WalletHistory({
+          enterprise: user.enterprise,
+          user: user.id,
+          txRef: ref,
+          amount: body.amount,
+          status: "approved",
+        });
+
+        resolve({ newWalletHistory, wallet });
       } catch (error) {
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
       }

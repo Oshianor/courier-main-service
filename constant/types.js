@@ -42,6 +42,8 @@ const MSG_TYPES = Object.freeze({
   RATING_DONE: "Rating submitted successfully.",
   RATING_EXIST: "Rating exists.",
   RATING_RETRIEVED: "Rating retrieved successfully.",
+  NO_ENTERPRISE: "No Enterprise account was found",
+  WALLET_FUNDED: "Your wallet has been funded"
 });
 
 const ACCOUNT_TYPES = Object.freeze({

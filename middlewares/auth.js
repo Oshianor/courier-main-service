@@ -1,12 +1,12 @@
 const jwt = require("jsonwebtoken");
-const { JsonResponse } = require("../lib/apiResponse");
 const config = require("config");
-const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
 const User = require("../models/users");
 const Company = require("../models/company");
-const { Container } = require("typedi");
 const AdminService = require("../services/admin");
 const UserService = require("../services/user");
+const { JsonResponse } = require("../lib/apiResponse");
+const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
+
 
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
@@ -14,8 +14,15 @@ const ROLES = {
   ACCOUNTANT: "accountant",
 };
 
-/*
- * @param array of strings
+const ENTERPRISE_ROLES = {
+  OWNER: "owner",
+  BRANCH: "branch",
+  MAINTAINER: "maintainer",
+};
+
+/**
+ * 
+ * @param {Array} roles Passing an array of string.
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
@@ -28,19 +35,19 @@ const hasRole = (roles = []) => {
     });
 
     // let admin = await Admin.findOne();
-    if (!admin) return JsonResponse(res, 401, "Unauthenticated", null, null);
+    if (!admin) return JsonResponse(res, 401, "Unauthenticated");
 
     if (admin.role === ROLES.SUPER_ADMIN) {
       next();
     } else {
       if (roles.length < 1) {
-        return JsonResponse(res, 403, MSG_TYPES.PERMISSION, null, null);
+        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
       for (let role of roles) {
         if (admin.role === role) {
           next();
         } else {
-          return JsonResponse(res, 403, MSG_TYPES.PERMISSION, null, null);
+          return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
         }
       }
     }
@@ -51,7 +58,7 @@ const hasRole = (roles = []) => {
 const Auth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token)
-    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
 
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
@@ -62,7 +69,7 @@ const Auth = async (req, res, next) => {
   } catch (ex) {
     console.log(ex);
     if (ex.msg) {
-      return JsonResponse(res, 401, ex.msg, null, null);
+      return JsonResponse(res, 401, ex.msg);
     }
     res.status(406).send();
   }
@@ -72,20 +79,20 @@ const Auth = async (req, res, next) => {
 const CompanyAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token)
-    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
     req.user = decoded;
 
     const company = await Company.findById(decoded.id);
-    if (!company) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED, null, null);
+    if (!company) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
 
     req.body.company = decoded.id
     next();
   } catch (ex) {
     console.log(ex);
     if (ex.msg) {
-      return JsonResponse(res, 401, ex.msg, null, null);
+      return JsonResponse(res, 401, ex.msg);
     }
     res.status(406).send();
   }
@@ -126,22 +133,48 @@ const UserAuth = async (req, res, next) => {
   } catch (ex) {
     console.log('Exception', ex);
     if (ex.msg) {
-      return JsonResponse(res, 401, ex.msg, null, null);
+      return JsonResponse(res, 401, ex.msg);
     }
-    res.status(406).send();
+    return JsonResponse(res, 406);
   }
 };
 
 
-const EnterpriseAuth = async (req, res, next) => {
-  try {
+const EnterpriseAuth = async (roles=[]) => {
+  return async (req, res, next) => {
+    try {
+      if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
+      
+      const user = await User.findOne({
+        _id: req.user.id,
+        enterprise: { $ne: null },
+        group: "enterprise"
+      });
 
-    if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
-    
-    const 
-    next();
-  } catch (ex) {
-    res.status(406).send();
+      if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
+
+      req.user.enterprise = user.enterprise;
+      req.user.role = user.role;
+
+      if (user.role === ENTERPRISE_ROLES.SUPER_ADMIN) {
+        next();
+      } else {
+        if (roles.length < 1) {
+          return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+        }
+        for (let role of ENTERPRISE_ROLES) {
+          if (admin.role === role) {
+            next();
+          } else {
+            return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+          }
+        }
+      }
+
+      // next();
+    } catch (ex) {
+      return JsonResponse(res, 400, MSG_TYPES.NOT_ALLOWED);
+    }
   }
 };
 

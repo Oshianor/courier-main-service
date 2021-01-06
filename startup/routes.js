@@ -19,6 +19,7 @@ const rating = require("../routes/rating");
 const bank = require("../routes/bank");
 const subscription = require("../routes/subscription");
 const card = require("../routes/card");
+const wallet = require("../routes/wallet");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
@@ -44,6 +45,7 @@ app.use("/api/v1/rating", rating);
 app.use("/api/v1/bank", bank);
 app.use("/api/v1/subscription", subscription);
 app.use("/api/v1/card", card);
+app.use("/api/v1/wallet", wallet);
 app.use(error);
 
 module.exports = app;

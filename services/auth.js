@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const axios = require("axios");
 const Rider = require("../models/rider");
 const User = require("../models/users");
+const Enterprise = require("../models/enterprise");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
@@ -228,6 +229,39 @@ class AuthSerivice {
       } catch (error) {
         reject({ code: error.code, msg: error.msg });
         return;
+      }
+    });
+  }
+
+  /**
+   * Enterprise login
+   * @param {Object} body
+   */
+  enterpriseLogin(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(
+          `${config.get("api.base")}/auth/login`,
+          body
+        );
+        if (response.status == 200) {
+          const token = response.headers["x-auth-token"];
+          const exaltUser = response.data.data;
+          const logisticsUser = await User.findById(exaltUser._id).populate('enterprise');
+          if (logisticsUser.role == "default") {
+            return reject({ code: 400, msg: "Not an Enterprise Account, You need to be careful" });
+          }
+          resolve({ logisticsUser, token });
+          return
+        } else {
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+        }
+      } catch (error) {
+        if (error.response) {
+          return reject({ code: error.response.status, msg: error.response.data.msg });
+        }
+        reject({ code: error.code, msg: error.msg });
+        return
       }
     });
   }

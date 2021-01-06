@@ -22,7 +22,7 @@ function validateUserLogin(body) {
 
 function validateRiderLogin(body) {
   const schema = Joi.object({
-    email: Joi.string().required(),
+    email: Joi.string().email().required(),
     password: passwordComplexity(complexityOptions).required(),
   });
 
@@ -47,7 +47,6 @@ function validateForgotPassword(body) {
 
   return schema.validate(body);
 }
-
 
 
 module.exports = {

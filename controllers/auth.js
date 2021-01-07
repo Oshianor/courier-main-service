@@ -10,6 +10,7 @@ const {
   validatePasswordUpdate,
   validateForgotPassword,
   validateUserLogin,
+  validateUserStatusUpdate
 } = require("../request/auth");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -388,7 +389,25 @@ exports.enterpriseLogin = async (req, res, next) => {
     const { logisticsUser, token } = await authInstance.enterpriseLogin(req.body)
 
     res.header("x-auth-token", token);
-    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, logisticsUser);
+    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, logisticsUser);
+  } catch (error) {
+    next(error)
+    return
+  }
+};
+
+/**
+ * Update user status
+ * @param {*} req
+ * @param {*} res
+ */
+exports.updateUserStatus = async (req, res, next) => {
+  try {
+    const { error } = validateUserStatusUpdate(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    await authInstance.updateEnterpriseAccountStatus(req.body, req.user.enterprise)
 
     return JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {

@@ -22,7 +22,6 @@ class AuthSerivice {
           `${config.get("api.base")}/auth/login`,
           body
         );
-        console.log("response", response);
         if (response.status == 200) {
           const token = response.headers["x-auth-token"];
           const exaltUser = response.data.data;
@@ -265,6 +264,43 @@ class AuthSerivice {
       }
     });
   }
+
+  /**
+   * Disable Branch/Maintainer
+   * @param {Object} body
+   */
+  updateEnterpriseAccountStatus(body, enterprise) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const account = await User.findOne({ _id: body.account, enterprise: enterprise._id })
+        // if(account.group !== "enterprise"){
+        //   return reject({ code: 400, msg: "Account selected is not an Enterprise account"})
+        // }
+        if (!account || account.role === "owner") {
+          return reject({ code: 400, msg: "You do not have permission to disable this account" })
+        }
+        if (account.role == "branch" && enterprise.type !== "HQ") {
+          return reject({ code: 400, msg: "You do not have permission to disable this account" })
+        }
+        const response = await axios.patch(
+          `${config.get("api.base")}/auth/toggle-status`,
+          body
+        );
+        if (response.status == 200) {
+          resolve(response.data.data);
+          return
+        } else {
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+        }
+      } catch (error) {
+        if (error.response) {
+          return reject({ code: error.response.status, msg: error.response.data.msg });
+        }
+        reject({ code: error.code, msg: error.msg });
+        return
+      }
+    });
+  } ß
 }
 
 module.exports = AuthSerivice;

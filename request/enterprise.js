@@ -14,6 +14,26 @@ function validateEnterprise(body) {
     industry: Joi.string().required(),
     createdBy: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
     logo: Joi.string().optional(),
+    enterprise: Joi.optional(),
+    owner: Joi.optional(),
+    branch: Joi.optional()
+  });
+
+  return schema.validate(body);
+}
+
+function validateEnterpriseUpdate(body) {
+  const schema = Joi.object({
+    name: Joi.string().optional(),
+    address: Joi.string().optional(),
+    primaryColors: Joi.array().items(Joi.string().optional()).optional(),
+    secondaryColors: Joi.array().items(Joi.string().optional()).optional(),
+    motto: Joi.string().optional(),
+    industry: Joi.string().optional(),
+    logo: Joi.string().optional(),
+    enterprise: Joi.optional(),
+    owner: Joi.optional(),
+    branch: Joi.optional()
   });
 
   return schema.validate(body);
@@ -35,5 +55,6 @@ function validateMaintainer(body) {
 
 module.exports = {
   validateEnterprise,
-  validateMaintainer
+  validateMaintainer,
+  validateEnterpriseUpdate
 };

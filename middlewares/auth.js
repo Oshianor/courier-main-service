@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const User = require("../models/users");
+const Enterprise = require("../models/enterprise");
 const Company = require("../models/company");
 const AdminService = require("../services/admin");
 const UserService = require("../services/user");
@@ -62,7 +63,6 @@ const Auth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
-    console.log(decoded)
 
     req.user = decoded;
     req.token = token;
@@ -139,16 +139,15 @@ const UserAuth = async (req, res, next) => {
   }
 };
 
-
-const EnterpriseAuth = (roles=[]) => {
+const EnterpriseAuth = (roles = []) => {
   return async (req, res, next) => {
     if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
-    
+
     const user = await User.findOne({
       _id: req.user.id,
       enterprise: { $ne: null },
       group: "enterprise"
-    });
+    }).populate('enterprise');
 
     if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
 
@@ -190,5 +189,5 @@ module.exports = {
   isExaltService,
   CompanyAuth,
   EnterpriseAuth,
-  E_ROLES,
+  E_ROLES
 };

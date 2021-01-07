@@ -1,5 +1,5 @@
 const EnterpriseService = require("../services/enterprise");
-const { validateEnterprise, validateMaintainer } = require("../request/enterprise");
+const { validateEnterprise, validateMaintainer, validateEnterpriseUpdate } = require("../request/enterprise");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
@@ -72,6 +72,24 @@ exports.addCard = async (req, res, next) => {
   try {
     const card = await enterpriseInstance.addCard(req.body, req.token);
     return JsonResponse(res, 200, card.data.msg, card.data.data);
+  } catch (error) {
+    next(error)
+    return
+  }
+};
+
+/**
+ * Update enterprise information
+ * @param {*} req 
+ * @param {*} res 
+ */
+exports.updateEnterprise = async (req, res, next) => {
+  try {
+    const { error } = validateEnterpriseUpdate(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+    const enterpriseId = req.user.enterprise._id;
+    await enterpriseInstance.updateEnterprise({ _id: enterpriseId }, req.body);
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     next(error)
     return

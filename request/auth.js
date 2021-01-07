@@ -48,10 +48,20 @@ function validateForgotPassword(body) {
   return schema.validate(body);
 }
 
+function validateUserStatusUpdate(body) {
+  const Schema = Joi.object().keys({
+    account: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    status: Joi.string().valid("inactive", "active").required(),
+  });
+
+  return Schema.validate(body);
+}
+
 
 module.exports = {
   validateRiderLogin,
   validatePasswordUpdate,
   validateForgotPassword,
   validateUserLogin,
+  validateUserStatusUpdate
 };

@@ -196,7 +196,6 @@ const entrySchema = mongoose.Schema(
     description: {
       type: String,
       default: "",
-      required: true,
       maxLenght: 3000,
     },
     metaData: {

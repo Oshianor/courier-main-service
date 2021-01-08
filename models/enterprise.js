@@ -15,10 +15,16 @@ const enterPriseSchema = new mongoose.Schema(
       index: true,
       ref: "Enterprise",
     },
+    user: {
+      type: ObjectId,
+      index: true,
+      ref: "User",
+      required: true
+    },
     type: {
       type: String,
       required: true,
-      enum: ["HQ", "Branch"],
+      enum: ["HQ", "Branch", "maintainer"],
     },
     email: {
       type: String,
@@ -37,7 +43,7 @@ const enterPriseSchema = new mongoose.Schema(
     },
     logo: {
       type: String,
-      required: true,
+      // required: true,
     },
     primaryColors: [String],
     secondaryColors: [String],

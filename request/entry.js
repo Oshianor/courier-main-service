@@ -10,7 +10,7 @@ function validateLocalEntry(data) {
       .required(),
     name: Joi.string().label("Name").required(),
     address: Joi.string().label("Delivery Address").required(),
-    description: Joi.string().label("Description").required(),
+    description: Joi.string().label("Description").allow("").required(),
     vehicle: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .label("Vehicle")
@@ -32,6 +32,7 @@ function validateLocalEntry(data) {
       .items({
         email: Joi.string().email().max(50).label("Email").required(),
         phoneNumber: Joi.string().max(10).required(),
+        value: Joi.number().max(11).required(),
         countryCode: Joi.string().max(5).required(),
         name: Joi.string().label("Name").required(),
         itemName: Joi.string().label("Item Name").required(),

@@ -76,6 +76,14 @@ const SettingSchema = mongoose.Schema(
       default: false,
       index: true,
     },
+    instantPricing: {
+      type: Number,
+      default: 1.5,
+    },
+    instantPriceFormat: {
+      type: String,
+      default: "percentage",
+    },
   },
   {
     timestamps: true,

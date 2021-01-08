@@ -300,112 +300,124 @@ class EntryService {
     });
   }
 
-  /**
-   * Create transaction for entry
-   * @param {Object} body
-   * @param {Object} user
-   * @param {String} token
-   */
-  createTransaction(body, user, token) {
-    return new Promise(async (resolve, reject) => {
-      const session = await mongoose.startSession();
-      try {
-        const entry = await Entry.findOne({
-          _id: body.entry,
-          status: "request",
-          user: user.id,
-        }).populate("vehicle");
+  // /**
+  //  * Create transaction for entry
+  //  * @param {Object} body
+  //  * @param {Object} user
+  //  * @param {String} token
+  //  */
+  // createTransaction(body, user, token) {
+  //   return new Promise(async (resolve, reject) => {
+  //     const session = await mongoose.startSession();
+  //     try {
+  //       const entry = await Entry.findOne({
+  //         _id: body.entry,
+  //         status: "request",
+  //         user: user.id,
+  //       }).populate("vehicle");
 
-        if (!entry) {
-          reject({
-            code: 404,
-            msg: "Entry transaction already processed.",
-          });
-          return;
-        }
+  //       if (!entry) {
+  //         reject({
+  //           code: 404,
+  //           msg: "Entry transaction already processed.",
+  //         });
+  //         return;
+  //       }
 
-        console.log("entry", entry);
+  //       // get price of the trip based on the pickup type
+  //       let amount = 0;
+  //       if (body.pickupType === "instant") {
+  //         amount = parseFloat(entry.TEC) * entry.instantPricing;
+  //       } else {
+  //         amount = entry.TEC;
+  //       }
 
-        let msgRES;
-        if (body.paymentMethod === "card") {
-          const userInstance = new UserService();
-          const card = await userInstance.getCard(token, body.card);
+  //       console.log("entry", entry);
 
-          const trans = await paystack.transaction.charge({
-            reference: nanoid(20),
-            authorization_code: card.data.token,
-            email: user.email,
-            amount: parseFloat(entry.TEC).toFixed(2) * 100,
-          });
-          console.log("trans", trans);
+  //       let msgRES;
+  //       if (body.paymentMethod === "card") {
+  //         const userInstance = new UserService();
+  //         const card = await userInstance.getCard(token, body.card);
 
-          if (!trans.status) {
-            reject({
-              code: 404,
-              msg: "Your Transaction could't be processed at the moment",
-            });
-            return;
-          }
-          if (trans.data.status !== "success") {
-            reject({
-              code: 404,
-              msg: "Your Transaction could't be processed at the moment",
-            });
-            return;
-          }
+  //         const trans = await paystack.transaction.charge({
+  //           reference: nanoid(20),
+  //           authorization_code: card.data.token,
+  //           email: user.email,
+  //           amount: parseFloat(entry.TEC).toFixed(2) * 100,
+  //         });
+  //         console.log("trans", trans);
 
-          body.amount = entry.TEC;
-          body.user = user.id;
-          body.status = "approved";
-          body.approvedAt = new Date();
-          body.entry = entry;
-          body.txRef = trans.data.reference;
+  //         if (!trans.status) {
+  //           reject({
+  //             code: 404,
+  //             msg: "Your Transaction could't be processed at the moment",
+  //           });
+  //           return;
+  //         }
+  //         if (trans.data.status !== "success") {
+  //           reject({
+  //             code: 404,
+  //             msg: "Your Transaction could't be processed at the moment",
+  //           });
+  //           return;
+  //         }
 
-          msgRES = "Payment Successfully Processed";
-        } else {
-          body.amount = entry.TEC;
-          body.user = user.id;
-          body.status = "pending";
-          body.entry = entry;
-          body.txRef = nanoid(10);
+  //         body.amount = entry.TEC;
+  //         body.user = user.id;
+  //         body.status = "approved";
+  //         body.approvedAt = new Date();
+  //         body.entry = entry;
+  //         body.txRef = trans.data.reference;
+  //         body.pickupType = entry.pickupType;
+  //         body.instantPricing = entry.instantPricing;
 
-          msgRES = "Cash Payment Method Confirmed";
-        }
+  //         msgRES = "Payment Successfully Processed";
+  //       } else {
+  //         body.amount = amount;
+  //         body.user = user.id;
+  //         body.status = "pending";
+  //         body.entry = entry;
+  //         body.txRef = nanoid(10);
+  //         body.pickupType = entry.pickupType;
+  //         body.instantPricing = entry.instantPricing;
 
-        // start our transaction
-        session.startTransaction();
+  //         msgRES = "Cash Payment Method Confirmed";
+  //       }
 
-        const newTransaction = new Transaction(body);
+  //       // start our transaction
+  //       session.startTransaction();
 
-        entry.transaction = newTransaction;
-        entry.status = "pending";
-        entry.approvedAt = new Date();
-        entry.paymentMethod = body.paymentMethod;
-        await newTransaction.save({ session });
-        await entry.save({ session });
-        await Order.updateMany(
-          { entry: entry._id },
-          { transaction: newTransaction._id },
-          { session }
-        );
+  //       const newTransaction = new Transaction(body);
 
-        await session.commitTransaction();
-        session.endSession();
+  //       entry.transaction = newTransaction;
+  //       entry.status = "pending";
+  //       entry.approvedAt = new Date();
+  //       entry.paymentMethod = body.paymentMethod;
+  //       await newTransaction.save({ session });
+  //       await entry.save({ session });
+  //       await Order.updateMany(
+  //         { entry: entry._id },
+  //         { transaction: newTransaction._id },
+  //         { session }
+  //       );
 
-        // console.log("entry", entry);
+  //       await session.commitTransaction();
+  //       session.endSession();
 
-        // send out new entry that has apporved payment method
-        entry.metaData = null;
-        resolve({ entry, msg: msgRES });
-      } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 500,
-          msg: "Your Transaction could't be processed at the moment",
-        });
-      }
-    });
-  }
+  //       // console.log("entry", entry);
+
+  //       // send out new entry that has apporved payment method
+  //       entry.metaData = null;
+  //       resolve({ entry, msg: msgRES });
+  //     } catch (error) {
+  //       console.log("error", error);
+  //       reject({
+  //         code: 500,
+  //         msg: "Your Transaction could't be processed at the moment",
+  //       });
+  //     }
+  //   });
+  // }
 
   /**
    * Company accept entry

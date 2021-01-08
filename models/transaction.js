@@ -23,6 +23,12 @@ const transactionSchema = new mongoose.Schema(
       type: ObjectId,
       default: null,
     },
+    enterprise: {
+      type: ObjectId,
+      index: true,
+      default: null,
+      ref: "Enterprise",
+    },
     rider: {
       type: ObjectId,
       index: true,
@@ -55,6 +61,15 @@ const transactionSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "approved", "declined"],
       default: "pending",
+    },
+    pickupType: {
+      type: String,
+      default: "anytime",
+      enum: ["instant", "anytime"],
+    },
+    instantPricing: {
+      type: Number,
+      default: 1.5,
     },
     approvedAt: {
       // this is for the rider when the payment method is cash

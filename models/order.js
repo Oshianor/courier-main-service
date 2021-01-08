@@ -55,6 +55,12 @@ const orderSchema = mongoose.Schema(
       index: true,
       ref: "Entry",
     },
+    enterprise: {
+      type: ObjectId,
+      index: true,
+      default: null,
+      ref: "Enterprise",
+    },
     company: {
       type: ObjectId,
       index: true,

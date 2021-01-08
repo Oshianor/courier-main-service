@@ -28,6 +28,7 @@ const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user")
+const TransactionService = require("../services/transaction");
 const socket = new io(config.get("application.redis"), { key: "/sio" })
 
 
@@ -105,18 +106,18 @@ exports.transaction = async (req, res) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
-    const entryInstance = new EntryService();
-    const { entry, msg } = await entryInstance.createTransaction(req.body, req.user, req.token);
+    const transactionInstance = new TransactionService();
+    const { entry, msg } = await transactionInstance.createTransaction(req.body, req.user, req.token);
 
     console.log("entry", entry);
 
     // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
-    const companySub = new CompanySubscription();
-    await companySub.dispatchToStateRoom(entry);
+    // const companySub = new CompanySubscription();
+    // await companySub.dispatchToStateRoom(entry);
 
-    // send socket to admin for update
-    const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    // // send socket to admin for update
+    // const entrySub = new EntrySubscription();
+    // await entrySub.updateEntryAdmin(entry._id);
 
     JsonResponse(res, 201, msg);
     return;

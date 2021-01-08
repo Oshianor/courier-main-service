@@ -67,6 +67,12 @@ const entrySchema = mongoose.Schema(
       enum: ["pool", "company"],
       default: "pool",
     },
+    enterprise: {
+      type: ObjectId,
+      index: true,
+      default: null,
+      ref: "Enterprise",
+    },
     user: {
       type: ObjectId,
       required: true,

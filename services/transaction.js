@@ -85,6 +85,7 @@ class TransactionService {
             pickupType: body.pickupType,
             status: "pending",
             approvedAt: new Date(),
+            TEC: amount,
             paymentMethod: body.paymentMethod,
           },
           { session }

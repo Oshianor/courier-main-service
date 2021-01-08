@@ -105,6 +105,7 @@ class EntryService {
         body.TET = 0;
         body.TEC = 0;
         body.user = user.id;
+        body.instantPricing = setting.instantPricing;
         body.deliveryAddresses = distance.destination_addresses;
         body.pickupAddress = distance.origin_addresses[0];
         body.metaData = {
@@ -142,6 +143,7 @@ class EntryService {
               const singleDistance = parseFloat(element.distance.value / 1000);
               // add user id
               body.delivery[elemIndex].user = user.id;
+              body.delivery[elemIndex].instantPricing = setting.instantPricing;
               body.delivery[elemIndex].vehicle = body.vehicle;
 
               // orderId

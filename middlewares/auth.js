@@ -161,12 +161,11 @@ const EnterpriseAuth = (roles=[]) => {
       if (roles.length < 1) {
         return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
-      for (let role of roles) {
-        if (user.role === role) {
-          next();
-        } else {
-          return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-        }
+      if (roles.includes(user.role)) {
+        next();
+        return;
+      } else {
+        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
     }
   }

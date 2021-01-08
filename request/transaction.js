@@ -2,9 +2,15 @@ const Joi = require("joi");
 
 function validateTransaction(body) {
   const schema = Joi.object({
-    paymentMethod: Joi.string().valid("cash", "card", "wallet", "credit").required(),
+    paymentMethod: Joi.string()
+      .valid("cash", "card", "wallet", "credit")
+      .required(),
     entry: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
+    pickupType: Joi.string()
+      .label("Pickup Type")
+      .valid("instant", "anytime")
       .required(),
     card: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)

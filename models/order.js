@@ -85,6 +85,20 @@ const orderSchema = mongoose.Schema(
       required: true,
       ref: "Vehicle",
     },
+    pickupType: {
+      type: String,
+      default: "anytime",
+      enum: ["instant", "anytime"],
+    },
+    instantPricing: {
+      type: Number,
+      default: 1.5,
+    },
+    value: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     OTPCode: {
       type: String,
       default: null,
@@ -201,12 +215,12 @@ const orderSchema = mongoose.Schema(
     riderRating: {
       type: ObjectId,
       default: null,
-      ref: "Rating"
+      ref: "Rating",
     },
     userRating: {
       type: ObjectId,
       default: null,
-      ref: "Rating"
+      ref: "Rating",
     },
     userRated: {
       type: Boolean,

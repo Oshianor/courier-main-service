@@ -103,6 +103,15 @@ const entrySchema = mongoose.Schema(
       default: "cash",
       enum: ["card", "cash"],
     },
+    pickupType: {
+      type: String,
+      default: "anytime",
+      enum: ["instant", "anytime"],
+    },
+    instantPricing: {
+      type: Number,
+      default: 1.5,
+    },
     OTPCode: {
       type: String,
       default: null,

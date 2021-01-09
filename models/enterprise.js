@@ -17,14 +17,24 @@ const enterPriseSchema = new mongoose.Schema(
     },
     user: {
       type: ObjectId,
+<<<<<<< Updated upstream
       index: true,
       ref: "User",
       required: true
+=======
+      default: null,
+      index: true,
+      ref: "User",
+>>>>>>> Stashed changes
     },
     type: {
       type: String,
       required: true,
+<<<<<<< Updated upstream
       enum: ["HQ", "Branch", "maintainer"],
+=======
+      enum: ["owner", "branch", "maintainer"],
+>>>>>>> Stashed changes
     },
     email: {
       type: String,
@@ -42,8 +52,12 @@ const enterPriseSchema = new mongoose.Schema(
       required: true,
     },
     logo: {
+<<<<<<< Updated upstream
       type: String,
       // required: true,
+=======
+      type: String
+>>>>>>> Stashed changes
     },
     primaryColors: [String],
     secondaryColors: [String],
@@ -53,7 +67,7 @@ const enterPriseSchema = new mongoose.Schema(
       enum: ["banking", "agric"],
       default: "banking",
     },
-    maintainers: [{ type: ObjectId, ref: "User", index: true }],
+    maintainers: [{ type: ObjectId, ref: "Enterprise", index: true }],
     branchIDS: [{ type: ObjectId, ref: "Enterprise", index: true }],
     branchIDSWithHQ: [{ type: ObjectId, ref: "Enterprise", index: true }],
     HQ: {

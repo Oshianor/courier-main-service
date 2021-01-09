@@ -169,8 +169,7 @@ class AuthSerivice {
       try {
         const userObject = {
           email: body.email,
-          password: body.password,
-          defaultPassword: "Opendoor12345"
+          password: body.password
         }
         const response = await axios.post(`${config.get("api.base")}/auth/set-password`, userObject);
         if (response.status == 200) {
@@ -246,11 +245,15 @@ class AuthSerivice {
         if (response.status == 200) {
           const token = response.headers["x-auth-token"];
           const exaltUser = response.data.data;
-          const logisticsUser = await User.findById(exaltUser._id).populate('enterprise');
-          if (logisticsUser.role == "default") {
-            return reject({ code: 400, msg: "Not an Enterprise Account, You need to be careful" });
+          const enterpriseUser = await Enterprise.find({ user: exaltUser._id }).select(' -createdBy -deleted -deletedBy -deletedAt')
+            .populate('enterprise', 'name type phoneNumber email address')
+            .populate('branchIDS', 'name type phoneNumber email address')
+            .populate('maintainer', 'name type phoneNumber email address');
+
+          if (!enterpriseUser) {
+            return reject({ code: 400, msg: MSG_TYPES.PERMISSION });
           }
-          resolve({ logisticsUser, token });
+          resolve({ enterpriseUser, token });
           return
         } else {
           return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
@@ -304,68 +307,3 @@ class AuthSerivice {
 }
 
 module.exports = AuthSerivice;
-
-
-
-  // loginUser(body) {
-  //   return new Promise(async (resolve, reject) => {
-  //     try {
-  //       const response = await axios.post(
-  //         `${config.get("api.base")}/auth/login`,
-  //         body
-  //       );
-  //       console.log("response", response);
-  //       if (response.status == 200) {
-  //         const token = response.headers["x-auth-token"];
-  //         const exaltUser = response.data.data;
-  //         const logisticUser = await User.findById(exaltUser._id);
-  //         if (logisticUser) {
-  //           resolve({ user: logisticUser, token });
-  //         } else {
-  //           const user = await User.create(exaltUser);
-  //           resolve({ user, token });
-  //         }
-  //       } else {
-  //         return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
-  //       }
-  //     } catch (error) {
-  //       reject({
-  //         code: error.response.status,
-  //         msg: error.response.data.msg,
-  //       });
-  //       return;
-  //     }
-  //   });
-  // }
-
-
-    // loginUser(body) {
-  //   return new Promise(async (resolve, reject) => {
-  //     axios.post(
-  //       `${config.get("api.base")}/auth/login`,
-  //       body
-  //     ).then(async res => {
-  //       console.log("res", res);
-  //       if (res.status == 200) {
-  //         const token = res.headers["x-auth-token"];
-  //         const exaltUser = res.data.data;
-  //         const logisticUser = await User.findById(exaltUser._id);
-  //         if (logisticUser) {
-  //           resolve({ user: logisticUser, token });
-  //         } else {
-  //           const user = await User.create(exaltUser);
-  //           resolve({ user, token });
-  //         }
-  //       } else {
-  //         return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
-  //       }
-  //     }).catch ((error) => {
-  //       console.log("error", error);
-  //       reject({
-  //         code: error.response.status,
-  //         msg: error.response.data.msg,
-  //       });
-  //       return;
-  //     })
-  //   });
-  // }

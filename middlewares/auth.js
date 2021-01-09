@@ -72,7 +72,7 @@ const Auth = async (req, res, next) => {
     if (ex.msg) {
       return JsonResponse(res, 401, ex.msg);
     }
-    res.status(406).send();
+    return JsonResponse(res, 406, "Session Expired");
   }
 };
 
@@ -95,7 +95,7 @@ const CompanyAuth = async (req, res, next) => {
     if (ex.msg) {
       return JsonResponse(res, 401, ex.msg);
     }
-    res.status(406).send();
+    return JsonResponse(res, 406, "Session Expired");
   }
 };
 
@@ -142,30 +142,23 @@ const UserAuth = async (req, res, next) => {
 const EnterpriseAuth = (roles = []) => {
   return async (req, res, next) => {
     if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
+    const enterprise = await Enterprise.findOne({
+      email: req.user.email
+    });
 
-    const user = await User.findOne({
-      _id: req.user.id,
-      enterprise: { $ne: null },
-      group: "enterprise"
-    }).populate('enterprise');
+    if (!enterprise) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
+    req.enterprise = enterprise;
 
-    if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
-
-    req.user.enterprise = user.enterprise;
-    req.user.role = user.role;
-
-    if (user.role === E_ROLES.OWNER) {
+    if (enterprise.type === E_ROLES.OWNER) {
       next();
     } else {
       if (roles.length < 1) {
         return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
-      if (roles.includes(user.role)) {
-        next();
-        return;
-      } else {
-        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+      if (roles.includes(enterprise.type)) {
+        return next()
       }
+      return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
     }
   }
 };

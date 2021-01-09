@@ -7,7 +7,7 @@ const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 
 
-class AdminSerivice {
+class AdminService {
   /**
    * Create Admin service
    * @param {Sting} body
@@ -160,4 +160,4 @@ class AdminSerivice {
 }
 
 
-module.exports = AdminSerivice;
+module.exports = AdminService;

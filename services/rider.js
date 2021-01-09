@@ -61,6 +61,7 @@ class RiderSerivice {
         newRider.rememberToken = null;
         resolve(newRider);
       } catch (error) {
+        console.log(error)
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
         return;
       }
@@ -114,7 +115,7 @@ class RiderSerivice {
    * @param {Req} params
    * @param {Auth user} user
    */
-  destory(params, user) {
+  destroy(params, user) {
     return new Promise(async (resolve, reject) => {
       try {
         const company = await Company.findOne({ _id: user.id });
@@ -406,6 +407,50 @@ class RiderSerivice {
       );
 
       resolve({ updateUser });
+    });
+  }
+
+  /**
+   * Suspend a rider
+   * @param {MongoDB ObjectId} riderId rider id
+   */
+  suspendRider(riderId, companyId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        let rider = await Rider.findOne({
+          _id: riderId,
+          company: companyId,
+        });
+        if(!rider){
+          return reject({code: 404, msg: "Rider not found"});
+        }
+
+        rider = rider.updateOne({status: "suspended"});
+
+        resolve(rider);
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Get a rider's transactions
+   * @param {MongoDB ObjectId} riderId rider id
+   */
+  getTransactions(riderId, companyId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const transactions = await Transaction.find({
+          rider: riderId,
+          company: companyId
+        })
+
+        resolve(transactions);
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
     });
   }
 }

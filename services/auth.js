@@ -245,6 +245,7 @@ class AuthSerivice {
         if (response.status == 200) {
           const token = response.headers["x-auth-token"];
           const exaltUser = response.data.data;
+          const localUser = await User.findById(exaltUser._id);
           const enterpriseUser = await Enterprise.findOne({ user: exaltUser._id }).select(' -createdBy -deleted -deletedBy -deletedAt')
             .populate('enterprise', 'name type phoneNumber email address')
             .populate('branchIDS', 'name type phoneNumber email address')
@@ -253,7 +254,7 @@ class AuthSerivice {
           if (!enterpriseUser) {
             return reject({ code: 400, msg: MSG_TYPES.PERMISSION });
           }
-          resolve({ enterpriseUser, token, exaltUser });
+          resolve({ enterpriseUser, token, exaltUser, localUser });
           return
         } else {
           return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })

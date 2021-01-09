@@ -390,11 +390,12 @@ exports.enterpriseLogin = async (req, res, next) => {
       enterpriseUser,
       token,
       exaltUser,
+      localUser,
     } = await authInstance.enterpriseLogin(req.body);
 
-    exaltUser.enterprise = enterpriseUser;
+    localUser.enterprise = enterpriseUser;
     res.header("x-auth-token", token);
-    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, exaltUser);
+    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, localUser);
   } catch (error) {
     next(error)
     return

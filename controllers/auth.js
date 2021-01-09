@@ -386,10 +386,15 @@ exports.enterpriseLogin = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const authInstance = new AuthService();
-    const { enterpriseUser, token } = await authInstance.enterpriseLogin(req.body)
+    const {
+      enterpriseUser,
+      token,
+      exaltUser,
+    } = await authInstance.enterpriseLogin(req.body);
 
+    exaltUser.enterprise = enterpriseUser;
     res.header("x-auth-token", token);
-    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, enterpriseUser);
+    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, exaltUser);
   } catch (error) {
     next(error)
     return

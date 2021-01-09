@@ -253,7 +253,7 @@ class AuthSerivice {
           if (!enterpriseUser) {
             return reject({ code: 400, msg: MSG_TYPES.PERMISSION });
           }
-          resolve({ enterpriseUser, token });
+          resolve({ enterpriseUser, token, exaltUser });
           return
         } else {
           return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })

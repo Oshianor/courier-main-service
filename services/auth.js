@@ -245,7 +245,7 @@ class AuthSerivice {
         if (response.status == 200) {
           const token = response.headers["x-auth-token"];
           const exaltUser = response.data.data;
-          const enterpriseUser = await Enterprise.find({ user: exaltUser._id }).select(' -createdBy -deleted -deletedBy -deletedAt')
+          const enterpriseUser = await Enterprise.findOne({ user: exaltUser._id }).select(' -createdBy -deleted -deletedBy -deletedAt')
             .populate('enterprise', 'name type phoneNumber email address')
             .populate('branchIDS', 'name type phoneNumber email address')
             .populate('maintainer', 'name type phoneNumber email address');

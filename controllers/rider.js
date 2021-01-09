@@ -393,7 +393,7 @@ exports.location = async (req, res) => {
 exports.destroy = async (req, res) => {
   try {
     const riderInstance = new RiderService();
-    await riderInstance.destory(req.params, req.user);
+    await riderInstance.destroy(req.params, req.user);
 
     JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
@@ -509,10 +509,46 @@ exports.checkDriverTripStatus = async (req, res) => {
     const { order } = await riderInstance.getDriverTripStatus(
       req.params.riderId
     );
-    
+
     const withPackage = order ? true : false;
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, { withPackage });
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+/**
+ * Suspend a rider
+ * @param {*} req
+ * @param {*} res
+ */
+exports.suspend = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const updatedRider = await riderInstance.suspendRider(req.params.riderId, req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+/**
+ * GET a rider's transactions
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getRiderTransactions = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const transactions = await riderInstance.getTransactions(req.params.riderId, req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
     return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

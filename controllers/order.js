@@ -19,6 +19,7 @@ const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const { validateRiderID } = require("../request/rating");
 const moment = require("moment");
+const CompanyService = require("../services/company");
 
 
 
@@ -92,8 +93,8 @@ exports.riderArriveAtDelivery = async (req, res) => {
 
 /**
  * Driver Confirm OTP code for delivery
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.confirmDelivery = async (req, res) => {
   try {
@@ -123,8 +124,8 @@ exports.confirmDelivery = async (req, res) => {
 
 /**
  * Fetch order details
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.orderDetails = async (req, res) => {
   try {
@@ -143,15 +144,15 @@ exports.orderDetails = async (req, res) => {
 
 /**
  * Get order overview for the week
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.orderOverview = async (req, res) => {
   try {
     const { error } = validateRiderID({ rider: req.user.id });
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    
+
     const beginningOfWeek = moment().startOf('isoWeek').toDate();
     const tripInstance = new TripLogService();
     const orderDetails = await tripInstance.getOverview({ rider: mongoose.Types.ObjectId(req.user.id), type: 'delivered', createdAt: { $gte: beginningOfWeek } });
@@ -160,7 +161,7 @@ exports.orderOverview = async (req, res) => {
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);
   }
-};  
+};
 
 
 exports.orderHistory = async (req, res) => {
@@ -178,5 +179,126 @@ exports.orderHistory = async (req, res) => {
     return;
   } catch (error) {
     return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+/**
+ * Get orders for a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getCompanyOrders  = async (req, res) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+    const orderInstance = new OrderService();
+    const companyInstance = new CompanyService();
+
+    const company = await companyInstance.get({_id: req.params.companyId});
+
+    // Pull order query params from request route
+    const orderQueryParams = ['status'];
+    const orderQuery = {};
+    for(let key in req.query){
+      if(orderQueryParams.hasOwnProperty(key)){
+        orderQuery[key] = req.query[key];
+      }
+    }
+
+    const { orders, total } = await orderInstance.getAll({company: company._id, ...orderQuery},{},'',{skip, pageSize});
+    const meta = {
+      total,
+      pagination: { pageSize, page }
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+/**
+ * Get order stats summary for a company
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getCompanyOrderStats  = async (req, res) => {
+  try {
+    const orderInstance = new OrderService();
+    const companyInstance = new CompanyService();
+
+    const company = await companyInstance.get({_id: req.params.companyId});
+
+    const total = await orderInstance.totalOrders({company: company._id});
+    // Get other totals - local, interstate, intl
+    const statistics = {
+      total: total,
+      local: total,
+      interstate: 0,
+      international: 0
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+/**
+ * Decline an order
+ * @param {*} req
+ * @param {*} res
+ */
+exports.decline  = async (req, res) => {
+  try {
+    const orderInstance = new OrderService();
+
+    const { companyId, orderId } = req.params;
+
+    const updatedOrder = await orderInstance.declineOrder(companyId, orderId);
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+/**
+ * Delete an order
+ * @param {*} req
+ * @param {*} res
+ */
+exports.delete = async (req, res) => {
+  try {
+    const orderInstance = new OrderService();
+    const { orderId } = req.params;
+
+    await orderInstance.destroy(orderId, req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.DELETED);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+/**
+ * Assign an order to a rider
+ * @param {*} req
+ * @param {*} res
+ */
+exports.assignOrderToRider = async (req, res) => {
+  try {
+    const orderInstance = new OrderService();
+    const { orderId, riderId } = req.params;
+
+    const updatedOrder = await orderInstance.assignToRider(orderId, riderId, req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedOrder);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
   }
 };

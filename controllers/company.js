@@ -497,3 +497,19 @@ exports.getSingleEntry = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
+
+/**
+ * Get company statistics
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getStatistics = async (req, res) => {
+  try {
+    const statistics = await companyInstance.getStatistics(req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};

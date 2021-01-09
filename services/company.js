@@ -9,6 +9,8 @@ const template = require("../templates");
 const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
+const Order = require("../models/order");
+const Rider = require("../models/rider");
 
 class CompanyService {
   /**
@@ -269,6 +271,31 @@ class CompanyService {
       }
     })
   }
+
+  /**
+  * GET a company's statistics - revenue, orders, riders summary
+  * @param {Object} updateObject
+  */
+ getStatistics(companyId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const totalOrders = await Order.find({company: companyId}).countDocuments();
+      const pendingOrders = await Order.find({company: companyId, status: "pending"}).countDocuments();
+      const totalRiders = await Rider.find({company: companyId}).countDocuments();
+      const totalRevenue = 0;
+
+      resolve({
+        totalOrders,
+        pendingOrders,
+        totalRiders,
+        totalRevenue
+      })
+    } catch (error) {
+      reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+      return
+    }
+  })
+}
 
 }
 

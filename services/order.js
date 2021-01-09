@@ -8,6 +8,7 @@ const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
 const { OTPCode } = require("../templates");
 const TripLog = require("../models/tripLog");
+const { reject } = require("bcrypt/promises");
 
 
 class OrderService {
@@ -37,16 +38,20 @@ class OrderService {
    * @param {Object} filter
    * @param {Object} option
    * @param {String} populate
+   * @param {Object} pagination - { skip, pageSize }
    */
-  getAll(filter = {}, option = {}, populate = "") {
+  getAll(filter = {}, option = {}, populate = "", pagination = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-        // check if we have pricing for the location
-        const order = await Order.find(filter)
+        const orders = await Order.find(filter)
           .select(option)
-          .populate(populate);
+          .populate(populate)
+          .skip(pagination.skip)
+          .limit(pagination.pageSize);
 
-        resolve(order);
+        const total = await Order.find(filter).countDocuments();
+
+        resolve({orders, total});
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
@@ -523,6 +528,85 @@ class OrderService {
       } catch (error) {
         reject(error)
         return
+      }
+    });
+  }
+
+  /**
+   * Decline an order
+   * @param {ObjectId} companyId
+   * @param {ObjectId} orderId
+   */
+  declineOrder(companyId, orderId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let order = await Order.findOne({_id: orderId, company: companyId});
+        if(!order){
+          return reject({code: 404, msg: MSG_TYPES.NOT_FOUND});
+        }
+
+        order = await order.updateOne({status: "declined"});
+
+        resolve(order);
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
+
+
+  /**
+   * Delete One Order by company
+   * @param {ObjectId} orderId
+   * @param {ObjectId} useriD
+   */
+  destroy(orderId, userId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        const order = await Order.findOne({
+          _id: orderId,
+          company: userId,
+        });
+
+        if (!order) {
+          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        }
+
+        order.deletedBy = userId;
+        order.deleted = true;
+        order.deletedAt = Date.now();
+        await order.save();
+
+        resolve(order);
+      } catch (error) {
+        reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Assign an order to a rider
+   * @param {ObjectId} orderId
+   * @param {ObjectId} riderId
+   * @param {ObjectId} companyId
+   */
+  assignToRider(orderId, riderId, companyId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({_id: riderId, company: companyId});
+        let order = await Order.findOne({_id: orderId, company: companyId});
+
+        if (!order || !rider) {
+          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        }
+
+        order.rider = rider._id;
+        order = await order.save();
+
+        resolve(order);
+      } catch (error) {
+        reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

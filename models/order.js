@@ -46,6 +46,7 @@ const orderSchema = mongoose.Schema(
         "arrivedAtDelivery", // await customer confirmation on delivery
         "delivered", // customer confirmed deluvery
         "cancelled",
+        "declined" // company declined an order
       ],
       default: "pending",
     },
@@ -231,6 +232,20 @@ const orderSchema = mongoose.Schema(
     userRated: {
       type: Boolean,
       default: false,
+    },
+    deleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   {

@@ -26,6 +26,10 @@ router.put("/riders/:riderId/respond", Auth, controller.rider.respond);
 
 router.delete("/riders/:riderId", Auth, controller.rider.destroy);
 
+router.patch("/riders/:riderId/suspend", Auth, controller.rider.suspend);
+
+router.get("/riders/:riderId/transactions", Auth, controller.rider.getRiderTransactions);
+
 // Riders Request
 router.get("/request/riders", Auth, controller.rider.requests);
 router.post("/request/:requestId", Auth, controller.rider.respond);
@@ -55,5 +59,15 @@ router.get("/transactions",Auth,controller.company.allTransactions)
 router.get("/entry", Auth, controller.company.entries);
 
 router.get("/entry/:entryId", Auth, controller.company.getSingleEntry);
+
+// Order management routes - These are supposed to be customized pool endpoints
+// router.get("/:companyId/orders", Auth, controller.order.getCompanyOrders);
+// router.get("/:companyId/orders/statistics", Auth, controller.order.getCompanyOrderStats);
+// router.patch("/:companyId/orders/:orderId/decline", Auth, controller.order.decline);
+// router.delete("/:companyId/orders/:orderId", Auth, controller.order.delete);
+// router.patch("/:companyId/orders/:orderId/assign/:riderId", Auth, controller.order.assignOrderToRider);
+
+// Dashboard statistics
+router.get("/:companyId/statistics", Auth, controller.company.getStatistics);
 
 module.exports = router;

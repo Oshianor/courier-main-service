@@ -19,8 +19,17 @@ router.post("/create-branch", [UserAuth, EnterpriseAuth([E_ROLES.OWNER])], contr
 // create maintainer
 router.post("/create-maintainer", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.createMaintainer);
 
+// get enterprise
+router.get("/", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getEnterprise);
+
 // edit enterprise account
 router.patch("/", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.updateEnterprise);
+
+// get enterprise branches
+router.get("/branches", [UserAuth, EnterpriseAuth(E_ROLES.OWNER)], controller.enterprise.allBranches);
+
+// get enterprise maintainers
+router.get("/maintainers", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.allMaintainers);
 
 // Add card by enterprise owner and branch
 router.post(

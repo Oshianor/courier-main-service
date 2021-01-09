@@ -25,7 +25,6 @@ class EnterpriseService {
           "email": body.email,
           "type": "Logistics",
           "countryCode": body.countryCode,
-          "password": "Opendoor12345",
           "phoneNumber": body.phoneNumber,
           "platform": "web",
           "group": "enterprise"
@@ -41,6 +40,7 @@ class EnterpriseService {
           body.logo = logo.Key;
         }
         body.status = "active";
+        body.user = user._id;
 
         const enterprise = await Enterprise.create(body);
         if (!enterprise) {
@@ -68,8 +68,10 @@ class EnterpriseService {
   /**
  * Create organization branch by organization HQ
  * @param {Object} body
+ * @param {Object} enterprise
+ * @param {Object} files
 */
-  createBranch(body, files) {
+  createBranch(body, files, owner) {
     return new Promise(async (resolve, reject) => {
       try {
         // check if enterprise exists
@@ -78,19 +80,12 @@ class EnterpriseService {
           reject({ code: 400, msg: "An Enterprise exists with same name email or phone number" })
           return
         }
-        const enterpriseHQ = await Enterprise.findById(body.createdBy)
-        if (!enterpriseHQ) {
-          reject({ code: 400, msg: "HQ not Found" })
-          return
-        }
-
         // Create user account in account service
         const userObject = {
           "name": body.name,
           "email": body.email,
           "type": "Logistics",
           "countryCode": body.countryCode,
-          "password": "Opendoor12345",
           "phoneNumber": body.phoneNumber,
           "platform": "web",
           "group": "enterprise"
@@ -106,28 +101,29 @@ class EnterpriseService {
           const logo = await UploadFileFromBinary(files.logo.data, files.logo.name);
           body.logo = logo.Key;
         }
-        body.enterprise = body.createdBy;
-        body.HQ = body.createdBy;
+
+        body.enterprise = owner._id;
+        body.HQ = owner._id;
+        body.user = user._id;
+
         const enterprise = await Enterprise.create(body);
         if (!enterprise) {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
           return
         }
-        if (body.type == "HQ") {
-          await this.updateEnterprise({ _id: body.createdBy }, { branchIDSWithHQ: [...enterpriseHQ.branchIDSWithHQ, enterprise._id] })
+        if (body.type === "owner") {
+          await this.updateEnterprise({ _id: owner._id }, { branchIDSWithHQ: [...owner.branchIDSWithHQ, enterprise._id] })
         } else {
-          await this.updateEnterprise({ _id: body.createdBy }, { branchIDS: [...enterpriseHQ.branchIDS, enterprise._id] })
+          await this.updateEnterprise({ _id: owner._id }, { branchIDS: [...owner.branchIDS, enterprise._id] })
         }
         // Create user account in logistics service 
-        const logisticsUserObject = { ...user, role: "branch", group: "enterprise", enterprise: body.createdBy }
+        const logisticsUserObject = { ...user, role: "branch", group: "enterprise", enterprise: owner._id }
         const logisticsUser = await this.createLogisticsUser(logisticsUserObject);
         if (!logisticsUser) {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
           return
         }
-
         resolve(enterprise);
-
       } catch (error) {
         reject({ code: error.code, msg: error.msg });
         return
@@ -139,12 +135,13 @@ class EnterpriseService {
  * Create maintainer  by organization HQ or branch
  * @param {Object} body
 */
-  createMaintainer(body) {
+  createMaintainer(body, parentEnterprise) {
     return new Promise(async (resolve, reject) => {
       try {
-        const parentEnterprise = await Enterprise.findById(body.createdBy)
-        if (!parentEnterprise) {
-          reject({ code: 400, msg: "Parent Enterprise not Found" })
+        // check if enterprise exists
+        const existingEnterprise = await Enterprise.findOne({ name: body.name, type: body.type, email: body.email, phoneNumber: body.phoneNumber })
+        if (existingEnterprise) {
+          reject({ code: 400, msg: "An Enterprise exists with same name email or phone number" })
           return
         }
         // Create user account in account service
@@ -154,7 +151,6 @@ class EnterpriseService {
           "type": "Logistics",
           "group": "enterprise",
           "countryCode": body.countryCode,
-          "password": "Opendoor12345",
           "phoneNumber": body.phoneNumber,
           "platform": "web"
         }
@@ -163,18 +159,32 @@ class EnterpriseService {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
           return
         }
+
+        body.enterprise = parentEnterprise._id;
+        if (parentEnterprise.type === "owner") {
+          body.HQ = parentEnterprise._id;
+        }
+        body.user = user._id;
+        const enterprise = await Enterprise.create(body);
+        if (!enterprise) {
+          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+          return
+        }
+        await this.updateEnterprise({ _id: parentEnterprise._id }, { maintainers: [...parentEnterprise.maintainers, enterprise._id] })
+
+
         // Create user account in logistics service 
-        const logisticsUserObject = { ...user, role: "maintainer", group: "enterprise", enterprise: body.createdBy }
+        const logisticsUserObject = { ...user, role: "maintainer", group: "enterprise", enterprise: parentEnterprise._id }
         const logisticsUser = await this.createLogisticsUser(logisticsUserObject);
         if (!logisticsUser) {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
           return
         }
-        await this.updateEnterprise({ _id: body.createdBy }, { maintainers: [...parentEnterprise.maintainers, logisticsUserObject._id] })
 
-        resolve(logisticsUser);
+        resolve(enterprise);
 
       } catch (error) {
+        console.log(error)
         reject({ code: error.code, msg: error.msg });
         return
       }
@@ -237,7 +247,9 @@ class EnterpriseService {
       try {
         const organization = await Enterprise.findOne(enterprise)
           .select('-_id -createdBy -deleted -deletedBy -deletedAt')
-          .populate('enterprise', 'name type phoneNumber email address');
+          .populate('enterprise', 'name type phoneNumber email address')
+          .populate('branchIDS', 'name type phoneNumber email address')
+          .populate('maintainer', 'name type phoneNumber email address');
         if (!organization) return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND })
         resolve(organization)
       } catch (error) {
@@ -247,6 +259,48 @@ class EnterpriseService {
     })
   }
 
+
+  /**
+   * Get all Enterprise Branches
+   * @param {MongoDB ObjectId} enterpriseId
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllBranches(enterpriseId, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const enterpriseBranches = await Enterprise.find({ enterprise: enterpriseId, type: 'branch' })
+          .select('-createdBy -deleted -deletedBy -deletedAt')
+          .skip(skip)
+          .limit(pageSize);
+        const totalBranches = await Enterprise.countDocuments({ enterprise: enterpriseId, type: 'branch' });
+        resolve({ enterpriseBranches, totalBranches });
+      } catch (error) {
+        return reject({ code: error.code, msg: error.msg });
+      }
+    });
+  }
+
+  /**
+ * Get all Enterprise Branches
+ * @param {MongoDB ObjectId} enterpriseId
+ * @param {number} skip
+ * @param {number} pageSize
+ */
+  getAllMaintainers(enterpriseId, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const enterpriseMaintainers = await Enterprise.find({ enterprise: enterpriseId, type: 'maintainer' })
+          .select('-createdBy -deleted -deletedBy -deletedAt')
+          .skip(skip)
+          .limit(pageSize);
+        const totalMaintainers = await Enterprise.countDocuments({ enterprise: enterpriseId, type: 'maintainer' });
+        resolve({ enterpriseMaintainers, totalMaintainers });
+      } catch (error) {
+        return reject({ code: error.code, msg: error.msg });
+      }
+    });
+  }
 
   /**
    * update enterprise 
@@ -272,56 +326,6 @@ class EnterpriseService {
         return
       }
     })
-  }
-
-  /**
-   * Disable branch 
-   * @param {Object} body
-  */
-  disableBranch(body) {
-    // return new Promise(async (resolve, reject) => {
-    //   try {
-    //     const validBranch = await Enterprise.findById(body.branch)
-    //     if (!validBranch) return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND })
-
-    //     const updatedEnterprise = await Enterprise.updateOne(
-    //       { _id: body.branch },
-    //       {
-    //         $set: { status: "suspended" },
-    //       }
-    //     );
-    //     if (!updatedEnterprise) return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
-    //     resolve(updatedEnterprise)
-    //   } catch (error) {
-    //     reject({ code: error.code, msg: error.msg })
-    //     return
-    //   }
-    // })
-  }
-
-  /**
-   * Disable maintainer 
-   * @param {Object} body
-  */
-  disableMaintainer(body) {
-    // return new Promise(async (resolve, reject) => {
-    //   try {
-    //     const validMaintainer = await User.findById(body.branch)
-    //     if (!validMaintainer) return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND })
-
-    //     const updatedMaintainer = await User.updateOne(
-    //       { _id: body.maintainer },
-    //       {
-    //         $set: { status: "suspended" },
-    //       }
-    //     );
-    //     if (!updatedMaintainer) return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
-    //     resolve(updatedMaintainer)
-    //   } catch (error) {
-    //     reject({ code: error.code, msg: error.msg })
-    //     return
-    //   }
-    // })
   }
 
   /**

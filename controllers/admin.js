@@ -259,19 +259,14 @@ exports.enable = async (req, res) => {
   }
 };
 
-// ADMIN INFO-METRICS 
-
 /**
- * Get all orders
+ * Verify an enterprise branch
  * @param {*} req
  * @param {*} res
  */
-exports.enable = async (req, res, next) => {
+exports.verifyBranch = async (req, res, next) => {
   try {
-    const admin = await adminInstance.get({ _id: req.params.adminId });
-
-    admin.status = "active";
-    await admin.save();
+    await adminInstance.verifyBranch(req.params.branchId);
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return
   } catch (error) {

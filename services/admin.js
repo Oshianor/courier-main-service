@@ -133,10 +133,10 @@ class AdminSerivice {
  * Verify branch
  * @param {Object} body
  */
-  verifyBranch(body) {
+  verifyBranch(branchId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const branch = await Enterprise.get({ _id: body.branch });
+        const branch = await Enterprise.findOne({ _id: branchId, type: "Branch" });
         if (!branch) {
           reject({ code: 400, msg: "Branch does not exist" });
           return;
@@ -146,7 +146,7 @@ class AdminSerivice {
           return;
         }
         const updatedEnterprise = await Enterprise.updateOne(
-          company,
+          { _id: branchId },
           {
             $set: { verified: true },
           }

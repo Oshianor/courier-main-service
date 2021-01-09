@@ -36,13 +36,14 @@ const enterPriseSchema = new mongoose.Schema(
       maxlength: 50,
       required: true,
     },
+    countryCode: String,
     address: {
       type: String,
       maxlength: 150,
       required: true,
     },
     logo: {
-      type: String
+      type: String,
     },
     primaryColors: [String],
     secondaryColors: [String],

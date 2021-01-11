@@ -7,10 +7,11 @@ const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
 const template = require("../templates");
 const { nanoid } = require("nanoid");
-const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
+const { UploadFileFromBinary, Mailer, GenerateToken, isObject } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
+const { base } = require("../models/order");
 
 class CompanyService {
   /**
@@ -276,26 +277,83 @@ class CompanyService {
   * GET a company's statistics - revenue, orders, riders summary
   * @param {Object} updateObject
   */
- getStatistics(companyId) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const totalOrders = await Order.find({company: companyId}).countDocuments();
-      const pendingOrders = await Order.find({company: companyId, status: "pending"}).countDocuments();
-      const totalRiders = await Rider.find({company: companyId}).countDocuments();
-      const totalRevenue = 0;
+  getStatistics(companyId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const totalOrders = await Order.find({company: companyId}).countDocuments();
+        const pendingOrders = await Order.find({company: companyId, status: "pending"}).countDocuments();
+        const failedOrders = await Order.find({company: companyId, status: "cancelled"}).countDocuments();
+        const successfulOrders = await Order.find({company: companyId, status: "delivered"}).countDocuments();
+        const totalRiders = await Rider.find({company: companyId}).countDocuments();
 
-      resolve({
-        totalOrders,
-        pendingOrders,
-        totalRiders,
-        totalRevenue
-      })
-    } catch (error) {
-      reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
-      return
-    }
-  })
-}
+        // @TODO - Get the actual revenues by querying
+        const totalRevenue = 0;
+        const revenuePerformance = [21,43,40,60,40,56,70,79,93,95,45,67];
+
+        resolve({
+          totalOrders,
+          pendingOrders,
+          failedOrders,
+          successfulOrders,
+          totalRiders,
+          totalRevenue,
+          revenuePerformance
+        })
+      } catch (error) {
+        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        return
+      }
+    })
+  }
+
+  /**
+  * GET a company's rider statistics - revenue, orders, riders summary
+  * @param {ObjectId} companyId
+  * @param {Object} filter
+  */
+  getRiderStatistics(companyId, filter) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let baseFilter = { company: companyId };
+        if(isObject(filter)){
+          baseFilter = {...baseFilter, ...filter};
+        }
+
+        const totalOrders = await Order.find({...baseFilter}).countDocuments();
+        const successfulOrders = await Order.find({...baseFilter, status: "delivered"}).countDocuments();
+        const failedOrders = await Order.find({...baseFilter, status: "cancelled"}).countDocuments();
+        const activeOrders = await Order.find({
+          ...baseFilter,
+          status: {
+            $nin: ["pending","delivered","cancelled","declined"]
+        }}).countDocuments();
+        // @TODO: Get the correct values for this field
+        const totalRevenue = 0;
+
+        const isSingleRider = baseFilter.hasOwnProperty('rider');
+
+        const totalRiders = await Rider.find(baseFilter).countDocuments();
+        const activeRiders = await Rider.find({...baseFilter, status: "active"}).countDocuments();
+
+        let statistics = {
+          totalOrders,
+          successfulOrders,
+          activeOrders,
+          failedOrders,
+          totalRevenue,
+        }
+
+        if(!isSingleRider){
+          statistics = { ...statistics, totalRiders, activeRiders };
+        }
+
+        resolve(statistics);
+      } catch (error) {
+        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        return
+      }
+    })
+  }
 
 }
 

@@ -27,7 +27,9 @@ router.put("/riders/:riderId/respond", Auth, controller.rider.respond);
 router.delete("/riders/:riderId", Auth, controller.rider.destroy);
 
 router.patch("/riders/:riderId/suspend", Auth, controller.rider.suspend);
-
+router.patch("/riders/:riderId/unsuspend", Auth, controller.rider.unsuspend);
+router.get("/riders/:riderId/orders", Auth, controller.rider.getRiderOrders);
+router.get("/riders/:riderId/statistics", Auth, controller.rider.getRiderStatistics);
 router.get("/riders/:riderId/transactions", Auth, controller.rider.getRiderTransactions);
 
 // Riders Request
@@ -69,5 +71,6 @@ router.get("/entry/:entryId", Auth, controller.company.getSingleEntry);
 
 // Dashboard statistics
 router.get("/:companyId/statistics", Auth, controller.company.getStatistics);
+router.get("/:companyId/riders/statistics", Auth, controller.company.getRiderStatistics)
 
 module.exports = router;

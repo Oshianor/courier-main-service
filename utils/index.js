@@ -126,6 +126,10 @@ const paginate = (req) => {
   return { page, pageSize, skip };
 };
 
+const isObject = (object) => {
+  return typeof object === "object" && object !== null;
+}
+
 
 module.exports = {
   GenerateToken,
@@ -136,4 +140,5 @@ module.exports = {
   UploadFileFromBase64,
   AsyncForEach,
   paginate,
+  isObject
 };

@@ -513,3 +513,20 @@ exports.getStatistics = async (req, res) => {
     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
   }
 };
+
+/**
+ * GET general riders statistics
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getRiderStatistics = async (req, res) => {
+  try {
+    const statistics = await companyInstance.getRiderStatistics(req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}

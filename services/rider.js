@@ -411,10 +411,10 @@ class RiderSerivice {
   }
 
   /**
-   * Suspend a rider
+   * Change a rider's status - suspend,
    * @param {MongoDB ObjectId} riderId rider id
    */
-  suspendRider(riderId, companyId) {
+  changeRiderStatus(riderId, companyId, newStatus) {
     return new Promise(async (resolve, reject) => {
       try {
 
@@ -426,7 +426,7 @@ class RiderSerivice {
           return reject({code: 404, msg: "Rider not found"});
         }
 
-        rider = rider.updateOne({status: "suspended"});
+        rider = rider.updateOne({status: newStatus});
 
         resolve(rider);
       } catch (error) {
@@ -452,6 +452,29 @@ class RiderSerivice {
         .populate('card');
 
         resolve(transactions);
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Get a rider's orders
+   * @param {MongoDB ObjectId} riderId
+   * @param {MongoDB ObjectId} companyId
+   */
+  getOrders(riderId, companyId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const orders = await Order.find({
+          rider: riderId,
+          company: companyId
+        })
+        .populate('user')
+        .populate('rider')
+        .populate('entry')
+
+        resolve(orders);
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }

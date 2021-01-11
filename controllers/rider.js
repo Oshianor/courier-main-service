@@ -528,7 +528,25 @@ exports.checkDriverTripStatus = async (req, res) => {
 exports.suspend = async (req, res) => {
   try {
     const riderInstance = new RiderService()
-    const updatedRider = await riderInstance.suspendRider(req.params.riderId, req.user.id);
+    const updatedRider = await riderInstance.changeRiderStatus(req.params.riderId, req.user.id, "suspended");
+
+    JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+/**
+ * Unsuspend a rider
+ * @param {*} req
+ * @param {*} res
+ */
+exports.unsuspend = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const updatedRider = await riderInstance.changeRiderStatus(req.params.riderId, req.user.id, "active");
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return
@@ -547,6 +565,43 @@ exports.getRiderTransactions = async (req, res) => {
   try {
     const riderInstance = new RiderService()
     const transactions = await riderInstance.getTransactions(req.params.riderId, req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+
+/**
+ * GET a rider's orders
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getRiderOrders = async (req, res) => {
+  try {
+    const riderInstance = new RiderService()
+    const transactions = await riderInstance.getOrders(req.params.riderId, req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
+    return
+  } catch (error) {
+    JsonResponse(res, error.code, error.msg);
+    return
+  }
+}
+
+/**
+ * GET a rider's statistics
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getRiderStatistics = async (req, res) => {
+  try {
+    const companyInstance = new CompanyService()
+    const transactions = await companyInstance.getRiderStatistics(req.user.id, {rider: req.params.riderId});
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
     return

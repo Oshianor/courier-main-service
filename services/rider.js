@@ -446,6 +446,10 @@ class RiderSerivice {
           rider: riderId,
           company: companyId
         })
+        .populate('user')
+        .populate('rider')
+        .populate('entry')
+        .populate('card');
 
         resolve(transactions);
       } catch (error) {

@@ -13,6 +13,7 @@ const {
   validateEntryID,
   validatePickupOTP,
   validateSendRiderRequest,
+  validateCalculateShipment
 } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -88,6 +89,63 @@ exports.localEntry = async (req, res) => {
     const entrySub = new EntrySubscription();
     await entrySub.newEntry(newEntry._id);
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
+    return;
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * Calculate pricing for shipment
+ * @param {*} req
+ * @param {*} res
+ */
+exports.calculateShipment = async (req, res) => {
+  try {
+    const { error } = validateCalculateShipment(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const entryInstance = new EntryService();
+    const countryInstance = new CountryService();
+    const settingInstance = new SettingService();
+    const DPInstance = new DPService();
+    const VehicleInstance = new VehicleService();
+    const country = await countryInstance.getCountryAndState(
+      req.body.country,
+      req.body.state
+    );
+
+    // find a single vehicle to have access to the weight
+    const vehicle = await VehicleInstance.get(req.body.vehicle);
+
+    // check if we have pricing for the location
+    const distancePrice = await DPInstance.get({country: req.body.country, state: req.body.state, vehicle: req.body.vehicle});
+
+    // get admin settings pricing
+    const setting = await settingInstance.get({ source: "admin" });
+ 
+    // get distance calculation
+    const distance = await entryInstance.getDistanceMetrix(req.body);
+
+
+    const body = await entryInstance.calculateLocalEntry(
+      req.body,
+      req.user,
+      distance.data,
+      setting,
+      distancePrice,
+      vehicle
+    );
+
+    // calculate pricing based on the pickup type
+    if (req.body.pickupType === "instant") {
+      body.TEC = parseFloat(body.TEC) * parseFloat(body.instantPricing);
+    }
+    
+    body.metaData = null;
+    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, body);
     return;
   } catch (error) {
     console.log(error);

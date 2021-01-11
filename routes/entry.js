@@ -5,6 +5,12 @@ const { UserAuth, Auth } = require("../middlewares/auth");
 
 // Create entry
 router.post("/", UserAuth, controller.entry.localEntry);
+// calculate shipment
+router.post(
+  "/calculate-shipment",
+  UserAuth,
+  controller.entry.calculateShipment
+);
 // approve an entry for different payment method
 router.post("/confirm", UserAuth, controller.entry.transaction);
 

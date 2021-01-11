@@ -9,6 +9,8 @@ const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
 const OTPCode = require("../templates/otpCode");
+const EnterpriseService = require("../services/enterprise");
+const enterpriseInstance = new EnterpriseService();
 
 class AuthSerivice {
   /**
@@ -173,18 +175,19 @@ class AuthSerivice {
         }
         const response = await axios.post(`${config.get("api.base")}/auth/set-password`, userObject);
         if (response.status == 200) {
+          await enterpriseInstance.updateEnterprise({ email: body.email }, {
+            verified: true,
+            status: 'active'
+          })
           resolve(response.data);
         }
         return reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-
       } catch (error) {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
         return reject({ code: error.code, msg: error.msg });
-
       }
-
     });
   }
 

@@ -245,11 +245,9 @@ class EnterpriseService {
   getEnterprise(enterprise) {
     return new Promise(async (resolve, reject) => {
       try {
-        const organization = await Enterprise.findOne(enterprise)
-          .select('-_id -createdBy -deleted -deletedBy -deletedAt')
-          .populate('enterprise', 'name type phoneNumber email address')
-          .populate('branchIDS', 'name type phoneNumber email address')
-          .populate('maintainer', 'name type phoneNumber email address');
+        const organization = await User.findOne(enterprise)
+          .select('-createdBy -deleted -deletedBy -deletedAt')
+          .populate('enterprise');
         if (!organization) return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND })
         resolve(organization)
       } catch (error) {

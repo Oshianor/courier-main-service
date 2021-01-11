@@ -103,9 +103,7 @@ exports.updateEnterprise = async (req, res, next) => {
  */
 exports.getEnterprise = async (req, res, next) => {
   try {
-    console.log('User', req.user)
-    console.log('Enterprise', req.enterprise)
-    const enterprise = await enterpriseInstance.getEnterprise({ _id: req.enterprise._id });
+    const enterprise = await enterpriseInstance.getEnterprise({ email: req.enterprise.email });
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterprise);
   } catch (error) {
     next(error)

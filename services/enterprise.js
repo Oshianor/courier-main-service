@@ -97,7 +97,7 @@ class EnterpriseService {
         }
 
         // create enterprise account
-        if (files.logo.data != null) {
+        if (files && files.logo.data != null) {
           const logo = await UploadFileFromBinary(files.logo.data, files.logo.name);
           body.logo = logo.Key;
         }
@@ -125,8 +125,8 @@ class EnterpriseService {
         }
         resolve(enterprise);
       } catch (error) {
-        reject({ code: error.code, msg: error.msg });
-        return
+        error.service = 'Create branch service error'
+        return reject(error);
       }
     })
   }
@@ -180,13 +180,11 @@ class EnterpriseService {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
           return
         }
-
         resolve(enterprise);
 
       } catch (error) {
-        console.log(error)
-        reject({ code: error.code, msg: error.msg });
-        return
+        error.service = 'Create maintainer service error'
+        return reject(error);
       }
     })
   }
@@ -208,8 +206,8 @@ class EnterpriseService {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
-        reject({ code: error.code, msg: error.msg });
-        return
+        error.service = 'Create exalt user service error'
+        return reject(error);
       }
     })
   }
@@ -231,8 +229,8 @@ class EnterpriseService {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
-        reject({ code: error.code, msg: error.msg });
-        return
+        error.service = 'Create logistics user service error'
+        return reject(error);
       }
     })
   }
@@ -251,8 +249,8 @@ class EnterpriseService {
         if (!organization) return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND })
         resolve(organization)
       } catch (error) {
-        reject({ code: error.code, msg: error.msg });
-        return
+        error.service = 'Get enterprise service error'
+        return reject(error);
       }
     })
   }
@@ -274,7 +272,8 @@ class EnterpriseService {
         const totalBranches = await Enterprise.countDocuments({ enterprise: enterpriseId, type: 'branch' });
         resolve({ enterpriseBranches, totalBranches });
       } catch (error) {
-        return reject({ code: error.code, msg: error.msg });
+        error.service = 'Get all branches service error'
+        return reject(error);
       }
     });
   }
@@ -295,7 +294,8 @@ class EnterpriseService {
         const totalMaintainers = await Enterprise.countDocuments({ enterprise: enterpriseId, type: 'maintainer' });
         resolve({ enterpriseMaintainers, totalMaintainers });
       } catch (error) {
-        return reject({ code: error.code, msg: error.msg });
+        error.service = 'Get all maintainers service error'
+        return reject(error);
       }
     });
   }
@@ -320,8 +320,8 @@ class EnterpriseService {
         if (!updatedEnterprise) return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
         resolve(updatedEnterprise)
       } catch (error) {
-        reject({ code: error.code, msg: error.msg })
-        return
+        error.service = 'Update enterprise service error'
+        return reject(error);
       }
     })
   }

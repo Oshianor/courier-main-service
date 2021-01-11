@@ -17,8 +17,8 @@ const enterPriseSchema = new mongoose.Schema(
     },
     user: {
       type: ObjectId,
-      default: null,
       index: true,
+      required: true,
       ref: "User",
     },
     type: {

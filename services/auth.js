@@ -186,7 +186,7 @@ class AuthSerivice {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
-        return reject({ code: error.code, msg: error.msg });
+        return reject(error);
       }
     });
   }
@@ -266,8 +266,7 @@ class AuthSerivice {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
-        reject({ code: error.code, msg: error.msg });
-        return
+        return reject(error);
       }
     });
   }
@@ -286,7 +285,7 @@ class AuthSerivice {
         if (!account || account.role === "owner") {
           return reject({ code: 400, msg: "You do not have permission to disable this account" })
         }
-        if (account.role == "branch" && enterprise.type !== "HQ") {
+        if (account.role === "branch" && enterprise.type !== "HQ") {
           return reject({ code: 400, msg: "You do not have permission to disable this account" })
         }
         const response = await axios.patch(
@@ -303,8 +302,7 @@ class AuthSerivice {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
-        reject({ code: error.code, msg: error.msg });
-        return
+        return reject(error);
       }
     });
   } ß

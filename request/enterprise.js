@@ -3,20 +3,17 @@ const Joi = require("joi");
 function validateEnterprise(body) {
   const schema = Joi.object({
     name: Joi.string().required(),
-    email: Joi.string().email().required(),
+    email: Joi.string().email().length(50).required(),
     type: Joi.string().valid("owner", "branch", "maintainer").required(),
-    phoneNumber: Joi.string().required(),
+    phoneNumber: Joi.string().length(11).required(),
     countryCode: Joi.string().required(),
     address: Joi.string().required(),
     primaryColors: Joi.array().items(Joi.string().optional()).optional(),
     secondaryColors: Joi.array().items(Joi.string().optional()).optional(),
     motto: Joi.string().required(),
-    industry: Joi.string().required(),
+    industry: Joi.string().valid("banking", "agric").required(),
     createdBy: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
-    logo: Joi.string().optional(),
-    enterprise: Joi.optional(),
-    owner: Joi.optional(),
-    branch: Joi.optional()
+    logo: Joi.string().optional()
   });
 
   return schema.validate(body);
@@ -29,7 +26,7 @@ function validateEnterpriseUpdate(body) {
     primaryColors: Joi.array().items(Joi.string().optional()).optional(),
     secondaryColors: Joi.array().items(Joi.string().optional()).optional(),
     motto: Joi.string().optional(),
-    industry: Joi.string().optional(),
+    industry: Joi.string().valid("banking", "agric").optional(),
     logo: Joi.string().optional(),
     enterprise: Joi.optional(),
     owner: Joi.optional(),

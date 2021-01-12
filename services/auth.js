@@ -285,7 +285,7 @@ class AuthSerivice {
         if (!account || account.role === "owner") {
           return reject({ code: 400, msg: "You do not have permission to disable this account" })
         }
-        if (account.role === "branch" && enterprise.type !== "HQ") {
+        if (account.role === "branch" && enterprise.type !== "owner") {
           return reject({ code: 400, msg: "You do not have permission to disable this account" })
         }
         const response = await axios.patch(

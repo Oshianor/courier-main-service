@@ -480,6 +480,32 @@ class RiderSerivice {
       }
     });
   }
+
+  getRider(riderId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({ _id: riderId })
+        .populate("company")
+        .select("-password")
+        .lean();
+
+        if(!rider){
+          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND});
+        }
+
+        const riderIsWithPackage = await Entry.findOne({
+          rider: riderId,
+          status: { $in: ["pickedup","enrouteToDelivery","arrivedAtDelivery"]}
+        });
+
+        rider.withPackage = riderIsWithPackage ? true : false;
+
+        resolve(rider);
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 module.exports = RiderSerivice;

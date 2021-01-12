@@ -141,15 +141,9 @@ exports.single = async (req, res) => {
       JsonResponse(res, 404, "Company Not Found!");
       return;
     }
-    const riderId = req.params.riderId;
-    const rider = await Rider.findOne({ _id: riderId })
-      .populate("company")
-      .select("-password");
+    const riderInstance = new RiderService();
 
-    if (!rider) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-      return;
-    }
+    const rider = await riderInstance.getRider(req.params.riderId);
 
     JsonResponse(res, 200, null, rider);
   } catch (error) {

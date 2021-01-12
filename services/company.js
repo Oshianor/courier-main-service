@@ -7,11 +7,11 @@ const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
 const template = require("../templates");
 const { nanoid } = require("nanoid");
-const { UploadFileFromBinary, Mailer, GenerateToken, isObject } = require("../utils");
+const { UploadFileFromBinary, Mailer, GenerateToken, isObject, convertToMonthlyDataArray } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
-const { base } = require("../models/order");
+const { ObjectId } = mongoose.Types;
 
 class CompanyService {
   /**
@@ -287,8 +287,27 @@ class CompanyService {
         const totalRiders = await Rider.find({company: companyId}).countDocuments();
 
         // @TODO - Get the actual revenues by querying
-        const totalRevenue = 0;
-        const revenuePerformance = [21,43,40,60,40,56,70,79,93,95,45,67];
+        let totalRevenue = await Transaction.aggregate([
+          { $match: {company: ObjectId(companyId) } },
+          { $group: { _id: companyId, "total": {$sum: "$amount"} }},
+        ]);
+
+        totalRevenue = totalRevenue[0] ? totalRevenue[0].total : 0;
+
+        let monthlyRevenues = await Transaction.aggregate([
+          { $match: {company: ObjectId(companyId) } },
+          { $group:{ _id: {$month: "$approvedAt"}, revenue: {$sum: "$amount"}} },
+          { $project: {_id:0, "month": "$_id", revenue: "$revenue"}}
+        ]);
+
+        let monthlyDeliveries = await Order.aggregate([
+          { $match: {company: ObjectId(companyId), status: "delivered" } },
+          { $group:{ _id: {$month: "$createdAt"}, numberOfDeliveries: {$sum: 1}} },
+          { $project: {_id:0, "month": "$_id", numberOfDeliveries: "$numberOfDeliveries"}}
+        ]);
+
+        monthlyRevenues = convertToMonthlyDataArray(monthlyRevenues, 'revenue');
+        monthlyDeliveries = convertToMonthlyDataArray(monthlyDeliveries, 'numberOfDeliveries');
 
         resolve({
           totalOrders,
@@ -297,9 +316,11 @@ class CompanyService {
           successfulOrders,
           totalRiders,
           totalRevenue,
-          revenuePerformance
+          monthlyRevenues,
+          monthlyDeliveries,
         })
       } catch (error) {
+        console.log('Error => ', error);
         reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
         return
       }

@@ -293,6 +293,7 @@ class AuthSerivice {
           body
         );
         if (response.status == 200) {
+          await enterpriseInstance.updateEnterprise({ user: body.account }, { status: body.status })
           resolve(response.data.data);
           return
         } else {
@@ -302,6 +303,7 @@ class AuthSerivice {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
+        error.service = "Uodate enterprise status service"
         return reject(error);
       }
     });

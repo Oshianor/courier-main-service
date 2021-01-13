@@ -165,3 +165,51 @@ exports.allMaintainers = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Get All Enterprise Entries
+ * @param {*} req
+ * @param {*} res
+ */
+exports.allEntries = async (req, res, next) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+
+    const { entries, total } = await enterpriseInstance.getAllEntries(
+      req.enterprise,
+      skip,
+      pageSize
+    );
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entries, meta);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get All Enterprise Transactions
+ * @param {*} req
+ * @param {*} res
+ */
+exports.allTransactions = async (req, res, next) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+
+    const { transactions, total } = await enterpriseInstance.getAllTransactions(
+      req.enterprise,
+      skip,
+      pageSize
+    );
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
+  } catch (error) {
+    next(error);
+  }
+};

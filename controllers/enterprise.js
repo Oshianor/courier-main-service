@@ -7,8 +7,8 @@ const enterpriseInstance = new EnterpriseService();
 
 /**
  * Create organization
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.createOrganization = async (req, res, next) => {
   try {
@@ -26,8 +26,8 @@ exports.createOrganization = async (req, res, next) => {
 
 /**
  * Create branch
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.createBranch = async (req, res, next) => {
   try {
@@ -49,8 +49,8 @@ exports.createBranch = async (req, res, next) => {
 
 /**
  * Create maintainer
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.createMaintainer = async (req, res, next) => {
   try {
@@ -58,7 +58,7 @@ exports.createMaintainer = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const { user } = await enterpriseInstance.createMaintainer(req.body, req.enterprise);
-    
+
     return JsonResponse(res, 200, MSG_TYPES.CREATED, user);
   } catch (error) {
     next(error)
@@ -69,8 +69,8 @@ exports.createMaintainer = async (req, res, next) => {
 
 /**
  * Add card for enterprise accounts
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.addCard = async (req, res, next) => {
   try {
@@ -84,8 +84,8 @@ exports.addCard = async (req, res, next) => {
 
 /**
  * Update enterprise information
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.updateEnterprise = async (req, res, next) => {
   try {
@@ -102,8 +102,8 @@ exports.updateEnterprise = async (req, res, next) => {
 
 /**
  * Get enterprise information
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.getEnterprise = async (req, res, next) => {
   try {
@@ -146,9 +146,21 @@ exports.allBranches = async (req, res) => {
  */
 exports.allMaintainers = async (req, res, next) => {
   try {
-    const maintainers = await enterpriseInstance.getAllMaintainers(req.user);
+    const { page, pageSize, skip } = paginate(req);
+    const pagination = {
+      page,
+      skip,
+      pageSize
+    }
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, maintainers);
+    const { total, maintainers } = await enterpriseInstance.getAllMaintainers(req.user, pagination);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, maintainers, meta);
   } catch (error) {
     next(error);
   }

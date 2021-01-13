@@ -487,6 +487,9 @@ class EnterpriseService {
         }
 
         const entries = await Entry.find(queryFilter)
+          .populate('company')
+          .populate('rider')
+          .populate('order')
           .skip(skip)
           .limit(pageSize);
 
@@ -514,6 +517,7 @@ class EnterpriseService {
         }
 
         const transactions = await Transaction.find(queryFilter)
+          .populate('user')
           .skip(skip)
           .limit(pageSize);
 

@@ -108,10 +108,6 @@ class TransactionService {
       } catch (error) {
         await session.abortTransaction();
         console.log("error", error);
-        // reject({
-        //   code: error.code,
-        //   msg: error.msg,
-        // });
         reject({
           code: 500,
           msg: "Your Transaction could't be processed at the moment",

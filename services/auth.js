@@ -169,13 +169,34 @@ class AuthSerivice {
   setPassword(body) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.post(`${config.get("api.base")}/auth/set-password`, body, );
-        await enterpriseInstance.updateEnterprise({ email: body.email }, {
-          verified: true,
-          status: 'active'
-        });
+        const response = await axios.post(
+          `${config.get("api.base")}/auth/set-password`,
+          body,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        const user = await User.findById(response.data.data._id);
+        if (!user) {
+          return reject({ code: 400, msg: "No User Account found" })
+        }
+        
+        if (user.role !== "maintainer") {
+          await enterpriseInstance.updateEnterprise(
+            { _id: user.enterprise },
+            {
+              verified: true,
+              status: "active",
+            }
+          );
+        }
+        
         resolve(response.data);
       } catch (error) {
+        console.log("error", error);
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
         }
@@ -238,23 +259,14 @@ class AuthSerivice {
           `${config.get("api.base")}/auth/login`,
           body
         );
-        if (response.status == 200) {
-          const token = response.headers["x-auth-token"];
-          const exaltUser = response.data.data;
-          const localUser = await User.findById(exaltUser._id);
-          const enterpriseUser = await Enterprise.findOne({ user: exaltUser._id }).select(' -createdBy -deleted -deletedBy -deletedAt')
-            .populate('enterprise', 'name type phoneNumber email address')
-            .populate('branchIDS', 'name type phoneNumber email address')
-            .populate('maintainer', 'name type phoneNumber email address');
+        const token = response.headers["x-auth-token"];
+        const exaltUser = response.data.data;
+        const localUser = await User.findById(exaltUser._id).populate(
+          "enterprise",
+          "name type phoneNumber email address logo"
+        );
 
-          if (!enterpriseUser) {
-            return reject({ code: 400, msg: MSG_TYPES.PERMISSION });
-          }
-          resolve({ enterpriseUser, token, exaltUser, localUser });
-          return
-        } else {
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
-        }
+        resolve({ token, exaltUser, localUser });
       } catch (error) {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });

@@ -34,11 +34,15 @@ exports.createBranch = async (req, res, next) => {
     const { error } = validateEnterprise(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const branch = await enterpriseInstance.createBranch(req.body, req.files, req.enterprise);
-    return JsonResponse(res, 200, MSG_TYPES.CREATED, branch);
+    const { newEnterprise } = await enterpriseInstance.createBranch(
+      req.body,
+      req.files,
+      req.enterprise
+    );
+    return JsonResponse(res, 200, MSG_TYPES.CREATED, newEnterprise);
 
   } catch (error) {
-    next(error)
+    next(error);
     return
   }
 };
@@ -53,9 +57,9 @@ exports.createMaintainer = async (req, res, next) => {
     const { error } = validateMaintainer(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const maintainer = await enterpriseInstance.createMaintainer(req.body, req.enterprise);
-    return JsonResponse(res, 200, MSG_TYPES.CREATED, maintainer);
-
+    const { user } = await enterpriseInstance.createMaintainer(req.body, req.enterprise);
+    
+    return JsonResponse(res, 200, MSG_TYPES.CREATED, user);
   } catch (error) {
     next(error)
     return

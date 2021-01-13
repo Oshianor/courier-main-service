@@ -21,12 +21,6 @@ const enterPriseSchema = new mongoose.Schema(
       required: true,
       ref: "User",
     },
-    users: [{
-      type: ObjectId,
-      index: true,
-      required: true,
-      ref: "User",
-    }],
     type: {
       type: String,
       required: true,
@@ -55,6 +49,22 @@ const enterPriseSchema = new mongoose.Schema(
     secondaryColors: [String],
     motto: { type: String, maxlength: 225, default: "" },
     industry: String,
+    users: [
+      {
+        type: ObjectId,
+        index: true,
+        required: true,
+        ref: "User",
+      },
+    ],
+    usersAll: [
+      {
+        type: ObjectId,
+        index: true,
+        required: true,
+        ref: "User",
+      },
+    ],
     maintainers: [{ type: ObjectId, ref: "User", index: true }],
     branchIDS: [{ type: ObjectId, ref: "Enterprise", index: true }],
     branchIDSWithHQ: [{ type: ObjectId, ref: "Enterprise", index: true }],

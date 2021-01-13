@@ -11,14 +11,15 @@ class WalletService {
   /**
    * Create a new wallet for enterprise
    * @param {string} enterprise Enterprise Id for the company
+   * @param {MongoDb session} session Enterprise Id for the company
    */
-  createWallet(enterprise) {
+  createWallet(enterprise, session) {
     return new Promise(async (resolve, reject) => {
       const newWallet = new Wallet({
         enterprise,
       });
 
-      await newWallet.save();
+      await newWallet.save({ session });
 
       resolve(newWallet);
     });

@@ -366,7 +366,7 @@ exports.setPassword = async (req, res, next) => {
     const authInstance = new AuthService();
     await authInstance.setPassword(req.body)
 
-    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return JsonResponse(res, 200, MSG_TYPES.ACCOUNT_VERIFIED);
   } catch (error) {
     next(error);
     return
@@ -385,13 +385,11 @@ exports.enterpriseLogin = async (req, res, next) => {
 
     const authInstance = new AuthService();
     const {
-      enterpriseUser,
       token,
-      exaltUser,
       localUser,
     } = await authInstance.enterpriseLogin(req.body);
 
-    localUser.enterprise = enterpriseUser;
+    // localUser.enterprise = enterpriseUser;
     res.header("x-auth-token", token);
     return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, localUser);
   } catch (error) {

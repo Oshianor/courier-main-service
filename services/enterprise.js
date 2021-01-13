@@ -1,10 +1,12 @@
 const config = require("config");
+const mongoose = require("mongoose");
 const axios = require("axios");
 const Enterprise = require('../models/enterprise');
 const { MSG_TYPES } = require('../constant/types');
 const { UploadFileFromBinary } = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
+const UserService = require("./user")
 
 class EnterpriseService {
   /**
@@ -13,179 +15,193 @@ class EnterpriseService {
    */
   createOrganization(body, files, authUser) {
     return new Promise(async (resolve, reject) => {
-      try {
-        if (typeof files.logo === "undefined") {
-          reject({ code: 404, msg: MSG_TYPES.ENTERPRISE_LOGO });
-          return;
-        }
+      const session = await mongoose.startSession();
 
-        // check if enterprise exists
-        const existingEnterprise = await Enterprise.findOne({
-          name: body.name,
-          type: body.type,
-          email: body.email,
-          phoneNumber: body.phoneNumber,
-        });
-        if (existingEnterprise) {
-          reject({
-            code: 400,
-            msg: "An Enterprise exists with same name email or phone number",
-          });
-          return;
-        }
-
-        // Create user account in account service (wrap account service)
-        const userObject = {
-          name: body.name,
-          email: body.email,
-          countryCode: body.countryCode,
-          phoneNumber: body.phoneNumber,
-        };
-
-        const user = await this.createExaltUser(userObject);
-        if (!user) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-
-        // create enterprise account
-        if (files.logo.data != null) {
-          const logo = await UploadFileFromBinary(
-            files.logo.data,
-            files.logo.name
-          );
-          body.logo = logo.Key;
-        }
-
-        body.status = "inactive";
-        body.verified = true;
-        body.user = user._id;
-        body.users = [user._id];
-        body.createdBy = authUser.id;
-        const enterprise = await Enterprise.create(body);
-        if (!enterprise) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-
-        // Create user account in logistics service
-        await this.createLogisticsUser({
-          ...user,
-          role: "owner",
-          group: "enterprise",
-          enterprise: enterprise._id,
-        });
-
-        // create wallet for enterprise
-        const walletInstance = new WalletService();
-        await walletInstance.createWallet(enterprise._id);
-
-        resolve(enterprise);
-      } catch (error) {
-        console.log("error", error);
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        return reject({ code: error.code, msg: error.msg });
+      if (typeof files.logo === "undefined") {
+        reject({ code: 404, msg: MSG_TYPES.ENTERPRISE_LOGO });
+        return;
       }
+
+      // check if enterprise exists
+      const existingEnterprise = await Enterprise.findOne({
+        name: body.name,
+        type: body.type,
+        email: body.email,
+        phoneNumber: body.phoneNumber,
+      });
+
+      if (existingEnterprise) {
+        reject({
+          code: 400,
+          msg: "An Enterprise exists with same name email or phone number",
+        });
+        return;
+      }
+
+      // Create user account in account service (wrap account service)
+      this.createExaltUser({
+        name: body.name,
+        email: body.email,
+        countryCode: body.countryCode,
+        phoneNumber: body.phoneNumber,
+      })
+        .then(async (user) => {
+          try {
+            // start our transaction
+            session.startTransaction();
+
+
+            body.status = "inactive";
+            body.type = "owner";
+            body.verified = true;
+            body.user = user._id;
+            body.users = [user._id];
+            body.usersAll = [user._id];
+            body.createdBy = authUser.id;
+
+            // create enterprise document
+            const newEnterprise = new Enterprise(body);
+            await newEnterprise.save({ session });
+
+            // create user in logistics service
+            const courierUser = new User({
+              ...user,
+              role: "owner",
+              group: "enterprise",
+              enterprise: newEnterprise._id,
+            });
+            await courierUser.save({ session });
+
+            const walletInstance = new WalletService();
+            await walletInstance.createWallet(newEnterprise._id, session);
+
+            await session.commitTransaction();
+            session.endSession();
+
+            // create enterprise account
+            if (files.logo.data != null) {
+              const logo = await UploadFileFromBinary(
+                files.logo.data,
+                files.logo.name
+              );
+              body.logo = logo.Key;
+            }
+
+            resolve(enterprise);
+          } catch (error) {
+            await session.abortTransaction();
+            if (error.response) {
+              return reject({
+                code: error.response.status,
+                msg: error.response.data.msg,
+              });
+            }
+            return reject({ code: error.code, msg: error.msg });
+          }
+        })
+        .catch((error) => {
+          return reject(error);
+        });
     });
   }
 
   /**
    * Create organization branch by organization HQ
    * @param {Object} body
-   * @param {Object} enterprise
    * @param {Object} files
+   * @param {Object} enterprise
    */
-  createBranch(body, files, owner) {
+  createBranch(body, files, enterprise) {
     return new Promise(async (resolve, reject) => {
-      try {
-        // check if enterprise exists
-        const existingEnterprise = await Enterprise.findOne({
-          name: body.name,
-          type: body.type,
-          email: body.email,
-          phoneNumber: body.phoneNumber,
-        });
-        if (existingEnterprise) {
-          reject({
-            code: 400,
-            msg: "An Enterprise exists with same name email or phone number",
-          });
-          return;
-        }
-        // Create user account in account service
-        const userObject = {
-          name: body.name,
-          email: body.email,
-          type: "Logistics",
-          countryCode: body.countryCode,
-          phoneNumber: body.phoneNumber,
-          platform: "web",
-          group: "enterprise",
-        };
-        const user = await this.createExaltUser(userObject);
-        if (!user) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
+      const session = await mongoose.startSession();
 
-        // create enterprise account
-        if (files && files.logo.data != null) {
-          const logo = await UploadFileFromBinary(
-            files.logo.data,
-            files.logo.name
-          );
-          body.logo = logo.Key;
-        }
-
-        body.enterprise = owner._id;
-        body.HQ = owner._id;
-        body.user = user._id;
-
-        const enterprise = await Enterprise.create(body);
-        if (!enterprise) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-
-        if (body.type === "owner") {
-          await this.updateEnterprise(
-            { _id: owner._id },
-            { branchIDSWithHQ: [...owner.branchIDSWithHQ, enterprise._id] }
-          );
-        } else {
-          await this.updateEnterprise(
-            { _id: owner._id },
-            { branchIDS: [...owner.branchIDS, enterprise._id] }
-          );
-        }
-        // Create user account in logistics service
-        const logisticsUserObject = {
-          ...user,
-          role: "branch",
-          group: "enterprise",
-          enterprise: owner._id,
-        };
-        const logisticsUser = await this.createLogisticsUser(
-          logisticsUserObject
-        );
-        if (!logisticsUser) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-
-        const walletInstance = new WalletService();
-        await walletInstance.createWallet(enterprise._id);
-
-        resolve(enterprise);
-      } catch (error) {
-        error.service = "Create branch service error";
-        return reject(error);
+      if (typeof files.logo === "undefined") {
+        reject({ code: 404, msg: MSG_TYPES.ENTERPRISE_LOGO });
+        return;
       }
+
+      // check if enterprise exists
+      const existingEnterprise = await Enterprise.findOne({
+        name: body.name,
+        type: body.type,
+        email: body.email,
+        phoneNumber: body.phoneNumber,
+      });
+
+      if (existingEnterprise) {
+        reject({
+          code: 400,
+          msg: "An Enterprise exists with same name email or phone number",
+        });
+        return;
+      }
+
+      this.createExaltUser({
+        name: body.name,
+        email: body.email,
+        countryCode: body.countryCode,
+        phoneNumber: body.phoneNumber,
+      }).then(async user => {
+        try {
+          // start our transaction
+          session.startTransaction();
+
+          body.type = "branch";
+          body.enterprise = enterprise._id;
+          body.HQ = enterprise._id;
+          body.user = user._id;
+          body.users = [user._id];
+
+          // create enterprise document
+          const newEnterprise = new Enterprise(body);
+          await newEnterprise.save({ session });
+
+          // create user in logistics service
+          const courierUser = new User({
+            ...user,
+            role: "branch",
+            group: "enterprise",
+            enterprise: newEnterprise._id,
+          });
+          await courierUser.save({ session });
+
+          const walletInstance = new WalletService();
+          await walletInstance.createWallet(newEnterprise._id, session);
+
+          await Enterprise.updateMany(
+            { _id: enterprise._id },
+            {
+              $addToSet: {
+                branchIDS: newEnterprise._id,
+                branchIDSWithHQ: newEnterprise._id,
+                usersAll: user._id,
+              },
+            },
+            { session }
+          );
+
+          await session.commitTransaction();
+          session.endSession();
+
+          // create enterprise account
+          if (files && files.logo.data != null) {
+            const logo = await UploadFileFromBinary(
+              files.logo.data,
+              files.logo.name
+            );
+            body.logo = logo.Key;
+          }
+
+          resolve({ newEnterprise });
+        } catch (error) {
+          await session.abortTransaction();
+          const userInstance = new UserService();
+          await userInstance.deleteUser(user._id);
+          return reject(error);
+        }
+      }).catch(error => {
+        return reject(error);
+      });
     });
   }
 
@@ -193,73 +209,53 @@ class EnterpriseService {
    * Create maintainer  by organization HQ or branch
    * @param {Object} body
    */
-  createMaintainer(body, parentEnterprise) {
+  createMaintainer(body, enterprise) {
     return new Promise(async (resolve, reject) => {
-      try {
-        // check if enterprise exists
-        const existingEnterprise = await Enterprise.findOne({
-          name: body.name,
-          type: body.type,
-          email: body.email,
-          phoneNumber: body.phoneNumber,
-        });
-        if (existingEnterprise) {
-          reject({
-            code: 400,
-            msg: "An Enterprise exists with same name email or phone number",
+      const session = await mongoose.startSession();
+      
+      this.createExaltUser({
+        name: body.name,
+        email: body.email,
+        countryCode: body.countryCode,
+        phoneNumber: body.phoneNumber,
+      })
+      .then(async (user) => {
+        try {
+          // start our transaction
+          session.startTransaction();
+
+          // create user in logistics service
+          const courierUser = new User({
+            ...user,
+            role: "maintainer",
+            group: "enterprise",
+            enterprise: enterprise._id,
           });
-          return;
-        }
-        // Create user account in account service
-        const userObject = {
-          name: body.name,
-          email: body.email,
-          type: "Logistics",
-          group: "enterprise",
-          countryCode: body.countryCode,
-          phoneNumber: body.phoneNumber,
-          platform: "web",
-        };
-        const user = await this.createExaltUser(userObject);
-        if (!user) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
+          await courierUser.save({ session });
 
-        body.enterprise = parentEnterprise._id;
-        if (parentEnterprise.type === "owner") {
-          body.HQ = parentEnterprise._id;
-        }
-        body.user = user._id;
-        const enterprise = await Enterprise.create(body);
-        if (!enterprise) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-        await this.updateEnterprise(
-          { _id: parentEnterprise._id },
-          { maintainers: [...parentEnterprise.maintainers, enterprise._id] }
-        );
+          await Enterprise.updateMany(
+            { _id: enterprise._id },
+            {
+              $addToSet: {
+                usersAll: user._id,
+                users: user._id,
+                maintainers: user._id,
+              },
+            },
+            { session }
+          );
 
-        // Create user account in logistics service
-        const logisticsUserObject = {
-          ...user,
-          role: "maintainer",
-          group: "enterprise",
-          enterprise: parentEnterprise._id,
-        };
-        const logisticsUser = await this.createLogisticsUser(
-          logisticsUserObject
-        );
-        if (!logisticsUser) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
+          await session.commitTransaction();
+          session.endSession();
+
+          resolve({ user });
+        } catch (error) {
+          return reject(error);
         }
-        resolve(enterprise);
-      } catch (error) {
-        error.service = "Create maintainer service error";
+      })
+      .catch((error) => {
         return reject(error);
-      }
+      });
     });
   }
 
@@ -282,7 +278,7 @@ class EnterpriseService {
         if (response.status == 200) {
           resolve(response.data.data);
         }
-        
+
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
         return;
       } catch (error) {

@@ -4,7 +4,6 @@ function validateEnterprise(body) {
   const schema = Joi.object({
     name: Joi.string().required(),
     email: Joi.string().email().max(50).required(),
-    type: Joi.string().valid("owner", "branch", "maintainer").required(),
     phoneNumber: Joi.string().max(10).required(),
     countryCode: Joi.string().required(),
     address: Joi.string().required(),
@@ -44,7 +43,6 @@ function validateMaintainer(body) {
     phoneNumber: Joi.string().required(),
     countryCode: Joi.string().required(),
     address: Joi.string().required(),
-    type: Joi.string().valid("owner", "branch", "maintainer").required()
   });
 
   return schema.validate(body);

@@ -200,7 +200,7 @@ class UserService {
           .populate("rider", "name email phoneNumber countryCode img")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle pickupType instantPricing"
           )
           .populate("transaction")
           .populate("vehicle")
@@ -243,7 +243,7 @@ class UserService {
         })
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle pickupType instantPricing"
           )
           .populate("rider", "name email phoneNumber countryCode img")
           .populate("transaction")

@@ -311,13 +311,13 @@ class AuthSerivice {
         }
 
         if (account.role === "maintainer") {
-          if (account.enterprise !== user.enterprise) {
+          if (String(account.enterprise) !== String(user.enterprise)) {
             return reject({
               code: 400,
               msg: "You do not have permission to disable this account",
             });
           }
-          
+
           const response = await axios.patch(
             `${config.get("api.base")}/auth/toggle-status`,
             body,

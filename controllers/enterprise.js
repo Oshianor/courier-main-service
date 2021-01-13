@@ -120,20 +120,24 @@ exports.getEnterprise = async (req, res, next) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allBranches = async (req, res) => {
+exports.allBranches = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
-    const { enterpriseBranches, totalBranches } = await enterpriseInstance.getAllBranches(
-      req.enterprise._id,
+    const pagination = {
+      page,
       skip,
-      pageSize
-    );
+      pageSize,
+    };
+    const {
+      total,
+      branches,
+    } = await enterpriseInstance.getAllBranches(req.user, pagination);
     const meta = {
-      totalBranches,
+      total,
       pagination: { pageSize, page },
     };
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseBranches, meta);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, branches, meta);
   } catch (error) {
     next(error);
   }

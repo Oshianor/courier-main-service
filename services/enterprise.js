@@ -374,7 +374,7 @@ class EnterpriseService {
    * Get all Enterprise Maintainers
    * @param {Object} user
    */
-  getAllMaintainers(user) {
+  getAllMaintainers(user, pagination) {
     return new Promise(async (resolve, reject) => {
       try {
         const enterprise = await Enterprise.findOne({
@@ -385,10 +385,13 @@ class EnterpriseService {
           return reject({ code: 404, msg: "No enterprise account was found." });
         }
 
+        const {skip, page, pageSize} = pagination;
+        const enterpriseMaintainersToRetrieve = enterprise.maintainers.slice(skip, page * pageSize)
+
         const maintainers = await axios.post(
           `${config.get("api.base")}/user/maintainers`,
           {
-            maintainers: enterprise.maintainers,
+            maintainers: enterpriseMaintainersToRetrieve,
           },
           {
             headers: {
@@ -397,7 +400,7 @@ class EnterpriseService {
           }
         );
 
-        resolve(maintainers.data.data);
+        resolve({total: enterprise.maintainers.length, maintainers: maintainers.data.data});
       } catch (error) {
         if (error.response) {
           return reject({

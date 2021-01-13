@@ -45,8 +45,7 @@ const orderSchema = mongoose.Schema(
         "enrouteToDelivery", // on the road to delivery.
         "arrivedAtDelivery", // await customer confirmation on delivery
         "delivered", // customer confirmed deluvery
-        "cancelled",
-        "declined" // company declined an order
+        "cancelled" // company declined an order
       ],
       default: "pending",
     },

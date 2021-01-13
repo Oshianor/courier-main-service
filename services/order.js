@@ -483,7 +483,7 @@ class OrderService {
    */
   getOrderHistory(orderId) {
     return new Promise(async (resolve, reject) => {
-      const logs = await TripLog.find({ order: orderId }).sort({ createdAt: 1 });
+      const logs = await TripLog.find({ order: orderId }).sort({ createdAt: 1 }).select({ metaData: 0 });
       resolve(logs);
     })
   }

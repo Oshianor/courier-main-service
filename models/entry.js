@@ -51,7 +51,7 @@ const entrySchema = mongoose.Schema(
         "companyAccepted", // when a company accepts the order
         "driverAccepted", // when a driver accepts the order
         "enrouteToPickup", // when atleast order is in pickup
-        "arrivedAtPickup",
+        "arrivedAtPickup", // 
         "pickedup", // when he item is picked up
         "enrouteToDelivery", // when atleast order is  delivery
         "arrivedAtDelivery", // when the rider gets to the delivery location

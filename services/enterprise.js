@@ -39,6 +39,7 @@ class EnterpriseService {
           const logo = await UploadFileFromBinary(files.logo.data, files.logo.name);
           body.logo = logo.Key;
         }
+        
         body.status = "active";
         body.user = user._id;
 
@@ -226,7 +227,7 @@ class EnterpriseService {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
           return
         }
-        resolve(user)
+        resolve(user);
       } catch (error) {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });

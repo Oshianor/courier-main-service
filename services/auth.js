@@ -35,7 +35,7 @@ class AuthSerivice {
             resolve({ user, token });
           }
         } else {
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
         }
       } catch (error) {
         reject({
@@ -65,8 +65,9 @@ class AuthSerivice {
         }
         const forgotPassOTP = GenerateOTP(4);
         const currentDate = new Date();
-        const forgotPassOTPExpiredDate = moment(currentDate).add(4, 'm').toDate();
-
+        const forgotPassOTPExpiredDate = moment(currentDate)
+          .add(4, "m")
+          .toDate();
 
         const updateRider = await Rider.updateOne(
           { email: email },
@@ -74,8 +75,8 @@ class AuthSerivice {
             $set: {
               rememberToken: {
                 token: forgotPassOTP,
-                expiredDate: forgotPassOTPExpiredDate
-              }
+                expiredDate: forgotPassOTPExpiredDate,
+              },
             },
           }
         );
@@ -93,10 +94,10 @@ class AuthSerivice {
   }
 
   /**
- * Validate forgot password OTP (FORGOT PASSWORD MODULE)
- * @param {String} email
- * @param {String} otp
- */
+   * Validate forgot password OTP (FORGOT PASSWORD MODULE)
+   * @param {String} email
+   * @param {String} otp
+   */
   forgotPassOTPValidate(email, otp) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -110,20 +111,20 @@ class AuthSerivice {
           return;
         }
         if (moment(rider.rememberToken.expiredDate).isSameOrAfter(moment())) {
-          reject({ code: 400, msg: 'OTP Expired Try Again' });
+          reject({ code: 400, msg: "OTP Expired Try Again" });
           return;
         }
         const updateRider = await Rider.updateOne(
           { email: email },
           {
             $set: {
-              rememberToken: null
+              rememberToken: null,
             },
           }
         );
         resolve(updateRider);
       } catch (error) {
-        console.log(error)
+        console.log(error);
         reject({ code: error.code, msg: error.msg });
         return;
       }
@@ -181,9 +182,9 @@ class AuthSerivice {
 
         const user = await User.findById(response.data.data._id);
         if (!user) {
-          return reject({ code: 400, msg: "No User Account found" })
+          return reject({ code: 400, msg: "No User Account found" });
         }
-        
+
         if (user.role !== "maintainer") {
           await enterpriseInstance.updateEnterprise(
             { _id: user.enterprise },
@@ -193,12 +194,15 @@ class AuthSerivice {
             }
           );
         }
-        
+
         resolve(response.data);
       } catch (error) {
         console.log("error", error);
         if (error.response) {
-          return reject({ code: error.response.status, msg: error.response.data.msg });
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
         }
         return reject(error);
       }
@@ -269,7 +273,10 @@ class AuthSerivice {
         resolve({ token, exaltUser, localUser });
       } catch (error) {
         if (error.response) {
-          return reject({ code: error.response.status, msg: error.response.data.msg });
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
         }
         return reject(error);
       }
@@ -278,37 +285,81 @@ class AuthSerivice {
 
   /**
    * Disable Branch/Maintainer
-   * @param {Object} body
+   * @param {Object} body req body
+   * @param {Object} user auth user data
+   * @param {Object} enterprise
    */
-  updateEnterpriseAccountStatus(body, enterprise) {
+  updateEnterpriseAccountStatus(body, user, enterprise) {
     return new Promise(async (resolve, reject) => {
       try {
-        const account = await User.findOne({ _id: body.account, enterprise: enterprise._id })
+        const account = await User.findOne({
+          _id: body.account,
+        });
 
-        if (!account || account.role === "owner") {
-          return reject({ code: 400, msg: "You do not have permission to disable this account" })
-        }
-        if (account.role === "branch") {
-          return reject({ code: 400, msg: "You do not have permission to disable this account" })
+        if (!account) {
+          return reject({
+            code: 400,
+            msg: "You do not have permission to disable this account",
+          });
         }
 
-        const response = await axios.patch(
-          `${config.get("api.base")}/auth/toggle-status`,
-          body,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
+        if (user.role !== "owner" && user.role !== "branch") {
+          return reject({
+            code: 400,
+            msg: "You do not have permission to disable this account",
+          });
+        }
+
+        if (account.role === "maintainer") {
+          if (account.enterprise !== user.enterprise) {
+            return reject({
+              code: 400,
+              msg: "You do not have permission to disable this account",
+            });
           }
-        );
+          
+          const response = await axios.patch(
+            `${config.get("api.base")}/auth/toggle-status`,
+            body,
+            {
+              headers: {
+                "api-key": config.get("api.key"),
+              },
+            }
+          );
+          resolve(response.data.data);
+        }
 
-        resolve(response.data.data);
-        return
+        // to disable branch, check if user has role of owner
+        if (user.role === "owner") {
+          if (account.role === "branch") {
+            const enterprise = await Enterprise.findOne({
+              _id: account.enterprise,
+            });
+            body.maintainers = enterprise.maintainers;
+            const response = await axios.patch(
+              `${config.get("api.base")}/auth/toggle-status`,
+              body,
+              {
+                headers: {
+                  "api-key": config.get("api.key"),
+                },
+              }
+            );
+            resolve(response.data.data);
+          } 
+        }
+
+        
+
       } catch (error) {
         if (error.response) {
-          return reject({ code: error.response.status, msg: error.response.data.msg });
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
         }
-        error.service = "Uodate enterprise status service"
+        error.service = "Uodate enterprise status service";
         return reject(error);
       }
     });

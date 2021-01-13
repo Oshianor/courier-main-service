@@ -31,6 +31,12 @@ router.get("/branches", [UserAuth, EnterpriseAuth(E_ROLES.OWNER)], controller.en
 // get enterprise maintainers
 router.get("/maintainers", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.allMaintainers);
 
+// get enterprise shippings (entries)
+router.get("/shipping", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.allEntries);
+
+// get enterprise transactions
+router.get("/transactions", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.allTransactions);
+
 // Add card by enterprise owner and branch
 router.post(
   "/card/add",

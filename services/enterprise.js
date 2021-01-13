@@ -1,12 +1,12 @@
 const config = require("config");
 const mongoose = require("mongoose");
 const axios = require("axios");
-const Enterprise = require('../models/enterprise');
-const { MSG_TYPES } = require('../constant/types');
+const Enterprise = require("../models/enterprise");
+const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary } = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
-const UserService = require("./user")
+const UserService = require("./user");
 
 class EnterpriseService {
   /**
@@ -20,6 +20,15 @@ class EnterpriseService {
       if (typeof files.logo === "undefined") {
         reject({ code: 404, msg: MSG_TYPES.ENTERPRISE_LOGO });
         return;
+      }
+
+      // create enterprise account
+      if (files.logo.data != null) {
+        const logo = await UploadFileFromBinary(
+          files.logo.data,
+          files.logo.name
+        );
+        body.logo = logo.Key;
       }
 
       // check if enterprise exists
@@ -50,7 +59,6 @@ class EnterpriseService {
             // start our transaction
             session.startTransaction();
 
-
             body.status = "inactive";
             body.type = "owner";
             body.verified = true;
@@ -78,18 +86,11 @@ class EnterpriseService {
             await session.commitTransaction();
             session.endSession();
 
-            // create enterprise account
-            if (files.logo.data != null) {
-              const logo = await UploadFileFromBinary(
-                files.logo.data,
-                files.logo.name
-              );
-              body.logo = logo.Key;
-            }
-
             resolve(enterprise);
           } catch (error) {
             await session.abortTransaction();
+            const userInstance = new UserService();
+            await userInstance.deleteUser(user._id);
             if (error.response) {
               return reject({
                 code: error.response.status,
@@ -141,67 +142,69 @@ class EnterpriseService {
         email: body.email,
         countryCode: body.countryCode,
         phoneNumber: body.phoneNumber,
-      }).then(async user => {
-        try {
-          // start our transaction
-          session.startTransaction();
+      })
+        .then(async (user) => {
+          try {
+            // start our transaction
+            session.startTransaction();
 
-          body.type = "branch";
-          body.enterprise = enterprise._id;
-          body.HQ = enterprise._id;
-          body.user = user._id;
-          body.users = [user._id];
+            body.type = "branch";
+            body.enterprise = enterprise._id;
+            body.HQ = enterprise._id;
+            body.user = user._id;
+            body.users = [user._id];
 
-          // create enterprise document
-          const newEnterprise = new Enterprise(body);
-          await newEnterprise.save({ session });
+            // create enterprise document
+            const newEnterprise = new Enterprise(body);
+            await newEnterprise.save({ session });
 
-          // create user in logistics service
-          const courierUser = new User({
-            ...user,
-            role: "branch",
-            group: "enterprise",
-            enterprise: newEnterprise._id,
-          });
-          await courierUser.save({ session });
+            // create user in logistics service
+            const courierUser = new User({
+              ...user,
+              role: "branch",
+              group: "enterprise",
+              enterprise: newEnterprise._id,
+            });
+            await courierUser.save({ session });
 
-          const walletInstance = new WalletService();
-          await walletInstance.createWallet(newEnterprise._id, session);
+            const walletInstance = new WalletService();
+            await walletInstance.createWallet(newEnterprise._id, session);
 
-          await Enterprise.updateMany(
-            { _id: enterprise._id },
-            {
-              $addToSet: {
-                branchIDS: newEnterprise._id,
-                branchIDSWithHQ: newEnterprise._id,
-                usersAll: user._id,
+            await Enterprise.updateMany(
+              { _id: enterprise._id },
+              {
+                $addToSet: {
+                  branchIDS: newEnterprise._id,
+                  branchIDSWithHQ: newEnterprise._id,
+                  usersAll: user._id,
+                },
               },
-            },
-            { session }
-          );
-
-          await session.commitTransaction();
-          session.endSession();
-
-          // create enterprise account
-          if (files && files.logo.data != null) {
-            const logo = await UploadFileFromBinary(
-              files.logo.data,
-              files.logo.name
+              { session }
             );
-            body.logo = logo.Key;
-          }
 
-          resolve({ newEnterprise });
-        } catch (error) {
-          await session.abortTransaction();
-          const userInstance = new UserService();
-          await userInstance.deleteUser(user._id);
+            await session.commitTransaction();
+            session.endSession();
+
+            // create enterprise account
+            if (files && files.logo.data != null) {
+              const logo = await UploadFileFromBinary(
+                files.logo.data,
+                files.logo.name
+              );
+              body.logo = logo.Key;
+            }
+
+            resolve({ newEnterprise });
+          } catch (error) {
+            await session.abortTransaction();
+            const userInstance = new UserService();
+            await userInstance.deleteUser(user._id);
+            return reject(error);
+          }
+        })
+        .catch((error) => {
           return reject(error);
-        }
-      }).catch(error => {
-        return reject(error);
-      });
+        });
     });
   }
 
@@ -212,50 +215,52 @@ class EnterpriseService {
   createMaintainer(body, enterprise) {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
-      
+
       this.createExaltUser({
         name: body.name,
         email: body.email,
         countryCode: body.countryCode,
         phoneNumber: body.phoneNumber,
       })
-      .then(async (user) => {
-        try {
-          // start our transaction
-          session.startTransaction();
+        .then(async (user) => {
+          try {
+            // start our transaction
+            session.startTransaction();
 
-          // create user in logistics service
-          const courierUser = new User({
-            ...user,
-            role: "maintainer",
-            group: "enterprise",
-            enterprise: enterprise._id,
-          });
-          await courierUser.save({ session });
+            // create user in logistics service
+            const courierUser = new User({
+              ...user,
+              role: "maintainer",
+              group: "enterprise",
+              enterprise: enterprise._id,
+            });
+            await courierUser.save({ session });
 
-          await Enterprise.updateMany(
-            { _id: enterprise._id },
-            {
-              $addToSet: {
-                usersAll: user._id,
-                users: user._id,
-                maintainers: user._id,
+            await Enterprise.updateMany(
+              { _id: enterprise._id },
+              {
+                $addToSet: {
+                  usersAll: user._id,
+                  users: user._id,
+                  maintainers: user._id,
+                },
               },
-            },
-            { session }
-          );
+              { session }
+            );
 
-          await session.commitTransaction();
-          session.endSession();
+            await session.commitTransaction();
+            session.endSession();
 
-          resolve({ user });
-        } catch (error) {
+            resolve({ user });
+          } catch (error) {
+            const userInstance = new UserService();
+            await userInstance.deleteUser(user._id);
+            return reject(error);
+          }
+        })
+        .catch((error) => {
           return reject(error);
-        }
-      })
-      .catch((error) => {
-        return reject(error);
-      });
+        });
     });
   }
 
@@ -373,11 +378,11 @@ class EnterpriseService {
     return new Promise(async (resolve, reject) => {
       try {
         const enterprise = await Enterprise.findOne({
-          _id: user.enterprise
+          _id: user.enterprise,
         });
 
         if (!enterprise) {
-          return reject({ code: 404, msg: "No enterprise account was found." })
+          return reject({ code: 404, msg: "No enterprise account was found." });
         }
 
         const maintainers = await axios.post(
@@ -391,7 +396,7 @@ class EnterpriseService {
             },
           }
         );
-        
+
         resolve(maintainers.data.data);
       } catch (error) {
         if (error.response) {
@@ -463,5 +468,4 @@ class EnterpriseService {
   }
 }
 
-
-module.exports = EnterpriseService
+module.exports = EnterpriseService;

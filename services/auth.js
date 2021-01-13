@@ -284,26 +284,26 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const account = await User.findOne({ _id: body.account, enterprise: enterprise._id })
-        // if(account.group !== "enterprise"){
-        //   return reject({ code: 400, msg: "Account selected is not an Enterprise account"})
-        // }
+
         if (!account || account.role === "owner") {
           return reject({ code: 400, msg: "You do not have permission to disable this account" })
         }
-        if (account.role === "branch" && enterprise.type !== "owner") {
+        if (account.role === "branch") {
           return reject({ code: 400, msg: "You do not have permission to disable this account" })
         }
+
         const response = await axios.patch(
           `${config.get("api.base")}/auth/toggle-status`,
-          body
+          body,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
         );
-        if (response.status == 200) {
-          await enterpriseInstance.updateEnterprise({ user: body.account }, { status: body.status })
-          resolve(response.data.data);
-          return
-        } else {
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
-        }
+
+        resolve(response.data.data);
+        return
       } catch (error) {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });

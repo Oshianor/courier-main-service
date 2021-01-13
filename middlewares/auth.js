@@ -147,8 +147,8 @@ const EnterpriseAuth = (roles = []) => {
     if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
     req.user = user;
     req.user.id = req.user._id;
-    req.user.enterprise = req.user.enterprise._id;
     req.enterprise = req.user.enterprise;
+    req.user.enterprise = req.user.enterprise._id;
 
     if (user.role === E_ROLES.OWNER) {
       next();

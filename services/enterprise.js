@@ -7,6 +7,8 @@ const { UploadFileFromBinary } = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
 const UserService = require("./user");
+const Entry = require("../models/entry");
+const Transaction = require("../models/transaction");
 
 class EnterpriseService {
   /**
@@ -502,6 +504,61 @@ class EnterpriseService {
 
         reject({ code: error.response.status, msg: error.response.data.msg });
         return;
+      }
+    });
+  }
+
+  /**
+   * Get all Enterprise Entries
+   * @param {MongoDB ObjectId} enterpriseId
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllEntries(enterprise, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const queryFilter = {
+          enterprise: enterprise._id,
+          user: { $in: [ ...enterprise.users ]}
+        }
+
+        const entries = await Entry.find(queryFilter)
+          .skip(skip)
+          .limit(pageSize);
+
+        const total = await Entry.countDocuments(queryFilter);
+
+        resolve({ entries, total });
+      } catch (error) {
+        error.service = "Get all entries service error";
+        return reject(error);
+      }
+    });
+  }
+
+  /**
+   * Get all Enterprise Transactions
+   * @param {MongoDB ObjectId} enterpriseId
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllTransactions(enterprise, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const queryFilter = {
+          enterprise: enterprise._id,
+        }
+
+        const transactions = await Transaction.find(queryFilter)
+          .skip(skip)
+          .limit(pageSize);
+
+        const total = await Transaction.countDocuments(queryFilter);
+
+        resolve({ transactions, total });
+      } catch (error) {
+        error.service = "Get all transactions service error";
+        return reject(error);
       }
     });
   }

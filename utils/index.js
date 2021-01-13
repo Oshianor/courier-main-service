@@ -126,6 +126,25 @@ const paginate = (req) => {
   return { page, pageSize, skip };
 };
 
+const isObject = (object) => {
+  return typeof object === "object" && object !== null;
+}
+
+const convertToMonthlyDataArray = (dataArray, dataField) => {
+  // 1 <= i <= 12 because there are 12 months in a year
+  const monthlyData = [];
+  for(let i=1; i <= 12; i++){
+    let currentMonthData = dataArray.find((data) => data.month === i);
+    if(!currentMonthData){
+      monthlyData.push({month: i, [dataField]: 0});
+    } else {
+      monthlyData.push(currentMonthData);
+    }
+  }
+
+  return monthlyData.sort().map((data) => data[dataField]);
+}
+
 
 module.exports = {
   GenerateToken,
@@ -136,4 +155,6 @@ module.exports = {
   UploadFileFromBase64,
   AsyncForEach,
   paginate,
+  isObject,
+  convertToMonthlyDataArray
 };

@@ -16,6 +16,7 @@ const MSG_TYPES = Object.freeze({
   DISABLED: "Account is disabled!",
   NOT_FOUND: "Not Found",
   UPLOAD_IMAGE: "Image upload is required.",
+  ENTERPRISE_LOGO: "Enterprise Logo is required.",
   ACCESS_DENIED: "Access denied.",
   SESSION_EXPIRED: "Access denied. Your session has expired",
   DEACTIVATED: "Your account isn't activate",

@@ -5,6 +5,8 @@ function validateFundWallet(data) {
     card: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
+    amount: Joi.number()
+      .required(),
   });
 
   return Schema.validate(data);

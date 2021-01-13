@@ -362,8 +362,6 @@ exports.resetPassword = async (req, res) => {
  */
 exports.setPassword = async (req, res, next) => {
   try {
-    const { error } = validateForgotPassword(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const authInstance = new AuthService();
     await authInstance.setPassword(req.body)

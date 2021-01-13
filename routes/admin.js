@@ -54,8 +54,9 @@ router.get("/setting", Auth, hasRole([ROLES.ADMIN]), controller.setting.getAdmin
 // patch settings
 router.patch("/setting", Auth, hasRole([ROLES.ADMIN]), controller.setting.updateAdmin);
 
-//user routes
 
+
+//user routes
 router.get("/user/all", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.allUsers);
 router.get("/user/:userId", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleUser);
 
@@ -75,6 +76,12 @@ router.get("/info/revenue", Auth, hasRole([ROLES.ADMIN]), controller.info.revenu
 
 // Enterprise Updates
 router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);
+
+
+
+// industry Category
+router.post("/industry-category", [Auth, hasRole([ROLES.ADMIN])], controller.industryCategory.create);
+router.get("/industry-category", controller.industryCategory.all);
 
 
 module.exports = router;

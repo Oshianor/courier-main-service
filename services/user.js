@@ -48,6 +48,33 @@ class UserService {
   }
 
   /**
+   * Delete user account
+   * @param {body} body
+   */
+  deleteUser(userId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        await axios.delete(
+          `${config.get("api.base")}/user/${userId}`,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+        
+        resolve();
+      } catch (error) {
+        reject({
+          code: error.response.status,
+          msg: error.response.data.msg,
+        });
+        return;
+      }
+    });
+  }
+
+  /**
    * Get a user by it's token
    * @param {String} token
    */

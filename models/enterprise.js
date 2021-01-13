@@ -21,10 +21,16 @@ const enterPriseSchema = new mongoose.Schema(
       required: true,
       ref: "User",
     },
+    users: [{
+      type: ObjectId,
+      index: true,
+      required: true,
+      ref: "User",
+    }],
     type: {
       type: String,
       required: true,
-      enum: ["owner", "branch", "maintainer"],
+      enum: ["owner", "branch"],
     },
     email: {
       type: String,
@@ -48,12 +54,8 @@ const enterPriseSchema = new mongoose.Schema(
     primaryColors: [String],
     secondaryColors: [String],
     motto: { type: String, maxlength: 225, default: "" },
-    industry: {
-      type: String,
-      enum: ["banking", "agric"],
-      default: "banking",
-    },
-    maintainers: [{ type: ObjectId, ref: "Enterprise", index: true }],
+    industry: String,
+    maintainers: [{ type: ObjectId, ref: "User", index: true }],
     branchIDS: [{ type: ObjectId, ref: "Enterprise", index: true }],
     branchIDSWithHQ: [{ type: ObjectId, ref: "Enterprise", index: true }],
     HQ: {

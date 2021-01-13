@@ -7,7 +7,8 @@ const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 const sgMail = require("@sendgrid/mail");
 const RandExp = require("randexp");
-const events = require("events");
+
+
 
 const GenerateToken = (num) => {
   var text = "";
@@ -20,16 +21,16 @@ const GenerateToken = (num) => {
   return text;
 };
 
+
 const AsyncForEach = async (array, callback) => {
   for (let index = 0; index < array.length; index++) {
     await callback(array[index], index, array);
   }
 };
 
+
 const GenerateOTP = (num) => {
-
   const OTPCode = new RandExp(`[0-9]{${num}}`).gen();
-
   return OTPCode;
 };
 

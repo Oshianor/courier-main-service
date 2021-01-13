@@ -15,7 +15,7 @@ exports.createOrganization = async (req, res, next) => {
     const { error } = validateEnterprise(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const enterprise = await enterpriseInstance.createOrganization(req.body, req.files);
+    const enterprise = await enterpriseInstance.createOrganization(req.body, req.files, req.user);
     return JsonResponse(res, 200, MSG_TYPES.CREATED, enterprise);
 
   } catch (error) {
@@ -131,8 +131,7 @@ exports.allBranches = async (req, res) => {
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseBranches, meta);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -156,7 +155,6 @@ exports.allMaintainers = async (req, res) => {
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseMaintainers, meta);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };

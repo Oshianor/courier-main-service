@@ -139,30 +139,29 @@ const UserAuth = async (req, res, next) => {
   }
 };
 
-const EnterpriseAuth = (roles = []) => {
-  return async (req, res, next) => {
-    if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
-    const user = await User.findById(req.user.id).populate("enterprise");
+// const EnterpriseAuth = (roles = []) => {
+//   return async (req, res, next) => {
+//     if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
+//     const enterprise = await Enterprise.findOne({
+//       email: req.user.email
+//     });
 
-    if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
-    req.user = user;
-    req.user.id = req.user._id;
-    req.user.enterprise = req.user.enterprise._id;
-    req.enterprise = req.user.enterprise;
+//     if (!enterprise) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
+//     req.user.enterprise = enterprise;
 
-    if (user.role === E_ROLES.OWNER) {
-      next();
-    } else {
-      if (roles.length < 1) {
-        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-      }
-      if (roles.includes(user.role)) {
-        return next();
-      }
-      return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-    }
-  }
-};
+//     if (enterprise.type === E_ROLES.OWNER) {
+//       next();
+//     } else {
+//       if (roles.length < 1) {
+//         return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+//       }
+//       if (roles.includes(enterprise.type)) {
+//         return next()
+//       }
+//       return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+//     }
+//   }
+// };
 
 const isExaltService = async (req, res, next) => {
   const serviceKey = req.header("api-key");

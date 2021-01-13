@@ -169,19 +169,12 @@ class AuthSerivice {
   setPassword(body) {
     return new Promise(async (resolve, reject) => {
       try {
-        const userObject = {
-          email: body.email,
-          password: body.password
-        }
-        const response = await axios.post(`${config.get("api.base")}/auth/set-password`, userObject);
-        if (response.status == 200) {
-          await enterpriseInstance.updateEnterprise({ email: body.email }, {
-            verified: true,
-            status: 'active'
-          })
-          resolve(response.data);
-        }
-        return reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        const response = await axios.post(`${config.get("api.base")}/auth/set-password`, body, );
+        await enterpriseInstance.updateEnterprise({ email: body.email }, {
+          verified: true,
+          status: 'active'
+        });
+        resolve(response.data);
       } catch (error) {
         if (error.response) {
           return reject({ code: error.response.status, msg: error.response.data.msg });
@@ -307,7 +300,7 @@ class AuthSerivice {
         return reject(error);
       }
     });
-  } ß
+  }
 }
 
 module.exports = AuthSerivice;

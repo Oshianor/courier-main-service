@@ -10,7 +10,7 @@ const { MSG_TYPES } = require("../constant/types");
 class WalletService {
   /**
    * Create a new wallet for enterprise
-   * @param {string} enterprise // Enterprise Id for the company
+   * @param {string} enterprise Enterprise Id for the company
    */
   createWallet(enterprise) {
     return new Promise(async (resolve, reject) => {
@@ -18,7 +18,21 @@ class WalletService {
         enterprise,
       });
 
+      await newWallet.save();
+
       resolve(newWallet);
+    });
+  }
+
+  /**
+   * get wallet
+   * @param (mongoDb) enterprise Enterprise Id for the company
+   */
+  getWallet(enterprise) {
+    return new Promise(async (resolve, reject) => {
+      const wallet = await Wallet.findOne({ enterprise });
+
+      resolve(wallet);
     });
   }
 
@@ -29,6 +43,15 @@ class WalletService {
   fundWallet(body, user, token) {
     return new Promise(async (resolve, reject) => {
       try {
+        const wallet = await Wallet.findOne({ enterprise: user.enterprise });
+
+        if (!wallet) {
+          return reject({
+            code: 400,
+            msg: "No wallet was found on your account",
+          });
+        }
+
         const userInstance = new UserService();
         const card = await userInstance.getCard(token, body.card);
 
@@ -38,7 +61,7 @@ class WalletService {
           reference: ref,
           authorization_code: card.data.token,
           email: user.email,
-          amount: body.amount,
+          amount: parseFloat(body.amount) * 100,
         });
 
         if (!trans.status) {
@@ -56,14 +79,10 @@ class WalletService {
           return;
         }
 
-        const wallet = await Wallet.findOne({ enterprise: user.enterprise });
-
-        if (!wallet) return reject({ code: 400, msg: "No wallet was found on your account" });
-
         await wallet.updateOne({
           $inc: { balance: body.amount, totalDeposited: body.amount },
         });
-        
+
         // add wallet history
         const newWalletHistory = new WalletHistory({
           enterprise: user.enterprise,
@@ -75,7 +94,7 @@ class WalletService {
 
         resolve({ newWalletHistory, wallet });
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR })
+        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

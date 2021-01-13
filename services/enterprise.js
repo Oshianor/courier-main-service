@@ -366,28 +366,41 @@ class EnterpriseService {
   }
 
   /**
-   * Get all Enterprise Branches
-   * @param {MongoDB ObjectId} enterpriseId
-   * @param {number} skip
-   * @param {number} pageSize
+   * Get all Enterprise Maintainers
+   * @param {Object} user
    */
-  getAllMaintainers(enterpriseId, skip, pageSize) {
+  getAllMaintainers(user) {
     return new Promise(async (resolve, reject) => {
       try {
-        const enterpriseMaintainers = await Enterprise.find({
-          enterprise: enterpriseId,
-          type: "maintainer",
-        })
-          .select("-createdBy -deleted -deletedBy -deletedAt")
-          .skip(skip)
-          .limit(pageSize);
-        const totalMaintainers = await Enterprise.countDocuments({
-          enterprise: enterpriseId,
-          type: "maintainer",
+        const enterprise = await Enterprise.findOne({
+          _id: user.enterprise
         });
-        resolve({ enterpriseMaintainers, totalMaintainers });
+
+        if (!enterprise) {
+          return reject({ code: 404, msg: "No enterprise account was found." })
+        }
+
+        const maintainers = await axios.post(
+          `${config.get("api.base")}/user/maintainers`,
+          {
+            maintainers: enterprise.maintainers,
+          },
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+        
+        resolve(maintainers.data.data);
       } catch (error) {
-        error.service = "Get all maintainers service error";
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+        // error.service = "Get all maintainers service error";
         return reject(error);
       }
     });

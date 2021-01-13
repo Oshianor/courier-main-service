@@ -144,20 +144,11 @@ exports.allBranches = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allMaintainers = async (req, res) => {
+exports.allMaintainers = async (req, res, next) => {
   try {
-    const { page, pageSize, skip } = paginate(req);
+    const maintainers = await enterpriseInstance.getAllMaintainers(req.user);
 
-    const { enterpriseMaintainers, totalMaintainers } = await enterpriseInstance.getAllMaintainers(
-      req.enterprise._id,
-      skip,
-      pageSize
-    );
-    const meta = {
-      totalMaintainers,
-      pagination: { pageSize, page },
-    };
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseMaintainers, meta);
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, maintainers);
   } catch (error) {
     next(error);
   }

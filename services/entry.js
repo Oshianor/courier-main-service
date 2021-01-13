@@ -148,6 +148,7 @@ class EntryService {
 
               // orderId
               body.delivery[elemIndex].orderId = nanoid(8);
+              body.delivery[elemIndex].company = body.company;
               // add the pickup
               // add delivery address in text
               body.delivery[elemIndex].deliveryAddress =

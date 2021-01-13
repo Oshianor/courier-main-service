@@ -44,6 +44,20 @@ exports.localEntry = async (req, res) => {
     const { error } = validateLocalEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    // get owners
+    const company = await Company.findOne({
+      state: req.body.state,
+      ownership: true,
+    }).select({ name: 1, rating: 1, state: 1, country: 1, logo: 1 });
+
+    if (company) {
+      req.body.company = company;
+    } else {
+      req.body.company = null;
+    }
+
+
+
     const entryInstance = new EntryService();
     const countryInstance = new CountryService();
     const settingInstance = new SettingService();
@@ -58,20 +72,23 @@ exports.localEntry = async (req, res) => {
     const vehicle = await VehicleInstance.get(req.body.vehicle);
 
     // check if we have pricing for the location
-    const distancePrice = await DPInstance.get({country: req.body.country, state: req.body.state, vehicle: req.body.vehicle});
+    const distancePrice = await DPInstance.get({
+      country: req.body.country,
+      state: req.body.state,
+      vehicle: req.body.vehicle,
+    });
 
     // get admin settings pricing
     const setting = await settingInstance.get({ source: "admin" });
- 
+
     // get distance calculation
     const distance = await entryInstance.getDistanceMetrix(req.body);
 
-    // check 
+    // check
     if (typeof req.body.img !== "undefined") {
       const images = await entryInstance.uploadArrayOfImages(req.body.img);
       req.body.img = images;
     }
-    
 
     const body = await entryInstance.calculateLocalEntry(
       req.body,
@@ -81,9 +98,9 @@ exports.localEntry = async (req, res) => {
       distancePrice,
       vehicle
     );
-    
+
     // start our mongoDb transaction
-    const newEntry = await entryInstance.createEntry(body)
+    const newEntry = await entryInstance.createEntry(body);
 
     newEntry.metaData = null;
     const entrySub = new EntrySubscription();
@@ -95,6 +112,7 @@ exports.localEntry = async (req, res) => {
     return JsonResponse(res, error.code, error.msg);
   }
 };
+
 
 
 /**
@@ -170,12 +188,55 @@ exports.transaction = async (req, res) => {
     console.log("entry", entry);
 
     // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
-    // const companySub = new CompanySubscription();
-    // await companySub.dispatchToStateRoom(entry);
+    const companySub = new CompanySubscription();
+    await companySub.dispatchToStateRoom(entry);
 
-    // // send socket to admin for update
-    // const entrySub = new EntrySubscription();
-    // await entrySub.updateEntryAdmin(entry._id);
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry._id);
+
+    JsonResponse(res, 201, msg);
+    return;
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code, error.msg);
+  }
+};
+
+
+/**
+ * enterprise confirm payment method and entry
+ * @param {*} req
+ * @param {*} res
+ */
+exports.enterpriseTransaction = async (req, res) => {
+  try {
+    const { error } = validateTransaction(req.body);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message);
+
+    const transactionInstance = new TransactionService();
+    const { entry, msg } = await transactionInstance.createTransaction(req.body, req.user, req.token);
+
+    console.log("entry", entry);
+
+    // const entryInstance = new EntryService();
+    // const { entry, riderIDS } = await entryInstance.riderAsignEntry(
+    //   req.body,
+    //   req.user
+    // );
+
+    // // send entries to all the rider
+    // const riderSub = new RiderSubscription();
+    // await riderSub.sendRidersEntries(riderIDS, entry);
+
+    // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
+    const companySub = new CompanySubscription();
+    await companySub.dispatchToStateRoom(entry);
+
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry._id);
 
     JsonResponse(res, 201, msg);
     return;
@@ -252,50 +313,6 @@ exports.singleEntry = async (req, res) => {
     return;
   }
 };
-
-/**
- * Get all online riders for a company by an entry
- * @param {*} req
- * @param {*} res
- */
-// exports.allOnlineRiderCompanyEntry = async (req, res) => {
-//   try {
-
-//     // find an entry that as been assigned to the company
-//     const entry = await Entry.findOne({
-//       _id: req.params.entry,
-//       status: "companyAccepted",
-//       company: req.user.id
-//     });
-//     if (!entry) return JsonResponse(res, 404, "Entry Not Found!");
-
-//     const company = await Company.findOne({
-//       _id: req.user.id,
-//       status: "active",
-//       verified: true,
-//     });
-//     if (!company) return JsonResponse(res, 404, "Company Not Found!");
-
-//     console.log("entry.vehicle", entry.vehicle);
-//     console.log("company._id", company._id);
-//     const riders = await Rider.find({
-//       company: company._id,
-//       deleted: false,
-//       onlineStatus: true,
-//       status: "active",
-//       verified: true,
-//       vehicle: entry.vehicle,
-//     })
-//       .populate("vehicle")
-//       .select("name email phoneNumber state country vehicle");
-
-
-//     JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, null);
-//   } catch (error) {
-//     console.log(error);
-//     JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-//   }
-// };
 
 /**
  * Company accept Entry

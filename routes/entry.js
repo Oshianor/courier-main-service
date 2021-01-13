@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers");
-const { UserAuth, Auth } = require("../middlewares/auth");
+const { UserAuth, Auth, EnterpriseAuth, E_ROLES } = require("../middlewares/auth");
 
 // Create entry
 router.post("/", UserAuth, controller.entry.localEntry);

@@ -35,7 +35,7 @@ exports.transaction = async (req, res, next) => {
 
     console.log("entry", entry);
 
-    // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
+    
     const companySub = new CompanySubscription();
     await companySub.dispatchToStateRoom(entry);
 
@@ -57,7 +57,7 @@ exports.transaction = async (req, res, next) => {
  * @param {*} req
  * @param {*} res
  */
-exports.enterpriseTransaction = async (req, res) => {
+exports.enterpriseTransaction = async (req, res, next) => {
   try {
     const { error } = validateEnterpriseTransaction(req.body);
     if (error)
@@ -66,19 +66,15 @@ exports.enterpriseTransaction = async (req, res) => {
     const transactionInstance = new TransactionService();
     const { entry, msg } = await transactionInstance.createEnterpriseTransaction(req.body, req.user, req.enterprise);
 
-    // const entryInstance = new EntryService();
-    // const { entry, riderIDS } = await entryInstance.riderAsignEntry(
-    //   req.body,
-    //   req.user
-    // );
+    const entryInstance = new EntryService();
+    const { riderIDS } = await entryInstance.silentlyAsignRiderToEntry(entry);
 
-    // // send entries to all the rider
-    // const riderSub = new RiderSubscription();
-    // await riderSub.sendRidersEntries(riderIDS, entry);
-
-    console.log("entry", entry);
-
-
+    if (riderIDS) {
+      // send entries to all the rider
+      const riderSub = new RiderSubscription();
+      await riderSub.sendRidersEntries(riderIDS, entry);
+    }
+     
     // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
@@ -86,7 +82,7 @@ exports.enterpriseTransaction = async (req, res) => {
     JsonResponse(res, 201, msg);
     return;
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 

@@ -127,7 +127,10 @@ class TransactionService {
           _id: body.entry,
           status: "request",
           user: user.id,
-        });
+        })
+          .populate("orders")
+          .populate("user", "name email phoneNumber countryCode")
+          .select("-metaData");
 
         if (!entry) {
           reject({
@@ -179,7 +182,6 @@ class TransactionService {
 
           msg = "Wallet Payment Successfully Processed";
         } else {
-
           body.enterprise = enterprise._id;
           body.amount = amount;
           body.user = user.id;
@@ -278,10 +280,12 @@ class TransactionService {
    * @param {Object} enterprise
    * @param {Number} amount
    * @param {Object} user
+   * @param {Mongo Session} session mongoDB session
    */
-  chargeWallet(enterprise, amount, user) {
+  chargeWallet(enterprise, amount, user, session) {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
+
       try {
         // start our transaction
         session.startTransaction();
@@ -292,6 +296,14 @@ class TransactionService {
           return reject({
             code: 500,
             msg: "No wallet was found for your account.",
+          });
+        }
+
+        if (parseFloat(wallet.balance) < parseFloat(amount)) {
+          return reject({
+            code: 500,
+            msg:
+              "You don't have enough in your wallet belanace to process this transaction",
           });
         }
 
@@ -318,8 +330,9 @@ class TransactionService {
 
         resolve({ wallet, wallethistory });
       } catch (error) {
+        console.log("error", error);
         await session.abortTransaction();
-        reject({ code: 400, msg: "Wallet transaction couldn't processed."  })
+        reject({ code: 400, msg: "Wallet transaction couldn't processed." });
       }
     });
   }

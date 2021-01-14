@@ -47,3 +47,10 @@ const WalletHistorySchema = mongoose.Schema(
 const WalletHistory = mongoose.model("WalletHistory", WalletHistorySchema);
 
 module.exports = WalletHistory;
+
+
+// origins [ 'Km 19 Lekki - Epe Expy, Lekki Penninsula II, Lekki, Nigeria' ]
+// destinations [
+//   'Oba Ogunji Rd, Ijaiye, Lagos, Nigeria',
+//   'Lekki - Epe Expy, Aja, Lagos, Nigeria'
+// ]

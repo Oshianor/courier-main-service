@@ -98,8 +98,11 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         const pickup = await this.getGooglePlace(body.address);
-        body.pickupLatitude = pickup.results[0].geometry.location.lat;
-        body.pickupLongitude = pickup.results[0].geometry.location.lng;
+        // const devy = await this.getGooglePlace(
+        //   distance.destination_addresses
+        // );
+        body.pickupLatitude = pickup[0].geometry.location.lat;
+        body.pickupLongitude = pickup[0].geometry.location.lng;
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
@@ -122,26 +125,26 @@ class EntryService {
           itemTypePrice = setting.parcelPrice;
         }
 
-        const devy = await this.getGooglePlace(
-          distance.destination_addresses.join(",")
-        );
 
         await AsyncForEach(distance.rows, async (row, rowIndex, rowsArr) => {
           await AsyncForEach(
             row.elements,
             async (element, elemIndex, elemArr) => {
               if (element.status === "OK") {
+                const devy = await this.getGooglePlace(
+                  distance.destination_addresses[elemIndex]
+                );
                 // set the coordinates for each deverly address
                 body.delivery[elemIndex].deliveryLatitude =
-                  devy.results[elemIndex].geometry.location.lat;
+                  devy[0].geometry.location.lat;
                 body.delivery[elemIndex].deliveryLongitude =
-                  devy.results[elemIndex].geometry.location.lng;
+                  devy[0].geometry.location.lng;
 
                 // set the coordinates for pickup address
                 body.delivery[elemIndex].pickupLatitude =
-                  pickup.results[0].geometry.location.lat;
+                  pickup[0].geometry.location.lat;
                 body.delivery[elemIndex].pickupLongitude =
-                  pickup.results[0].geometry.location.lng;
+                  pickup[0].geometry.location.lng;
 
                 const time = parseFloat(element.duration.value / 60);
                 const singleDistance = parseFloat(
@@ -249,8 +252,8 @@ class EntryService {
           destinations.push(data.address);
         });
 
-        console.log("origins", origins);
-        console.log("destinations", destinations);
+        // console.log("origins", origins);
+        // console.log("destinations", destinations);
 
         // get distance and duration from google map distance matrix
         const N = 5000;
@@ -296,15 +299,17 @@ class EntryService {
           },
         });
 
-        console.log("distance", JSON.stringify(distance.data));
+        // console.log("distance", JSON.stringify(distance.data));
         console.log("distance", distance.data);
+        console.log("distance", distance.data.results);
+
 
         if (distance.data.status !== "OK") {
           reject({ code: 400, msg: "Your address couldn't be verified" });
           return;
         }
 
-        resolve(distance.data);
+        resolve(distance.data.results);
       } catch (error) {
         console.log("error distance", error);
         reject({ code: 400, msg: "Your address couldn't be verified" });

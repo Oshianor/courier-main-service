@@ -557,7 +557,8 @@ class EnterpriseService {
         const transactions = await Transaction.find(queryFilter)
           .populate('user')
           .skip(skip)
-          .limit(pageSize);
+          .limit(pageSize)
+          .sort({createdAt: 'desc'})
 
         const total = await Transaction.countDocuments(queryFilter);
 

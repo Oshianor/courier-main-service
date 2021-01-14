@@ -287,7 +287,6 @@ class CompanyService {
         const successfulOrders = await Order.find({company: companyId, status: "delivered"}).countDocuments();
         const totalRiders = await Rider.find({company: companyId}).countDocuments();
 
-        // @TODO - Get the actual revenues by querying
         let totalRevenue = await Transaction.aggregate([
           { $match: {company: ObjectId(companyId),status: "approved",approvedAt: {$ne:null}} },
           { $group: { _id: companyId, "total": {$sum: "$amount"} }},

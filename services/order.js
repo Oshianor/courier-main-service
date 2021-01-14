@@ -47,7 +47,8 @@ class OrderService {
           .select(option)
           .populate(populate)
           .skip(pagination.skip)
-          .limit(pagination.pageSize);
+          .limit(pagination.pageSize)
+          .sort({createdAt: "desc"});
 
         const total = await Order.find(filter).countDocuments();
 

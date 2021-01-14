@@ -3,6 +3,7 @@ const { validateEnterprise, validateMaintainer, validateEnterpriseUpdate } = req
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
+const OrderService = require("../services/order");
 const enterpriseInstance = new EnterpriseService();
 
 /**
@@ -213,6 +214,41 @@ exports.allTransactions = async (req, res, next) => {
       pagination: { pageSize, page },
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get All Enterprise Pending orders
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getPendingOrders = async (req, res, next) => {
+  try {
+    const orderInstance = new OrderService();
+    const { orders } = await orderInstance.getAll({
+      enterprise: req.enterprise._id,
+      status: "pending"
+    }, {}, '', {pageSize: 5});
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
+ * Get Enterprise statistics
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getStatistics = async (req, res, next) => {
+  try {
+    const statistics = await enterpriseInstance.getStatistics(req.enterprise);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
   } catch (error) {
     next(error);
   }

@@ -37,9 +37,9 @@ exports.all = async (req, res, next) => {
 // Get card details by id
 exports.single = async (req, res, next) => {
   try {
-    const { error } = validateCardId(req.query);
+    const { error } = validateCardId(req.params);
     if (error) return JsonResponse(res, 400, error.details[0].message);
-    const card = await cardInstance.get(req.query.cardId);
+    const card = await cardInstance.get(req.params.cardId);
     JsonResponse(res, 200, MSG_TYPES.FETCHED, card);
     return;
   } catch (error) {
@@ -51,9 +51,10 @@ exports.single = async (req, res, next) => {
 // Delete a card by id
 exports.delete = async (req, res, next) => {
   try {
-    const { error } = validateCardId(req.query);
+    const { error } = validateCardId(req.params);
     if (error) return JsonResponse(res, 400, error.details[0].message);
-    const card = await cardInstance.delete(req.query.cardId);
+
+    const card = await cardInstance.delete(req.params.cardId);
     JsonResponse(res, 200, MSG_TYPES.DELETED);
     return;
   } catch (error) {

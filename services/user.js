@@ -86,6 +86,7 @@ class UserService {
         // console.log("response", response);
         resolve(response.data);
       } catch (error) {
+        console.log('User not found', error);
         reject(error.response.data);
       }
     });

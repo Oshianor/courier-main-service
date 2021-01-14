@@ -17,6 +17,7 @@ const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
 const VehicleService = require("../services/vehicle");
+const CompanyService = require("../services/company");
 const EntrySubscription = require("../subscription/entry");
 const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
@@ -115,8 +116,6 @@ exports.localEntry = async (req, res) => {
     return JsonResponse(res, error.code, error.msg);
   }
 };
-
-
 
 /**
  * Calculate pricing for shipment
@@ -275,15 +274,23 @@ exports.companyAcceptEntry = async (req, res) => {
  * @param {*} req 
  * @param {*} res 
  */
-exports.riderAssignToEntry = async (req, res) => {
+exports.riderAssignToEntry = async (req, res, next) => {
   try {
     const { error } = validateSendRiderRequest(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    // find the company
+    const companyInstance = new CompanyService();
+    const company = await companyInstance.get({
+      _id: req.user.id,
+      status: "active",
+      verified: true,
+    });
+
     const entryInstance = new EntryService();
     const { entry, riderIDS } = await entryInstance.riderAsignEntry(
       req.body,
-      req.user
+      company._id
     );
 
     // send entries to all the rider
@@ -293,7 +300,7 @@ exports.riderAssignToEntry = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error)
   }
 };
 

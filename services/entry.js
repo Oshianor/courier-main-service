@@ -25,7 +25,6 @@ const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
 
-
 class EntryService {
   /**
    * Get a single ENtry
@@ -123,82 +122,90 @@ class EntryService {
           itemTypePrice = setting.parcelPrice;
         }
 
-        const devy = await this.getGooglePlace(distance.destination_addresses.join(","));
+        const devy = await this.getGooglePlace(
+          distance.destination_addresses.join(",")
+        );
 
         await AsyncForEach(distance.rows, async (row, rowIndex, rowsArr) => {
-          await AsyncForEach(row.elements, async (element, elemIndex, elemArr) => {
-            if (element.status === "OK") {
-              // set the coordinates for each deverly address
-              body.delivery[elemIndex].deliveryLatitude =
-                devy.results[elemIndex].geometry.location.lat;
-              body.delivery[elemIndex].deliveryLongitude =
-                devy.results[elemIndex].geometry.location.lng;
+          await AsyncForEach(
+            row.elements,
+            async (element, elemIndex, elemArr) => {
+              if (element.status === "OK") {
+                // set the coordinates for each deverly address
+                body.delivery[elemIndex].deliveryLatitude =
+                  devy.results[elemIndex].geometry.location.lat;
+                body.delivery[elemIndex].deliveryLongitude =
+                  devy.results[elemIndex].geometry.location.lng;
 
-              // set the coordinates for pickup address
-              body.delivery[elemIndex].pickupLatitude =
-                pickup.results[0].geometry.location.lat;
-              body.delivery[elemIndex].pickupLongitude =
-                pickup.results[0].geometry.location.lng;
+                // set the coordinates for pickup address
+                body.delivery[elemIndex].pickupLatitude =
+                  pickup.results[0].geometry.location.lat;
+                body.delivery[elemIndex].pickupLongitude =
+                  pickup.results[0].geometry.location.lng;
 
-              const time = parseFloat(element.duration.value / 60);
-              const singleDistance = parseFloat(element.distance.value / 1000);
-              // add user id
-              body.delivery[elemIndex].user = user.id;
-              body.delivery[elemIndex].instantPricing = setting.instantPricing;
-              body.delivery[elemIndex].vehicle = body.vehicle;
+                const time = parseFloat(element.duration.value / 60);
+                const singleDistance = parseFloat(
+                  element.distance.value / 1000
+                );
+                // add user id
+                body.delivery[elemIndex].user = user.id;
+                body.delivery[elemIndex].instantPricing =
+                  setting.instantPricing;
+                body.delivery[elemIndex].vehicle = body.vehicle;
 
-              // orderId
-              body.delivery[elemIndex].orderId = nanoid(8);
-              // set company id on individual orders
-              body.delivery[elemIndex].company = body.company;
-              // set enterprise id on individual enterprise account
-              body.delivery[elemIndex].enterprise = body.enterprise;
-              // add the pickup
-              // add delivery address in text
-              body.delivery[elemIndex].deliveryAddress =
-                distance.destination_addresses[elemIndex];
-              // add pickup details for each order
-              body.delivery[elemIndex].pickupAddress =
-                distance.origin_addresses[0];
-              // set duration of an order from the pick up point to the delivery point
-              body.delivery[elemIndex].estimatedTravelduration = time;
-              // set distance of an order from the pick up point to the delivery point
-              body.delivery[elemIndex].estimatedDistance = singleDistance;
+                // orderId
+                body.delivery[elemIndex].orderId = nanoid(8);
+                // set company id on individual orders
+                body.delivery[elemIndex].company = body.company;
+                // set enterprise id on individual enterprise account
+                body.delivery[elemIndex].enterprise = body.enterprise;
+                // add the pickup
+                // add delivery address in text
+                body.delivery[elemIndex].deliveryAddress =
+                  distance.destination_addresses[elemIndex];
+                // add pickup details for each order
+                body.delivery[elemIndex].pickupAddress =
+                  distance.origin_addresses[0];
+                // set duration of an order from the pick up point to the delivery point
+                body.delivery[elemIndex].estimatedTravelduration = time;
+                // set distance of an order from the pick up point to the delivery point
+                body.delivery[elemIndex].estimatedDistance = singleDistance;
 
-              // total the distance travelled and time
-              body.TET = body.TET + time;
-              body.TED = body.TED + singleDistance;
+                // total the distance travelled and time
+                body.TET = body.TET + time;
+                body.TED = body.TED + singleDistance;
 
-              // estimated cost
-              // calculate the km travelled for each trip multiplied by our price per km
-              const km =
-                parseFloat(singleDistance) * parseFloat(distancePrice.price);
-              // calculate the weight of each order for each trip multiplied by our price per weight
-              const weight =
-                parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
-              const amount =
-                parseFloat(km) +
-                parseFloat(weight) +
-                parseFloat(itemTypePrice) +
-                parseFloat(setting.baseFare);
+                // estimated cost
+                // calculate the km travelled for each trip multiplied by our price per km
+                const km =
+                  parseFloat(singleDistance) * parseFloat(distancePrice.price);
+                // calculate the weight of each order for each trip multiplied by our price per weight
+                const weight =
+                  parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
+                const amount =
+                  parseFloat(km) +
+                  parseFloat(weight) +
+                  parseFloat(itemTypePrice) +
+                  parseFloat(setting.baseFare);
 
-              // set price for each order
-              body.delivery[elemIndex].estimatedCost = parseFloat(amount);
-              // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
+                // set price for each order
+                body.delivery[elemIndex].estimatedCost = parseFloat(amount);
+                // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
 
-              // set total price for the entry
-              body.TEC = body.TEC + parseFloat(amount);
-            } else {
-              // very questionable
-              // just for test only
-              // delete body.delivery[elemIndex];
-              reject({
-                code: 404,
-                msg:
-                  "We couldn't process your request. Please contact our support",
-              });
+                // set total price for the entry
+                body.TEC = body.TEC + parseFloat(amount);
+              } else {
+                // very questionable
+                // just for test only
+                // delete body.delivery[elemIndex];
+                reject({
+                  code: 404,
+                  msg:
+                    "We couldn't process your request. Please contact our support",
+                });
+              }
             }
-          });
+          );
         });
 
         resolve(body);
@@ -294,7 +301,7 @@ class EntryService {
 
         if (distance.data.status !== "OK") {
           reject({ code: 400, msg: "Your address couldn't be verified" });
-          return 
+          return;
         }
 
         resolve(distance.data);
@@ -304,125 +311,6 @@ class EntryService {
       }
     });
   }
-
-  // /**
-  //  * Create transaction for entry
-  //  * @param {Object} body
-  //  * @param {Object} user
-  //  * @param {String} token
-  //  */
-  // createTransaction(body, user, token) {
-  //   return new Promise(async (resolve, reject) => {
-  //     const session = await mongoose.startSession();
-  //     try {
-  //       const entry = await Entry.findOne({
-  //         _id: body.entry,
-  //         status: "request",
-  //         user: user.id,
-  //       }).populate("vehicle");
-
-  //       if (!entry) {
-  //         reject({
-  //           code: 404,
-  //           msg: "Entry transaction already processed.",
-  //         });
-  //         return;
-  //       }
-
-  //       // get price of the trip based on the pickup type
-  //       let amount = 0;
-  //       if (body.pickupType === "instant") {
-  //         amount = parseFloat(entry.TEC) * entry.instantPricing;
-  //       } else {
-  //         amount = entry.TEC;
-  //       }
-
-  //       console.log("entry", entry);
-
-  //       let msgRES;
-  //       if (body.paymentMethod === "card") {
-  //         const userInstance = new UserService();
-  //         const card = await userInstance.getCard(token, body.card);
-
-  //         const trans = await paystack.transaction.charge({
-  //           reference: nanoid(20),
-  //           authorization_code: card.data.token,
-  //           email: user.email,
-  //           amount: parseFloat(entry.TEC).toFixed(2) * 100,
-  //         });
-  //         console.log("trans", trans);
-
-  //         if (!trans.status) {
-  //           reject({
-  //             code: 404,
-  //             msg: "Your Transaction could't be processed at the moment",
-  //           });
-  //           return;
-  //         }
-  //         if (trans.data.status !== "success") {
-  //           reject({
-  //             code: 404,
-  //             msg: "Your Transaction could't be processed at the moment",
-  //           });
-  //           return;
-  //         }
-
-  //         body.amount = entry.TEC;
-  //         body.user = user.id;
-  //         body.status = "approved";
-  //         body.approvedAt = new Date();
-  //         body.entry = entry;
-  //         body.txRef = trans.data.reference;
-  //         body.pickupType = entry.pickupType;
-  //         body.instantPricing = entry.instantPricing;
-
-  //         msgRES = "Payment Successfully Processed";
-  //       } else {
-  //         body.amount = amount;
-  //         body.user = user.id;
-  //         body.status = "pending";
-  //         body.entry = entry;
-  //         body.txRef = nanoid(10);
-  //         body.pickupType = entry.pickupType;
-  //         body.instantPricing = entry.instantPricing;
-
-  //         msgRES = "Cash Payment Method Confirmed";
-  //       }
-
-  //       // start our transaction
-  //       session.startTransaction();
-
-  //       const newTransaction = new Transaction(body);
-
-  //       entry.transaction = newTransaction;
-  //       entry.status = "pending";
-  //       entry.approvedAt = new Date();
-  //       entry.paymentMethod = body.paymentMethod;
-  //       await newTransaction.save({ session });
-  //       await entry.save({ session });
-  //       await Order.updateMany(
-  //         { entry: entry._id },
-  //         { transaction: newTransaction._id },
-  //         { session }
-  //       );
-
-  //       await session.commitTransaction();
-  //       session.endSession();
-
-  //       // console.log("entry", entry);
-
-  //       // send out new entry that has apporved payment method
-  //       entry.metaData = null;
-  //       resolve({ entry, msg: msgRES });
-  //     } catch (error) {
-  //       console.log("error", error);
-  //       reject({
-  //         code: 500,
-  //         msg: "Your Transaction could't be processed at the moment",
-  //       });
-  //     }
-  //   });
-  // }
 
   /**
    * Company accept entry
@@ -493,24 +381,16 @@ class EntryService {
   /**
    * Company send rider request
    * @param {Object} body
-   * @param {Auth user Object} user
+   * @param {MongoDB ObjectID} company
    */
-  riderAsignEntry(body, user) {
+  riderAsignEntry(body, company) {
     return new Promise(async (resolve, reject) => {
       try {
-        // find the company
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
-          _id: user.id,
-          status: "active",
-          verified: true,
-        });
-
         // find the entry that has been accepted by a company
         const entry = await Entry.findOne({
           _id: body.entry,
           status: "companyAccepted",
-          company: company._id,
+          company,
           rider: null,
           transaction: { $ne: null },
         })
@@ -527,7 +407,7 @@ class EntryService {
 
         // find all the online riders for the company with the specific vehicle type
         const riders = await Rider.find({
-          company: company._id,
+          company,
           deleted: false,
           onlineStatus: true,
           status: "active",
@@ -564,7 +444,7 @@ class EntryService {
             riderIDS.push(row._id);
             riderEntries.push({
               entry: entry._id,
-              company: company._id,
+              company,
               rider: row._id,
             });
           }
@@ -600,10 +480,68 @@ class EntryService {
 
         const newRiderReq = await RiderEntryRequest.create(riderEntries);
 
-        resolve({ entry, company, riders, newRiderReq, riderIDS });
+        resolve({ entry, riders, newRiderReq, riderIDS });
       } catch (error) {
         console.log("error", error);
         reject(error);
+      }
+    });
+  }
+
+  /**
+   * dispatch entry to exalt riders
+   * @param {Object} entry
+   */
+  silentlyAsignRiderToEntry(entry) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // find all the online riders for the company with the specific vehicle type
+        const riders = await Rider.find({
+          company: entry.company,
+          deleted: false,
+          onlineStatus: true,
+          status: "active",
+          verified: true,
+          vehicle: entry.vehicle,
+        });
+
+        console.log("riders", riders);
+
+        if (typeof riders[0] === "undefined") {
+          resolve({ riderIDS: null });
+          return;
+        }
+
+
+        // if (typeof riders[0] == "undefined") {
+        //   reject({
+        //     code: 200,
+        //     msg:
+        //       "Your Transaction has been processed. We currently don't have any online Rider for this order. This would be resolved shortly",
+        //   });
+        //   return;
+        // }
+
+        const riderIDS = [];
+        const riderEntries = [];
+        await AsyncForEach(riders, async (row, index, arr) => {
+          riderIDS.push(row._id);
+          riderEntries.push({
+            entry: entry._id,
+            company: entry.company,
+            rider: row._id,
+          });
+        });
+
+        console.log("riderIDS", riderIDS);
+
+
+        const newRiderReq = await RiderEntryRequest.create(riderEntries);
+
+        resolve({ riders, newRiderReq, riderIDS });
+      } catch (error) {
+        console.log("error", error);
+        resolve(error);
       }
     });
   }
@@ -1189,17 +1127,13 @@ class EntryService {
   }
 }
 
-
-
-
 module.exports = EntryService;
 
+// send the request to the driver
+// const newRiderReq = new RiderEntryRequest({
+//   entry: entry._id,
+//   company: company._id,
+//   rider: body.rider,
+// });
 
-        // send the request to the driver
-        // const newRiderReq = new RiderEntryRequest({
-        //   entry: entry._id,
-        //   company: company._id,
-        //   rider: body.rider,
-        // });
-
-        // await newRiderReq.save();
+// await newRiderReq.save();

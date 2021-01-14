@@ -1,23 +1,16 @@
 const config = require("config");
-const io = require("socket.io-emitter");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Rider = require("../models/rider");
-const Transaction = require("../models/transaction");
-const {
-  validateTransaction,
-  validateTransactionStatus,
-} = require("../request/transaction");
 const {
   validateLocalEntry,
   validateEntryID,
   validatePickupOTP,
   validateSendRiderRequest,
-  validateCalculateShipment
+  validateCalculateShipment,
 } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { SERVER_EVENTS } = require("../constant/events");
 const { paginate } = require("../utils");
 const CountryService = require("../services/country");
 const EntryService = require("../services/entry");
@@ -29,8 +22,6 @@ const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user")
-const TransactionService = require("../services/transaction");
-const socket = new io(config.get("application.redis"), { key: "/sio" })
 
 
 
@@ -44,17 +35,24 @@ exports.localEntry = async (req, res) => {
     const { error } = validateLocalEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    // get owners
-    const company = await Company.findOne({
-      state: req.body.state,
-      ownership: true,
-    }).select({ name: 1, rating: 1, state: 1, country: 1, logo: 1 });
 
-    if (company) {
-      req.body.company = company;
-    } else {
-      req.body.company = null;
+    req.body.company = null;
+    req.body.enterprise = null;
+    // we need to check if it done by an enterprise account
+    if (typeof req.enterprise !== "undefined") {
+      // get owners
+      const company = await Company.findOne({
+        state: req.body.state,
+        ownership: true,
+      }).select({ name: 1, rating: 1, state: 1, country: 1, logo: 1 });
+
+      if (company) {
+        req.body.company = company;
+      }
+
+      req.body.enterprise = req.enterprise._id;
     }
+    
 
 
 
@@ -103,8 +101,13 @@ exports.localEntry = async (req, res) => {
     const newEntry = await entryInstance.createEntry(body);
 
     newEntry.metaData = null;
-    const entrySub = new EntrySubscription();
-    await entrySub.newEntry(newEntry._id);
+    // only send out a socket dispatch when it's n ot enterprise 
+    // because on enterprise a company has already been assigned
+    if (typeof req.enterprise === "undefined") {
+      const entrySub = new EntrySubscription();
+      await entrySub.newEntry(newEntry._id);
+    }
+    
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
     return;
   } catch (error) {
@@ -171,80 +174,6 @@ exports.calculateShipment = async (req, res) => {
   }
 };
 
-/**
- * User confirm payment method and entry
- * @param {*} req
- * @param {*} res
- */
-exports.transaction = async (req, res) => {
-  try {
-    const { error } = validateTransaction(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message);
-
-    const transactionInstance = new TransactionService();
-    const { entry, msg } = await transactionInstance.createTransaction(req.body, req.user, req.token);
-
-    console.log("entry", entry);
-
-    // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
-    const companySub = new CompanySubscription();
-    await companySub.dispatchToStateRoom(entry);
-
-    // send socket to admin for update
-    const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
-
-    JsonResponse(res, 201, msg);
-    return;
-  } catch (error) {
-    console.log(error);
-    return JsonResponse(res, error.code, error.msg);
-  }
-};
-
-
-/**
- * enterprise confirm payment method and entry
- * @param {*} req
- * @param {*} res
- */
-exports.enterpriseTransaction = async (req, res) => {
-  try {
-    const { error } = validateTransaction(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message);
-
-    const transactionInstance = new TransactionService();
-    const { entry, msg } = await transactionInstance.createTransaction(req.body, req.user, req.token);
-
-    console.log("entry", entry);
-
-    // const entryInstance = new EntryService();
-    // const { entry, riderIDS } = await entryInstance.riderAsignEntry(
-    //   req.body,
-    //   req.user
-    // );
-
-    // // send entries to all the rider
-    // const riderSub = new RiderSubscription();
-    // await riderSub.sendRidersEntries(riderIDS, entry);
-
-    // socket.to(entry.state).emit(SERVER_EVENTS.NEW_ENTRY, entry);
-    const companySub = new CompanySubscription();
-    await companySub.dispatchToStateRoom(entry);
-
-    // send socket to admin for update
-    const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
-
-    JsonResponse(res, 201, msg);
-    return;
-  } catch (error) {
-    console.log(error);
-    return JsonResponse(res, error.code, error.msg);
-  }
-};
 
 /**
  * get entries by a company
@@ -479,41 +408,6 @@ exports.riderArriveAtPickup = async (req, res) => {
   }
 };
 
-
-/**
- * Rider confirm user cash payment at pickup location
- * @param {*} req
- * @param {*} res
- */
-exports.riderConfirmCashPayment = async (req, res) => {
-  try {
-    const { error } = validateTransactionStatus(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message);
-
-      const entryInstance = new EntryService();
-      const { entry, code, msg } = await entryInstance.riderConfirmCashPayment(
-        req.body,
-        req.user
-      );
-
-      // send fcm notification
-      // send nofication to the user device
-      const title = "Your payment has been confirmed. Thank you";
-      const notifyInstance = new NotifyService();
-      await notifyInstance.textNotify(title, "", entry.user.FCMToken);
-
-      // send socket to admin for update
-      const entrySub = new EntrySubscription();
-      await entrySub.updateEntryAdmin(entry._id);
-    
-
-    JsonResponse(res, code, msg);
-    return;
-  } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
-  }
-};
 
 /**
  * Driver Confirm OTP code for pickup

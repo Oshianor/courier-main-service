@@ -54,15 +54,12 @@ class UserService {
   deleteUser(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        await axios.delete(
-          `${config.get("api.base")}/user/${userId}`,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
-        
+        await axios.delete(`${config.get("api.base")}/user/${userId}`, {
+          headers: {
+            "api-key": config.get("api.key"),
+          },
+        });
+
         resolve();
       } catch (error) {
         reject({
@@ -149,6 +146,29 @@ class UserService {
           {
             headers: {
               "x-auth-token": token,
+            },
+          }
+        );
+        resolve(response.data);
+      } catch (error) {
+        reject(error.response.data);
+      }
+    });
+  }
+
+  /**
+   * Get a single card for by user
+   * @param {ObjectId} user
+   * @param {ObjectId} card
+   */
+  getCardByUserId(user, card) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.get(
+          `${config.get("api.base")}/card/${card}/${user}`,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
             },
           }
         );

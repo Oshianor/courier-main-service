@@ -128,16 +128,17 @@ class EntryService {
         await AsyncForEach(distance.rows, async (row, rowIndex, rowsArr) => {
           await AsyncForEach(row.elements, async (element, elemIndex, elemArr) => {
             if (element.status === "OK") {
-
               // set the coordinates for each deverly address
               body.delivery[elemIndex].deliveryLatitude =
                 devy.results[elemIndex].geometry.location.lat;
               body.delivery[elemIndex].deliveryLongitude =
                 devy.results[elemIndex].geometry.location.lng;
 
-                // set the coordinates for pickup address
-              body.delivery[elemIndex].pickupLatitude = pickup.results[0].geometry.location.lat;
-              body.delivery[elemIndex].pickupLongitude = pickup.results[0].geometry.location.lng;
+              // set the coordinates for pickup address
+              body.delivery[elemIndex].pickupLatitude =
+                pickup.results[0].geometry.location.lat;
+              body.delivery[elemIndex].pickupLongitude =
+                pickup.results[0].geometry.location.lng;
 
               const time = parseFloat(element.duration.value / 60);
               const singleDistance = parseFloat(element.distance.value / 1000);
@@ -148,7 +149,10 @@ class EntryService {
 
               // orderId
               body.delivery[elemIndex].orderId = nanoid(8);
+              // set company id on individual orders
               body.delivery[elemIndex].company = body.company;
+              // set enterprise id on individual enterprise account
+              body.delivery[elemIndex].enterprise = body.enterprise;
               // add the pickup
               // add delivery address in text
               body.delivery[elemIndex].deliveryAddress =

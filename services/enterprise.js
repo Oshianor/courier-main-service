@@ -523,9 +523,12 @@ class EnterpriseService {
         }
 
         const entries = await Entry.find(queryFilter)
-          .populate('company')
-          .populate('rider')
-          .populate('order')
+          .populate(
+            "company",
+            "name email phoneNumber countryCode img state address rating"
+          )
+          .populate("rider", "name email phoneNumber countryCode img rating")
+          .populate("orders")
           .skip(skip)
           .limit(pageSize);
 
@@ -533,7 +536,6 @@ class EnterpriseService {
 
         resolve({ entries, total });
       } catch (error) {
-        error.service = "Get all entries service error";
         return reject(error);
       }
     });
@@ -561,7 +563,6 @@ class EnterpriseService {
 
         resolve({ transactions, total });
       } catch (error) {
-        error.service = "Get all transactions service error";
         return reject(error);
       }
     });

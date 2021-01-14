@@ -13,6 +13,11 @@ const WalletHistorySchema = mongoose.Schema(
       required: true,
       ref: "Enterprise",
     },
+    type: {
+      type: String,
+      enum: ["dr", "cr"],
+      default: "cr",
+    },
     user: {
       type: ObjectId,
       index: true,

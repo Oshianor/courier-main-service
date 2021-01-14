@@ -5,6 +5,8 @@ const { UserAuth, Auth, EnterpriseAuth, E_ROLES } = require("../middlewares/auth
 
 // Create entry
 router.post("/", UserAuth, controller.entry.localEntry);
+// Create entry by enterprise
+router.post("/enterprise", UserAuth, EnterpriseAuth(E_ROLES.BRANCH, E_ROLES.MAINTAINER), controller.entry.localEntry);
 // calculate shipment
 router.post(
   "/calculate-shipment",
@@ -12,15 +14,20 @@ router.post(
   controller.entry.calculateShipment
 );
 // approve an entry for different payment method
-router.post("/confirm", UserAuth, controller.entry.transaction);
+router.post("/confirm", UserAuth, controller.transaction.transaction);
+// approve an entry for enterprise 
+router.post(
+  "/enterprise/confirm",
+  UserAuth,
+  EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]),
+  controller.transaction.enterpriseTransaction
+);
 
 router.get("/pool", Auth, controller.entry.byCompany);
 
 router.get("/:id", Auth, controller.entry.singleEntry);
 // compnay accept entry
 router.patch("/company/accept/:entry", Auth, controller.entry.companyAcceptEntry);
-// compnay accept entry
-// router.get("/company/online/:entry", Auth, controller.entry.allOnlineRiderCompanyEntry);
 
 router.post("/rider-assign", Auth, controller.entry.riderAssignToEntry);
 
@@ -33,7 +40,11 @@ router.post("/enroute-pickup", Auth, controller.entry.riderStartPickup);
 router.post("/arrived-pickup", Auth, controller.entry.riderArriveAtPickup);
 
 // rider confirm cash payment
-router.post("/confirm/cash-payment", Auth, controller.entry.riderConfirmCashPayment);
+router.post(
+  "/confirm/cash-payment",
+  Auth,
+  controller.transaction.riderConfirmCashPayment
+);
 
 router.post("/confirm-pickup", Auth, controller.entry.riderComfirmPickupOTPCode);
 

@@ -71,6 +71,7 @@ class EnterpriseService {
 
             // create enterprise document
             const newEnterprise = new Enterprise(body);
+            newEnterprise.HQ = newEnterprise._id;
             await newEnterprise.save({ session });
 
             // create user in logistics service
@@ -179,6 +180,7 @@ class EnterpriseService {
                   branchIDS: newEnterprise._id,
                   branchIDSWithHQ: newEnterprise._id,
                   usersAll: user._id,
+                  branchUserIDS: user._id,
                 },
               },
               { session }
@@ -346,27 +348,54 @@ class EnterpriseService {
 
   /**
    * Get all Enterprise Branches
-   * @param {MongoDB ObjectId} enterpriseId
-   * @param {number} skip
-   * @param {number} pageSize
+   * @param {Object} user
+   * @param {Object} pagination
    */
-  getAllBranches(enterpriseId, skip, pageSize) {
+  getAllBranches(user, pagination) {
     return new Promise(async (resolve, reject) => {
       try {
-        const enterpriseBranches = await Enterprise.find({
-          enterprise: enterpriseId,
-          type: "branch",
-        })
-          .select("-createdBy -deleted -deletedBy -deletedAt")
-          .skip(skip)
-          .limit(pageSize);
-        const totalBranches = await Enterprise.countDocuments({
-          enterprise: enterpriseId,
-          type: "branch",
+        const enterprise = await Enterprise.findOne({
+          _id: user.enterprise,
         });
-        resolve({ enterpriseBranches, totalBranches });
+
+        if (!enterprise) {
+          return reject({ code: 404, msg: "No enterprise account was found." });
+        }
+
+        const { skip, page, pageSize } = pagination;
+        const enterpriseMaintainersToRetrieve = enterprise.branchUserIDS.slice(
+          skip,
+          page * pageSize
+        );
+
+        console.log(
+          "enterpriseMaintainersToRetrieve",
+          enterpriseMaintainersToRetrieve
+        );
+        const maintainers = await axios.post(
+          `${config.get("api.base")}/user/maintainers`,
+          {
+            maintainers: enterpriseMaintainersToRetrieve,
+          },
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        resolve({
+          total: enterprise.branchUserIDS.length,
+          branches: maintainers.data.data,
+        });
       } catch (error) {
-        error.service = "Get all branches service error";
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+        // error.service = "Get all maintainers service error";
         return reject(error);
       }
     });
@@ -375,6 +404,7 @@ class EnterpriseService {
   /**
    * Get all Enterprise Maintainers
    * @param {Object} user
+   * @param {Object} pagination
    */
   getAllMaintainers(user, pagination) {
     return new Promise(async (resolve, reject) => {
@@ -387,8 +417,11 @@ class EnterpriseService {
           return reject({ code: 404, msg: "No enterprise account was found." });
         }
 
-        const {skip, page, pageSize} = pagination;
-        const enterpriseMaintainersToRetrieve = enterprise.maintainers.slice(skip, page * pageSize)
+        const { skip, page, pageSize } = pagination;
+        const enterpriseMaintainersToRetrieve = enterprise.maintainers.slice(
+          skip,
+          page * pageSize
+        );
 
         const maintainers = await axios.post(
           `${config.get("api.base")}/user/maintainers`,
@@ -402,7 +435,10 @@ class EnterpriseService {
           }
         );
 
-        resolve({total: enterprise.maintainers.length, maintainers: maintainers.data.data});
+        resolve({
+          total: enterprise.maintainers.length,
+          maintainers: maintainers.data.data,
+        });
       } catch (error) {
         if (error.response) {
           return reject({
@@ -487,9 +523,12 @@ class EnterpriseService {
         }
 
         const entries = await Entry.find(queryFilter)
-          .populate('company')
-          .populate('rider')
-          .populate('order')
+          .populate(
+            "company",
+            "name email phoneNumber countryCode img state address rating"
+          )
+          .populate("rider", "name email phoneNumber countryCode img rating")
+          .populate("orders")
           .skip(skip)
           .limit(pageSize);
 
@@ -497,7 +536,6 @@ class EnterpriseService {
 
         resolve({ entries, total });
       } catch (error) {
-        error.service = "Get all entries service error";
         return reject(error);
       }
     });
@@ -525,7 +563,6 @@ class EnterpriseService {
 
         resolve({ transactions, total });
       } catch (error) {
-        error.service = "Get all transactions service error";
         return reject(error);
       }
     });
@@ -533,3 +570,32 @@ class EnterpriseService {
 }
 
 module.exports = EnterpriseService;
+
+
+  // /**
+  //  * Get all Enterprise Branches
+  //  * @param {MongoDB ObjectId} enterpriseId
+  //  * @param {number} skip
+  //  * @param {number} pageSize
+  //  */
+  // getAllBranches(enterpriseId, skip, pageSize) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const enterpriseBranches = await Enterprise.find({
+  //         enterprise: enterpriseId,
+  //         type: "branch",
+  //       })
+  //         .select("-createdBy -deleted -deletedBy -deletedAt")
+  //         .skip(skip)
+  //         .limit(pageSize);
+  //       const totalBranches = await Enterprise.countDocuments({
+  //         enterprise: enterpriseId,
+  //         type: "branch",
+  //       });
+  //       resolve({ enterpriseBranches, totalBranches });
+  //     } catch (error) {
+  //       error.service = "Get all branches service error";
+  //       return reject(error);
+  //     }
+  //   });
+  // }

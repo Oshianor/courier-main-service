@@ -66,6 +66,7 @@ const enterPriseSchema = new mongoose.Schema(
       },
     ],
     maintainers: [{ type: ObjectId, ref: "User", index: true }],
+    branchUserIDS: [{ type: ObjectId, ref: "User", index: true }],
     branchIDS: [{ type: ObjectId, ref: "Enterprise", index: true }],
     branchIDSWithHQ: [{ type: ObjectId, ref: "Enterprise", index: true }],
     HQ: {

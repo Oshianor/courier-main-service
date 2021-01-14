@@ -54,14 +54,11 @@ class UserService {
   deleteUser(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        await axios.delete(
-          `${config.get("api.base")}/user/${userId}`,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
+        await axios.delete(`${config.get("api.base")}/user/${userId}`, {
+          headers: {
+            "api-key": config.get("api.key"),
+          },
+        });
 
         resolve();
       } catch (error) {
@@ -161,6 +158,29 @@ class UserService {
   }
 
   /**
+   * Get a single card for by user
+   * @param {ObjectId} user
+   * @param {ObjectId} card
+   */
+  getCardByUserId(user, card) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.get(
+          `${config.get("api.base")}/card/${card}/${user}`,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+        resolve(response.data);
+      } catch (error) {
+        reject(error.response.data);
+      }
+    });
+  }
+
+  /**
    * Update user FCMToken from firebase
    * @param {Object} body
    * @param {Auth user} user
@@ -201,7 +221,7 @@ class UserService {
           .populate("rider", "name email phoneNumber countryCode img")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle pickupType instantPricing"
           )
           .populate("transaction")
           .populate("vehicle")
@@ -244,7 +264,7 @@ class UserService {
         })
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET vehicle"
+            "status type source paymentMethod transaction itemType TEC TED TET vehicle pickupType instantPricing"
           )
           .populate("rider", "name email phoneNumber countryCode img")
           .populate("transaction")

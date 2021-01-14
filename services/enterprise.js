@@ -530,7 +530,8 @@ class EnterpriseService {
           .populate("rider", "name email phoneNumber countryCode img rating")
           .populate("orders")
           .skip(skip)
-          .limit(pageSize);
+          .limit(pageSize)
+          .sort({createdAt: 'desc'});
 
         const total = await Entry.countDocuments(queryFilter);
 
@@ -558,7 +559,7 @@ class EnterpriseService {
           .populate('user')
           .skip(skip)
           .limit(pageSize)
-          .sort({createdAt: 'desc'})
+          .sort({createdAt: 'desc'});
 
         const total = await Transaction.countDocuments(queryFilter);
 

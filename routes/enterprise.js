@@ -37,6 +37,11 @@ router.get("/shipping", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH
 // get enterprise transactions
 router.get("/transactions", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.allTransactions);
 
+// get enterprise pending orders
+router.get("/orders/pending", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getPendingOrders);
+
+// get enterprise statistics
+router.get("/statistics", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getStatistics);
 // Add card by enterprise owner and branch
 router.post(
   "/card/add",

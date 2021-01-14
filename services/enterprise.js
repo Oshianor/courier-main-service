@@ -3,12 +3,14 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const Enterprise = require("../models/enterprise");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary } = require("../utils");
+const { UploadFileFromBinary, convertToMonthlyDataArray } = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
 const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
+const Order = require("../models/order");
+const { ObjectId } = require("mongoose").Types;
 
 class EnterpriseService {
   /**
@@ -568,6 +570,65 @@ class EnterpriseService {
         return reject(error);
       }
     });
+  }
+
+
+  /**
+   * @param {Object} enterprise object
+   */
+  getStatistics(enterprise){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const successfulDeliveryFilter = {
+          enterprise: enterprise.id,
+          status: "delivered"
+        }
+        const failedDeliveryFilter = {
+          enterprise: enterprise.id,
+          status: "canceled"
+        }
+
+        // Total deliveries by months
+        let monthlySuccessfulDeliveries = await Order.aggregate(buildOrderAggregationPipeline(successfulDeliveryFilter));
+        let monthlyFailedDeliveries = await Order.aggregate(buildOrderAggregationPipeline(failedDeliveryFilter));
+        monthlySuccessfulDeliveries = convertToMonthlyDataArray(monthlySuccessfulDeliveries, 'numberOfDeliveries');
+        monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
+
+        // Total deliveries
+        const totalSuccessfulDeliveries = await Order.countDocuments(successfulDeliveryFilter);
+        const totalFailedDeliveries = await Order.countDocuments(failedDeliveryFilter);
+
+        // Total spent
+        let totalSpent = await Transaction.aggregate([
+          { $match: {enterprise: ObjectId(enterprise.id), status: "approved",approvedAt: {$ne:null}} },
+          { $group: { _id: enterprise.id, "total": {$sum: "$amount"} }},
+        ]);
+        totalSpent = totalSpent[0] ? totalSpent[0].total : 0;
+
+        const totalBranches = enterprise.branchIDS.length;
+        const totalManagers = enterprise.maintainers.length;
+
+        resolve({
+          monthlySuccessfulDeliveries,
+          monthlyFailedDeliveries,
+          totalFailedDeliveries,
+          totalSuccessfulDeliveries,
+          totalBranches,
+          totalManagers,
+          totalSpent
+        })
+
+        function buildOrderAggregationPipeline(filter){
+          return [
+            { $match: { ...filter } },
+            { $group:{ _id: {$month: "$createdAt"}, numberOfDeliveries: {$sum: 1}} },
+            { $project: {_id:0, "month": "$_id", numberOfDeliveries: "$numberOfDeliveries"}}
+          ]
+        }
+      } catch(error){
+        return reject(error);
+      }
+    })
   }
 }
 

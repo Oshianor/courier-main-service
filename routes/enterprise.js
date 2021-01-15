@@ -38,7 +38,14 @@ router.get("/shipping", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH
 router.get("/transactions", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.allTransactions);
 
 // get enterprise pending orders
-router.get("/orders/pending", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getPendingOrders);
+router.get(
+  "/orders/pending",
+  [
+    UserAuth,
+    EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.OWNER, E_ROLES.BRANCH]),
+  ],
+  controller.enterprise.getPendingOrders
+);
 
 // get enterprise statistics
 router.get("/statistics", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getStatistics);

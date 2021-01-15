@@ -55,6 +55,7 @@ class EnterpriseService {
         email: body.email,
         countryCode: body.countryCode,
         phoneNumber: body.phoneNumber,
+        img: body.logo,
       })
         .then(async (user) => {
           try {
@@ -80,6 +81,7 @@ class EnterpriseService {
               role: "owner",
               group: "enterprise",
               enterprise: newEnterprise._id,
+              img: body.logo,
             });
             await courierUser.save({ session });
 
@@ -124,6 +126,15 @@ class EnterpriseService {
         return;
       }
 
+      // create enterprise account
+      if (files && files.logo.data != null) {
+        const logo = await UploadFileFromBinary(
+          files.logo.data,
+          files.logo.name
+        );
+        body.logo = logo.Key;
+      }
+
       // check if enterprise exists
       const existingEnterprise = await Enterprise.findOne({
         name: body.name,
@@ -145,6 +156,7 @@ class EnterpriseService {
         email: body.email,
         countryCode: body.countryCode,
         phoneNumber: body.phoneNumber,
+        img: body.logo,
       })
         .then(async (user) => {
           try {
@@ -167,6 +179,7 @@ class EnterpriseService {
               role: "branch",
               group: "enterprise",
               enterprise: newEnterprise._id,
+              img: body.logo,
             });
             await courierUser.save({ session });
 
@@ -188,15 +201,6 @@ class EnterpriseService {
 
             await session.commitTransaction();
             session.endSession();
-
-            // create enterprise account
-            if (files && files.logo.data != null) {
-              const logo = await UploadFileFromBinary(
-                files.logo.data,
-                files.logo.name
-              );
-              body.logo = logo.Key;
-            }
 
             resolve({ newEnterprise });
           } catch (error) {
@@ -284,12 +288,8 @@ class EnterpriseService {
             },
           }
         );
-        if (response.status == 200) {
-          resolve(response.data.data);
-        }
-
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-        return;
+        
+        resolve(response.data.data);
       } catch (error) {
         console.log("error", error);
 
@@ -299,7 +299,6 @@ class EnterpriseService {
             msg: error.response.data.msg,
           });
         }
-        // error.service = 'Create exalt user service error'
         return reject(error);
       }
     });

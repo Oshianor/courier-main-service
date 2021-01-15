@@ -16,9 +16,13 @@ exports.createOrganization = async (req, res, next) => {
     const { error } = validateEnterprise(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const enterprise = await enterpriseInstance.createOrganization(req.body, req.files, req.user);
-    return JsonResponse(res, 200, MSG_TYPES.CREATED, enterprise);
-
+    const { newEnterprise } = await enterpriseInstance.createOrganization(
+      req.body,
+      req.files,
+      req.user
+    );
+    
+    return JsonResponse(res, 200, MSG_TYPES.CREATED, newEnterprise);
   } catch (error) {
     next(error)
     return

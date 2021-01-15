@@ -93,7 +93,7 @@ class EnterpriseService {
             await session.commitTransaction();
             session.endSession();
 
-            resolve(enterprise);
+            resolve({newEnterprise});
           } catch (error) {
             await session.abortTransaction();
             const userInstance = new UserService();

@@ -176,7 +176,8 @@ class CompanyService {
         .populate("user", "name")
         .populate("rider", "name")
         .skip(skip)
-        .limit(pageSize);
+        .limit(pageSize)
+        .sort({createdAt: "desc"});
 
       const total = await Transaction.find({
         company,

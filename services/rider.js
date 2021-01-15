@@ -473,6 +473,7 @@ class RiderSerivice {
         .populate('user')
         .populate('rider')
         .populate('entry')
+        .sort({createdAt: "desc"});
 
         resolve(orders);
       } catch (error) {

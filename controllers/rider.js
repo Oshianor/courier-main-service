@@ -557,10 +557,20 @@ exports.unsuspend = async (req, res) => {
  */
 exports.getRiderTransactions = async (req, res) => {
   try {
-    const riderInstance = new RiderService()
-    const transactions = await riderInstance.getTransactions(req.params.riderId, req.user.id);
+    const { page, pageSize, skip } = paginate(req);
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
+    const riderInstance = new RiderService()
+    const { transactions, total } = await riderInstance.getTransactions({
+      company: req.user.id,
+      rider: req.params.riderId
+    }, skip, pageSize);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page }
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
     return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
@@ -576,10 +586,20 @@ exports.getRiderTransactions = async (req, res) => {
  */
 exports.getRiderOrders = async (req, res) => {
   try {
-    const riderInstance = new RiderService()
-    const transactions = await riderInstance.getOrders(req.params.riderId, req.user.id);
+    const { page, pageSize, skip } = paginate(req);
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
+    const riderInstance = new RiderService()
+    const { orders, total } = await riderInstance.getOrders({
+      rider: req.params.riderId,
+      company: req.user.id
+    }, skip, pageSize);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page }
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return
   } catch (error) {
     JsonResponse(res, error.code, error.msg);

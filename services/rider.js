@@ -437,21 +437,24 @@ class RiderSerivice {
 
   /**
    * Get a rider's transactions
-   * @param {MongoDB ObjectId} riderId rider id
+   * @param {Object} filter
+   * @param {number} skip
+   * @param {number} pageSize
    */
-  getTransactions(riderId, companyId) {
+  getTransactions(filter, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const transactions = await Transaction.find({
-          rider: riderId,
-          company: companyId
-        })
+        const transactions = await Transaction.find(filter)
         .populate('user')
         .populate('rider')
         .populate('entry')
-        .populate('card');
+        .populate('card')
+        .skip(skip)
+        .limit(pageSize);
 
-        resolve(transactions);
+        const total = await Transaction.countDocuments(filter);
+
+        resolve({ transactions, total });
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
@@ -460,22 +463,24 @@ class RiderSerivice {
 
   /**
    * Get a rider's orders
-   * @param {MongoDB ObjectId} riderId
-   * @param {MongoDB ObjectId} companyId
+   * @param {Object} filter
+   * @param {number} skip
+   * @param {number} pageSize
    */
-  getOrders(riderId, companyId) {
+  getOrders(filter, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const orders = await Order.find({
-          rider: riderId,
-          company: companyId
-        })
+        const orders = await Order.find(filter)
         .populate('user')
         .populate('rider')
         .populate('entry')
+        .skip(skip)
+        .limit(pageSize)
         .sort({createdAt: "desc"});
 
-        resolve(orders);
+        const total = await Order.countDocuments(filter);
+
+        resolve({ orders, total });
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }

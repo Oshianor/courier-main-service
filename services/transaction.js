@@ -12,6 +12,11 @@ const { nanoid } = require("nanoid");
 const { MSG_TYPES } = require("../constant/types");
 const Wallet = require("../models/wallet");
 const WalletHistory = require("../models/walletHistory");
+const Credit = require("../models/credit");
+const CreditHistory = require("../models/creditHistory");
+
+
+
 class TransactionService {
   /**
    * Create transaction for entry
@@ -181,6 +186,19 @@ class TransactionService {
           body.instantPricing = entry.instantPricing;
 
           msg = "Wallet Payment Successfully Processed";
+        } else if (body.paymentMethod === "credit") {
+          await this.chargeCredit(enterprise, amount, user, body.entry);
+
+          body.enterprise = enterprise._id;
+          body.amount = amount;
+          body.user = user.id;
+          body.status = "approved";
+          body.approvedAt = new Date();
+          body.entry = entry;
+          body.txRef = nanoid(10);
+          body.instantPricing = entry.instantPricing;
+
+          msg = "Payment Successfully Processed with line of Credit";
         } else {
           body.enterprise = enterprise._id;
           body.amount = amount;
@@ -280,7 +298,7 @@ class TransactionService {
    * @param {Object} enterprise
    * @param {Number} amount
    * @param {Object} user
-   * @param {Object} entry 
+   * @param {Object} entry
    */
   chargeWallet(enterprise, amount, user, entry) {
     return new Promise(async (resolve, reject) => {
@@ -334,6 +352,69 @@ class TransactionService {
         console.log("error", error);
         await session.abortTransaction();
         reject({ code: 400, msg: "Wallet transaction couldn't processed." });
+      }
+    });
+  }
+
+  /**
+   * Charge enterprise line of credit
+   * @param {Object} enterprise
+   * @param {Number} amount
+   * @param {Object} user
+   * @param {Object} entry
+   */
+  chargeCredit(enterprise, amount, user, entry) {
+    return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+
+      try {
+        // start our transaction
+        session.startTransaction();
+
+        const credit = await Credit.findOne({ enterprise: enterprise._id });
+
+        if (!credit) {
+          return reject({
+            code: 500,
+            msg: "No line of credit was found for your account.",
+          });
+        }
+
+        if (parseFloat(credit.balance) < parseFloat(amount)) {
+          return reject({
+            code: 500,
+            msg:
+              "You don't have enough credit to process this transaction",
+          });
+        }
+
+        await credit.updateOne(
+          {
+            $inc: { totalSpent: amount, balance: -amount },
+          },
+          { session }
+        );
+
+        const creditHistory = new CreditHistory({
+          txRef: nanoid(20),
+          type: "debit",
+          user: user.id,
+          amount,
+          status: "approved",
+          enterprise: enterprise._id,
+          entry: entry,
+        });
+
+        await creditHistory.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        resolve({ credit, creditHistory });
+      } catch (error) {
+        console.log("error", error);
+        await session.abortTransaction();
+        reject({ code: 400, msg: "Credit transaction couldn't processed." });
       }
     });
   }

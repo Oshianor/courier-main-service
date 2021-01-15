@@ -9,31 +9,6 @@ const { paginate } = require("../utils");
 
 
 /**
- * Admin fund wallet for branch or owner
- * @param {*} req
- * @param {*} res
- */
-exports.lineOfCredit = async (req, res, next) => {
-  try {
-    const { error } = validateAdminFundWallet(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
-
-    const walletInstance = new WalletService();
-    await walletInstance.lineOfCreditForWallet(
-      req.body,
-      req.user
-    );
-
-    JsonResponse(res, 200, MSG_TYPES.WALLET_FUNDED);
-    return;
-  } catch (error) {
-    next(error);
-    return;
-  }
-};
-
-
-/**
  * Fund wallet by onwer and branch
  * @param {*} req
  * @param {*} res

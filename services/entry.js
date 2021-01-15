@@ -214,7 +214,7 @@ class EntryService {
         resolve(body);
       } catch (error) {
         console.log(error);
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error)
       }
     });
   }
@@ -279,7 +279,7 @@ class EntryService {
         resolve(distance);
       } catch (error) {
         console.log(error);
-        reject({ err: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject({ err: 400, msg: "Address provided couldn't be verified" });
       }
     });
   }

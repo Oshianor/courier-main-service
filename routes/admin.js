@@ -84,11 +84,11 @@ router.post("/industry-category", [Auth, hasRole([ROLES.ADMIN])], controller.ind
 router.get("/industry-category", controller.industryCategory.all);
 
 
-// wallet
+// credit
 router.post(
-  "/fund-wallet",
+  "/fund-credit",
   [Auth, hasRole([ROLES.ADMIN])],
-  controller.wallet.lineOfCredit
+  controller.credit.lineOfCredit
 );
 
 

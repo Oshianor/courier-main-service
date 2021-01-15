@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const WalletHistorySchema = mongoose.Schema(
+const CreditHistorySchema = mongoose.Schema(
   {
     txRef: {
       type: String,
@@ -30,8 +30,8 @@ const WalletHistorySchema = mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["debit", "credit"],
-      default: "credit",
+      enum: ["repaid", "loan", "debit"],
+      default: "loan",
     },
     user: {
       type: ObjectId,
@@ -59,13 +59,6 @@ const WalletHistorySchema = mongoose.Schema(
   }
 );
 
-const WalletHistory = mongoose.model("WalletHistory", WalletHistorySchema);
+const CreditHistory = mongoose.model("CreditHistory", CreditHistorySchema);
 
-module.exports = WalletHistory;
-
-
-// origins [ 'Km 19 Lekki - Epe Expy, Lekki Penninsula II, Lekki, Nigeria' ]
-// destinations [
-//   'Oba Ogunji Rd, Ijaiye, Lagos, Nigeria',
-//   'Lekki - Epe Expy, Aja, Lagos, Nigeria'
-// ]
+module.exports = CreditHistory;

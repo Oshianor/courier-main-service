@@ -1,16 +1,17 @@
 const config = require("config");
 const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 const axios = require("axios");
 const Enterprise = require("../models/enterprise");
 const { MSG_TYPES } = require("../constant/types");
 const { UploadFileFromBinary, convertToMonthlyDataArray } = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
+const CreditService = require("./credit");
 const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
 const Order = require("../models/order");
-const { ObjectId } = require("mongoose").Types;
 
 class EnterpriseService {
   /**
@@ -75,7 +76,6 @@ class EnterpriseService {
             // create enterprise document
             const newEnterprise = new Enterprise(body);
             newEnterprise.HQ = newEnterprise._id;
-            await newEnterprise.save({ session });
 
             // create user in logistics service
             const courierUser = new User({
@@ -88,7 +88,17 @@ class EnterpriseService {
             await courierUser.save({ session });
 
             const walletInstance = new WalletService();
-            await walletInstance.createWallet(newEnterprise._id, session);
+            const wallet = await walletInstance.createWallet(newEnterprise._id, session);
+
+            const creditInstance = new CreditService();
+            const credit = await creditInstance.createCredit(
+              newEnterprise._id,
+              session
+            );
+
+            newEnterprise.credit = credit;
+            newEnterprise.wallet = wallet;
+            await newEnterprise.save({ session });
 
             await session.commitTransaction();
             session.endSession();
@@ -173,7 +183,6 @@ class EnterpriseService {
 
             // create enterprise document
             const newEnterprise = new Enterprise(body);
-            await newEnterprise.save({ session });
 
             // create user in logistics service
             const courierUser = new User({
@@ -186,7 +195,19 @@ class EnterpriseService {
             await courierUser.save({ session });
 
             const walletInstance = new WalletService();
-            await walletInstance.createWallet(newEnterprise._id, session);
+            const wallet = await walletInstance.createWallet(
+              newEnterprise._id,
+              session
+            );
+
+            const creditInstance = new CreditService();
+            const credit = await creditInstance.createCredit(
+              newEnterprise._id,
+              session
+            );
+
+            newEnterprise.credit = credit;
+            newEnterprise.wallet = wallet;
 
             await Enterprise.updateMany(
               { _id: enterprise._id },
@@ -200,6 +221,8 @@ class EnterpriseService {
               },
               { session }
             );
+
+            await newEnterprise.save({ session });
 
             await session.commitTransaction();
             session.endSession();

@@ -31,7 +31,7 @@ const UserService = require("../services/user")
  * @param {*} req
  * @param {*} res
  */
-exports.localEntry = async (req, res) => {
+exports.localEntry = async (req, res, next) => {
   try {
     const { error } = validateLocalEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -112,8 +112,7 @@ exports.localEntry = async (req, res) => {
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
     return;
   } catch (error) {
-    console.log(error);
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 

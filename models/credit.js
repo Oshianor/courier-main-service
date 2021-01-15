@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const WalletSchema = mongoose.Schema(
+const CreditSchema = mongoose.Schema(
   {
     source: {
       type: String,
@@ -25,7 +25,7 @@ const WalletSchema = mongoose.Schema(
       required: true,
       default: 0.0,
     },
-    totalDeposited: {
+    totalCredit: {
       type: Number,
       required: true,
       default: 0.0,
@@ -36,6 +36,6 @@ const WalletSchema = mongoose.Schema(
   }
 );
 
-const Wallet = mongoose.model("Wallet", WalletSchema);
+const Credit = mongoose.model("Credit", CreditSchema);
 
-module.exports = Wallet;
+module.exports = Credit;

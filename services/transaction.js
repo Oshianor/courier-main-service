@@ -203,7 +203,7 @@ class TransactionService {
             enterprise: enterprise._id,
             transaction: newTransaction._id,
             pickupType: body.pickupType,
-            status: "pending",
+            status: "companyAccepted",
             approvedAt: new Date(),
             TEC: amount,
             paymentMethod: body.paymentMethod,

@@ -450,7 +450,8 @@ class RiderSerivice {
         .populate('entry')
         .populate('card')
         .skip(skip)
-        .limit(pageSize);
+        .limit(pageSize)
+        .sort({createdAt: "desc"});
 
         const total = await Transaction.countDocuments(filter);
 

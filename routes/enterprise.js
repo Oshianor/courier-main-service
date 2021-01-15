@@ -48,7 +48,14 @@ router.get(
 );
 
 // get enterprise statistics
-router.get("/statistics", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getStatistics);
+router.get(
+  "/statistics",
+  [
+    UserAuth,
+    EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH, E_ROLES.MAINTAINER]),
+  ],
+  controller.enterprise.getStatistics
+);
 // Add card by enterprise owner and branch
 router.post(
   "/card/add",

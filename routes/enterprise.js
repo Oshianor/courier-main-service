@@ -49,6 +49,13 @@ router.post(
   EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH]),
   controller.enterprise.addCard
 );
+// get all cards for an eneterprise
+router.get(
+  "/card",
+  UserAuth,
+  EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.BRANCH]),
+  controller.enterprise.getCards
+);
 
 
 module.exports = router;

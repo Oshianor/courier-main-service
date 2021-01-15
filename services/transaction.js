@@ -151,7 +151,7 @@ class TransactionService {
         let msg;
         if (body.paymentMethod === "card") {
           const userInstance = new UserService();
-          const card = await userInstance.getCardByUserId(
+          const card = await userInstance.getAllEnterpriseCard(
             enterprise.user,
             body.card
           );

@@ -571,7 +571,6 @@ class EnterpriseService {
     });
   }
 
-
   /**
    * @param {Object} enterprise object
    */

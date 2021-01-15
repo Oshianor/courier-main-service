@@ -86,7 +86,7 @@ class UserService {
         // console.log("response", response);
         resolve(response.data);
       } catch (error) {
-        console.log('User not found', error);
+        console.log("User not found", error);
         reject(error.response.data);
       }
     });
@@ -158,15 +158,44 @@ class UserService {
   }
 
   /**
-   * Get a single card for by user
+   * Get a single card for enterprise
    * @param {ObjectId} user
    * @param {ObjectId} card
    */
-  getCardByUserId(user, card) {
+  getSingleEnterpriseCard(user, card) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.get(
-          `${config.get("api.base")}/card/${card}/${user}`,
+        const response = await axios.post(
+          `${config.get("api.base")}/card/enterprise/single`,
+          {
+            card,
+            user,
+          },
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+        resolve(response.data);
+      } catch (error) {
+        reject(error.response.data);
+      }
+    });
+  }
+
+  /**
+   * Get all card for enterprise account
+   * @param {ObjectId} user the user account to get their cards
+   */
+  getAllEnterpriseCard(user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(
+          `${config.get("api.base")}/card/enterprise/all`,
+          {
+            user,
+          },
           {
             headers: {
               "api-key": config.get("api.key"),

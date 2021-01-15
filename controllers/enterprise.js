@@ -4,6 +4,8 @@ const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
 const OrderService = require("../services/order");
+const UserService = require("../services/user");
+const userInstance = new UserService();
 const enterpriseInstance = new EnterpriseService();
 
 /**
@@ -81,6 +83,22 @@ exports.addCard = async (req, res, next) => {
   try {
     const card = await enterpriseInstance.addCard(req.body, req.token);
     return JsonResponse(res, 200, card.data.msg, card.data.data);
+  } catch (error) {
+    next(error)
+    return
+  }
+};
+
+/**
+ * get all cards for enterprise accounts
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getCards = async (req, res, next) => {
+  try {
+    const card = await userInstance.getAllEnterpriseCard(req.enterprise.user);
+
+    return JsonResponse(res, 200, card.msg, card.data);
   } catch (error) {
     next(error)
     return

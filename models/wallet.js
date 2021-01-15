@@ -30,6 +30,11 @@ const WalletSchema = mongoose.Schema(
       required: true,
       default: 0.0,
     },
+    totalCredit: {
+      type: Number,
+      required: true,
+      default: 0.0,
+    },
   },
   {
     timestamps: true,

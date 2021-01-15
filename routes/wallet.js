@@ -7,6 +7,7 @@ const router = express.Router();
 const controller = require("../controllers");
 const { UserAuth, EnterpriseAuth, E_ROLES } = require("../middlewares/auth");
 
+
 // fund wallet
 router.post(
   "/fund",
@@ -21,6 +22,14 @@ router.get(
   UserAuth,
   EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.OWNER]),
   controller.wallet.get
+);
+
+// get wallet history
+router.get(
+  "/history",
+  UserAuth,
+  EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER ]),
+  controller.wallet.walletHistory
 );
 
 

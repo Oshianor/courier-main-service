@@ -7,16 +7,31 @@ const WalletHistorySchema = mongoose.Schema(
       type: String,
       default: null,
     },
+    source: {
+      type: String,
+      index: true,
+      required: true,
+      enum: ["enterprise", "admin"],
+      default: "enterprise",
+    },
     enterprise: {
       type: ObjectId,
       index: true,
       required: true,
       ref: "Enterprise",
     },
+    admin: {
+      type: ObjectId,
+      ref: "Admin",
+    },
+    entry: {
+      type: ObjectId,
+      ref: "Entry",
+    },
     type: {
       type: String,
-      enum: ["dr", "cr"],
-      default: "cr",
+      enum: ["debit", "credit", "loan"],
+      default: "credit",
     },
     user: {
       type: ObjectId,

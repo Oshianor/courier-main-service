@@ -84,4 +84,12 @@ router.post("/industry-category", [Auth, hasRole([ROLES.ADMIN])], controller.ind
 router.get("/industry-category", controller.industryCategory.all);
 
 
+// wallet
+router.post(
+  "/fund-wallet",
+  [Auth, hasRole([ROLES.ADMIN])],
+  controller.wallet.lineOfCredit
+);
+
+
 module.exports = router;

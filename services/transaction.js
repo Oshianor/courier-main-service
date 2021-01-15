@@ -169,7 +169,7 @@ class TransactionService {
 
           msg = "Card Payment Successfully Processed";
         } else if (body.paymentMethod === "wallet") {
-          await this.chargeWallet(enterprise, amount, user);
+          await this.chargeWallet(enterprise, amount, user, body.entry);
 
           body.enterprise = enterprise._id;
           body.amount = amount;
@@ -280,9 +280,9 @@ class TransactionService {
    * @param {Object} enterprise
    * @param {Number} amount
    * @param {Object} user
-   * @param {Mongo Session} session mongoDB session
+   * @param {Object} entry 
    */
-  chargeWallet(enterprise, amount, user, session) {
+  chargeWallet(enterprise, amount, user, entry) {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
 
@@ -316,11 +316,12 @@ class TransactionService {
 
         const wallethistory = new WalletHistory({
           txRef: nanoid(20),
-          type: "cr",
+          type: "debit",
           user: user.id,
           amount,
           status: "approved",
           enterprise: enterprise._id,
+          entry: entry,
         });
 
         await wallethistory.save({ session });

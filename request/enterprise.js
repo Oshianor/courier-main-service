@@ -20,7 +20,8 @@ function validateEnterprise(body) {
 
 function validateEnterpriseUpdate(body) {
   const schema = Joi.object({
-    name: Joi.string().optional(),
+    name: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
     address: Joi.string().optional(),
     primaryColors: Joi.array().items(Joi.string().optional()).optional(),
     secondaryColors: Joi.array().items(Joi.string().optional()).optional(),
@@ -29,7 +30,7 @@ function validateEnterpriseUpdate(body) {
     logo: Joi.string().optional(),
     enterprise: Joi.optional(),
     owner: Joi.optional(),
-    branch: Joi.optional()
+    branch: Joi.optional(),
   });
 
   return schema.validate(body);

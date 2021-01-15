@@ -4,7 +4,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const axios = require("axios");
 const Enterprise = require("../models/enterprise");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary, convertToMonthlyDataArray } = require("../utils");
+const { UploadFileFromBinary, UploadFileFromBase64 ,convertToMonthlyDataArray } = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
 const CreditService = require("./credit");
@@ -313,11 +313,46 @@ class EnterpriseService {
             },
           }
         );
-        
+
         resolve(response.data.data);
       } catch (error) {
         console.log("error", error);
 
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+        return reject(error);
+      }
+    });
+  }
+
+  /**
+   * Update user account - request to account service
+   * @param {Object} body
+   */
+  updateExaltUser(userAuthToken, body) {
+    return new Promise(async (resolve, reject) => {
+
+      const accountUpdateData = {
+        name: body.name,
+        phoneNumber: body.phoneNumber
+      };
+
+      try {
+        const response = await axios.patch(
+          `${config.get("api.base")}/user/account`,
+          accountUpdateData,
+          {
+            headers: {
+              "x-auth-token": userAuthToken,
+            },
+          }
+        );
+        resolve(response.data.data);
+      } catch (error) {
         if (error.response) {
           return reject({
             code: error.response.status,
@@ -481,20 +516,50 @@ class EnterpriseService {
    * @param {Object} enterprise
    * @param {ObjectI} updateObject
    */
-  updateEnterprise(enterprise, updateObject) {
+  updateEnterprise(enterprise, userAuthToken, updateObject) {
     return new Promise(async (resolve, reject) => {
       try {
         const validEnterprise = await Enterprise.findOne(enterprise);
-        if (!validEnterprise)
+        if (!validEnterprise){
           return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        }
+
+        const updatedUserAccount = await this.updateExaltUser(userAuthToken, updateObject);
+
+        if(!updatedUserAccount){
+          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        }
+
+        // Upload image to s3 if any
+        if (updateObject.logo) {
+          const imageUpload = await UploadFileFromBase64(
+            updateObject.logo,
+            `${enterprise._id}_image`
+          );
+
+          if (imageUpload && imageUpload.key) {
+            updateObject.logo = imageUpload.key;
+          } else {
+            return reject({ code: 500, msg: "Image upload failed" });
+          }
+        }
 
         const updatedEnterprise = await Enterprise.updateOne(enterprise, {
           $set: updateObject,
         });
-        if (!updatedEnterprise)
+        if (!updatedEnterprise){
           return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        }
         resolve(updatedEnterprise);
       } catch (error) {
+        console.log('Error => ', error);
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+
         error.service = "Update enterprise service error";
         return reject(error);
       }

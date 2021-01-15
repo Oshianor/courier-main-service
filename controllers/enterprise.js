@@ -23,7 +23,7 @@ exports.createOrganization = async (req, res, next) => {
       req.files,
       req.user
     );
-    
+
     return JsonResponse(res, 200, MSG_TYPES.CREATED, newEnterprise);
   } catch (error) {
     next(error)
@@ -115,7 +115,7 @@ exports.updateEnterprise = async (req, res, next) => {
     const { error } = validateEnterpriseUpdate(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
     const enterpriseId = req.enterprise._id;
-    await enterpriseInstance.updateEnterprise({ _id: enterpriseId }, req.body);
+    await enterpriseInstance.updateEnterprise({ _id: enterpriseId }, req.token, req.body);
     return JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     next(error)

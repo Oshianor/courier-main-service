@@ -107,7 +107,7 @@ const entrySchema = mongoose.Schema(
     paymentMethod: {
       type: String,
       default: "cash",
-      enum: ["card", "cash"],
+      enum: ["card", "cash", "credit", "wallet"],
     },
     pickupType: {
       type: String,

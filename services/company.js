@@ -287,16 +287,15 @@ class CompanyService {
         const successfulOrders = await Order.find({company: companyId, status: "delivered"}).countDocuments();
         const totalRiders = await Rider.find({company: companyId}).countDocuments();
 
-        // @TODO - Get the actual revenues by querying
         let totalRevenue = await Transaction.aggregate([
-          { $match: {company: ObjectId(companyId) } },
+          { $match: {company: ObjectId(companyId),status: "approved",approvedAt: {$ne:null}} },
           { $group: { _id: companyId, "total": {$sum: "$amount"} }},
         ]);
 
         totalRevenue = totalRevenue[0] ? totalRevenue[0].total : 0;
 
         let monthlyRevenues = await Transaction.aggregate([
-          { $match: {company: ObjectId(companyId) } },
+          { $match: {company: ObjectId(companyId), status: "approved"} },
           { $group:{ _id: {$month: "$approvedAt"}, revenue: {$sum: "$amount"}} },
           { $project: {_id:0, "month": "$_id", revenue: "$revenue"}}
         ]);

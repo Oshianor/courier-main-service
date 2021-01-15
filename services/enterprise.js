@@ -605,7 +605,7 @@ class EnterpriseService {
         ]);
         totalSpent = totalSpent[0] ? totalSpent[0].total : 0;
 
-        const totalBranches = enterprise.branchIDS.length;
+        const totalBranches = enterprise.branchUserIDS.length;
         const totalManagers = enterprise.maintainers.length;
 
         resolve({

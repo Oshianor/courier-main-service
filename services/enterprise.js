@@ -394,7 +394,7 @@ class EnterpriseService {
       try {
         const organization = await User.findOne({_id: userId})
           .select("-createdBy -deleted -deletedBy -deletedAt")
-          .populate("enterprise", "name type phoneNumber email address logo");
+          .populate("enterprise", "name type phoneNumber email address logo motto industry");
 
         if (!organization){
           return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });

@@ -472,9 +472,7 @@ class RiderSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const orders = await Order.find(filter)
-        .populate('user')
-        .populate('rider')
-        .populate('entry')
+        .populate("user", "-password -rememberToken")
         .skip(skip)
         .limit(pageSize)
         .sort({createdAt: "desc"});

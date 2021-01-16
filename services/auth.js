@@ -267,7 +267,7 @@ class AuthSerivice {
         const exaltUser = response.data.data;
         const localUser = await User.findById(exaltUser._id).populate(
           "enterprise",
-          "name type phoneNumber email address logo"
+          "name type phoneNumber email address logo motto industry"
         );
 
         resolve({ token, exaltUser, localUser });
@@ -347,10 +347,10 @@ class AuthSerivice {
               }
             );
             resolve(response.data.data);
-          } 
+          }
         }
 
-        
+
 
       } catch (error) {
         if (error.response) {

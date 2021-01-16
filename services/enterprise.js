@@ -387,16 +387,18 @@ class EnterpriseService {
 
   /**
    * Get an enterprise details
-   * @param {MongoDB ObjectId} enterprise
+   * @param {MongoDB ObjectId} userId
    */
-  getEnterprise(enterprise) {
+  getEnterprise(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const organization = await User.findOne(enterprise)
+        const organization = await User.findOne({_id: userId})
           .select("-createdBy -deleted -deletedBy -deletedAt")
-          .populate("enterprise");
-        if (!organization)
-          return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+          .populate("enterprise", "name type phoneNumber email address logo");
+
+        if (!organization){
+          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        }
         resolve(organization);
       } catch (error) {
         // error.service = 'Get enterprise service error'
@@ -514,9 +516,10 @@ class EnterpriseService {
   /**
    * update enterprise
    * @param {Object} enterprise
-   * @param {ObjectI} updateObject
+   * @param {Object} updateObject
+   * @param {string } userAuthToken Optional param, Should be provided for accounts service update
    */
-  updateEnterprise(enterprise, userAuthToken, updateObject) {
+  updateEnterprise(enterprise, updateObject, userAuthToken) {
     return new Promise(async (resolve, reject) => {
       try {
         const validEnterprise = await Enterprise.findOne(enterprise);
@@ -524,10 +527,11 @@ class EnterpriseService {
           return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
         }
 
-        const updatedUserAccount = await this.updateExaltUser(userAuthToken, updateObject);
-
-        if(!updatedUserAccount){
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        if(userAuthToken){
+          const updatedUserAccount = await this.updateExaltUser(userAuthToken, updateObject);
+          if(!updatedUserAccount){
+            return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+          }
         }
 
         // Upload image to s3 if any
@@ -544,12 +548,14 @@ class EnterpriseService {
           }
         }
 
-        const updatedEnterprise = await Enterprise.updateOne(enterprise, {
-          $set: updateObject,
-        });
+        const updatedEnterprise = await Enterprise.findOneAndUpdate(enterprise,
+          { $set: updateObject },
+          { new: true }
+        );
         if (!updatedEnterprise){
           return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
         }
+
         resolve(updatedEnterprise);
       } catch (error) {
         console.log('Error => ', error);

@@ -114,9 +114,11 @@ exports.updateEnterprise = async (req, res, next) => {
   try {
     const { error } = validateEnterpriseUpdate(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
+
     const enterpriseId = req.enterprise._id;
-    await enterpriseInstance.updateEnterprise({ _id: enterpriseId }, req.token, req.body);
-    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    const updatedEnterprise = await enterpriseInstance.updateEnterprise({ _id:enterpriseId },  req.body, req.token);
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedEnterprise);
   } catch (error) {
     next(error)
     return
@@ -130,7 +132,7 @@ exports.updateEnterprise = async (req, res, next) => {
  */
 exports.getEnterprise = async (req, res, next) => {
   try {
-    const enterprise = await enterpriseInstance.getEnterprise({ email: req.enterprise.email });
+    const enterprise = await enterpriseInstance.getEnterprise(req.user.id);
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterprise);
   } catch (error) {
     next(error)

@@ -10,6 +10,11 @@ const WalletSchema = mongoose.Schema(
       enum: ["enterprise"],
       default: "enterprise",
     },
+    status: {
+      type: String,
+      default: "active",
+      enum: ["active", "suspended"]
+    },
     enterprise: {
       type: ObjectId,
       ref: "Enterprise",

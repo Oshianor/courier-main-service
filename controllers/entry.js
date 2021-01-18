@@ -54,9 +54,6 @@ exports.localEntry = async (req, res, next) => {
       req.body.enterprise = req.enterprise._id;
     }
     
-
-
-
     const entryInstance = new EntryService();
     const countryInstance = new CountryService();
     const settingInstance = new SettingService();
@@ -320,6 +317,10 @@ exports.riderAcceptEntry = async (req, res) => {
     // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
+
+    // dispatch action to riders for taken entry
+    const riderSub = new RiderSubscription();
+    await riderSub.takenEntryForRiders(entry._id);
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
     return;

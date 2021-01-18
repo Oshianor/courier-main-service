@@ -21,7 +21,11 @@ const SERVER_EVENTS = Object.freeze({
   ENTRY_ACCEPTED: "entryAccepted",
 
   // When an order is assgned to a rider
-  ASSIGN_ENTRY: "assignEntry"
+  ASSIGN_ENTRY: "assignEntry",
+
+  // When an order as been accepted by a rider.
+  // we dispatch this to the app to hide that order
+  TAKEN_ENTRY: "takenEntry"
 });
 
 

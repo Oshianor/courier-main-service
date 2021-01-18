@@ -7,6 +7,12 @@ const WalletHistorySchema = mongoose.Schema(
       type: String,
       default: null,
     },
+    wallet: {
+      type: ObjectId,
+      index: true,
+      required: true,
+      ref: "Wallet",
+    },
     source: {
       type: String,
       index: true,

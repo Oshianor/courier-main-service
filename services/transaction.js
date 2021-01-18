@@ -156,12 +156,15 @@ class TransactionService {
         let msg;
         if (body.paymentMethod === "card") {
           const userInstance = new UserService();
-          const card = await userInstance.getAllEnterpriseCard(
+          const card = await userInstance.getSingleEnterpriseCard(
             enterprise.user,
             body.card
           );
 
-          const { trans } = await this.changeCard(card, amount);
+        console.log("card", card);
+
+
+          const { trans } = await this.chargeCard(card, amount);
 
           body.enterprise = enterprise._id;
           body.amount = amount;
@@ -257,8 +260,9 @@ class TransactionService {
    * @param {Object} body
    * @param {number} amount
    */
-  changeCard(card, amount) {
+  chargeCard(card, amount) {
     return new Promise(async (resolve, reject) => {
+      console.log("card", card);
       try {
         const trans = await paystack.transaction.charge({
           reference: nanoid(20),
@@ -340,6 +344,7 @@ class TransactionService {
           status: "approved",
           enterprise: enterprise._id,
           entry: entry,
+          wallet: wallet._id,
         });
 
         await wallethistory.save({ session });
@@ -383,8 +388,7 @@ class TransactionService {
         if (parseFloat(credit.balance) < parseFloat(amount)) {
           return reject({
             code: 500,
-            msg:
-              "You don't have enough credit to process this transaction",
+            msg: "You don't have enough credit to process this transaction",
           });
         }
 

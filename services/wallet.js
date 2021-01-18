@@ -39,18 +39,50 @@ class WalletService {
   }
 
   /**
+   * get all wallet
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllWallet(skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      const wallet = await Wallet.find()
+        .populate(
+          "enterprise",
+          "name email address industry countryCode phoneNumber type"
+        )
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ createdAt: -1 });
+
+      const total = await Wallet.find().countDocuments();
+
+      resolve({ wallet, total });
+    });
+  }
+
+  /**
    * fund wallet with card
    * @param {string} enterprise // Enterprise Id for the company
    */
   fundWallet(body, user, token) {
     return new Promise(async (resolve, reject) => {
       try {
-        const wallet = await Wallet.findOne({ enterprise: user.enterprise });
+        const wallet = await Wallet.findOne({
+          enterprise: user.enterprise,
+        });
 
         if (!wallet) {
           return reject({
             code: 400,
             msg: "No wallet was found on your account",
+          });
+        }
+
+        if (wallet.status === "suspended") {
+          return reject({
+            code: 400,
+            msg:
+              "Your wallet account has been suspended. Please contact support for asistance",
           });
         }
 
@@ -93,6 +125,7 @@ class WalletService {
           amount: body.amount,
           status: "approved",
           type: "credit",
+          wallet: wallet._id
         });
 
         await newWalletHistory.save();
@@ -170,7 +203,59 @@ class WalletService {
           enterprise: user.enterprise,
         }).countDocuments();
 
-        resolve({ total, history })
+        resolve({ total, history });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Suspended a wallet screen
+   * @param {Object} body
+   */
+  disableAWallet(params) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const wallet = await Wallet.findOne({
+          _id: params.wallet,
+        });
+
+        if (!wallet) {
+          return reject({ code: 404, msg: "No wallet was found." });
+        }
+
+        (wallet.status = wallet.status === "active" ? "suspended" : "active"),
+          await wallet.save();
+
+        resolve(wallet);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * get Wallet history by wallet ID for admin
+   * @param {Object} params request parameters
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  singleWalletHistory(params, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const history = await WalletHistory.find({
+          wallet: params.wallet,
+        })
+          .skip(skip)
+          .limit(pageSize)
+          .sort({ createdAt: -1 });
+
+        const total = await WalletHistory.find({
+          wallet: params.wallet,
+        }).countDocuments();
+
+        resolve({ total, history });
       } catch (error) {
         reject(error);
       }

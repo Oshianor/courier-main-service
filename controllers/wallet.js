@@ -6,7 +6,8 @@ const {
   validateAdminFundWallet,
 } = require("../request/wallet");
 const { paginate } = require("../utils");
-
+const mongoose = require("mongoose");
+const ObjectId = mongoose.Types.ObjectId;
 
 /**
  * Fund wallet by onwer and branch
@@ -64,6 +65,92 @@ exports.walletHistory = async (req, res, next) => {
     const walletInstance = new WalletService();
     const { history, total } = await walletInstance.walletHistory(
       req.user,
+      skip,
+      pageSize
+    );
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, history, meta);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
+
+
+
+/**
+ * get all wallet address by admin
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getWalletByAdmin = async (req, res, next) => {
+  try {
+    const { page, pageSize, skip } = paginate(req);
+
+    const walletInstance = new WalletService();
+    const { wallet, total } = await walletInstance.getAllWallet(skip, pageSize);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, wallet, meta);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
+
+
+/**
+ * get all wallet address by admin
+ * @param {*} req
+ * @param {*} res
+ */
+exports.disableWallet = async (req, res, next) => {
+  try {
+    if (!ObjectId.isValid(req.params.wallet)) {
+      JsonResponse(res, 200, "Wallet Id provided is invalid", wallet);
+      return;
+    }
+
+    const walletInstance = new WalletService();
+    const wallet = await walletInstance.disableAWallet(req.params);
+
+    JsonResponse(res, 200, `Wallet account is successfully ${wallet.status}`, wallet);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
+
+
+/**
+ * get a wallet history
+ * @param {*} req
+ * @param {*} res
+ */
+exports.singleWalletHistory = async (req, res, next) => {
+  try {
+    if (!ObjectId.isValid(req.params.wallet)) {
+      JsonResponse(res, 200, "Wallet Id provided is invalid", wallet);
+      return;
+    }
+
+    const { page, pageSize, skip } = paginate(req);
+
+    const walletInstance = new WalletService();
+    const { history, total } = await walletInstance.singleWalletHistory(
+      req.params,
       skip,
       pageSize
     );

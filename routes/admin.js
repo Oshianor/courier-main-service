@@ -91,5 +91,25 @@ router.post(
   controller.credit.lineOfCredit
 );
 
+// wallet
+// get all enterprise wallet
+router.post(
+  "/wallet/all",
+  [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
+  controller.wallet.getWalletByAdmin
+);
+// disable a wallet account
+router.patch(
+  "/wallet/status/:wallet",
+  [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
+  controller.wallet.disableWallet
+);
+// a wallet history of for a particular wallet
+router.get(
+  "/wallet/history/:wallet",
+  [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
+  controller.wallet.singleWalletHistory
+);
+
 
 module.exports = router;

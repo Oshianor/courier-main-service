@@ -3,8 +3,8 @@ const io = require("socket.io-emitter");
 const { SocketResponse } = require("../lib/apiResponse");
 const { SERVER_EVENTS } = require("../constant/events");
 const { AsyncForEach } = require("../utils");
+const RiderEntryRequest = require("../models/riderEntryRequest");
 const socket = new io(config.get("application.redis"), { key: "/sio" });
-
 
 class RiderSubscription {
   /**
@@ -14,6 +14,7 @@ class RiderSubscription {
    */
   sendRidersEntries(riderIDS, entry) {
     return new Promise(async (resolve, reject) => {
+      // send to an array of riders
       await AsyncForEach(riderIDS, (row, index, arr) => {
         // send to rider by their room id
         // send socket to riders only
@@ -21,10 +22,29 @@ class RiderSubscription {
           .to(String(row))
           .emit(SERVER_EVENTS.ASSIGN_ENTRY, SocketResponse(false, "ok", entry));
       });
-      
-      resolve({ entry });
 
-      // resolve(SocketResponse(false, "ok", entry));
+      resolve({ entry });
+    });
+  }
+
+  /**
+   * Dispatch action to riders that entry has been taken.
+   * @param {ObjectId} entry
+   */
+  takenEntryForRiders(entry) {
+    return new Promise(async (resolve, reject) => {
+      const request = await RiderEntryRequest.find({ entry });
+
+      console.log("request", request);
+      
+      // send to an array of riders
+      await AsyncForEach(request, (row, index, arr) => {
+        // send to rider by their room id
+        // send socket to riders only
+        socket.to(String(row.rider)).emit(SERVER_EVENTS.TAKEN_ENTRY, SocketResponse(false, "ok", null));
+      });
+
+      resolve();
     });
   }
 }

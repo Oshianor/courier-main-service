@@ -672,11 +672,12 @@ class EnterpriseService {
     return new Promise(async(resolve, reject) => {
       try{
         const successfulDeliveryFilter = {
-          enterprise: enterprise.id,
+          enterprise: enterprise._id,
           status: "delivered"
         }
+
         const failedDeliveryFilter = {
-          enterprise: enterprise.id,
+          enterprise: enterprise._id,
           status: "canceled"
         }
 
@@ -691,9 +692,13 @@ class EnterpriseService {
         const totalFailedDeliveries = await Order.countDocuments(failedDeliveryFilter);
 
         // Total spent
-        let totalSpent = await Transaction.aggregate([
-          { $match: {enterprise: ObjectId(enterprise.id), status: "approved",approvedAt: {$ne:null}} },
-          { $group: { _id: enterprise.id, "total": {$sum: "$amount"} }},
+        let totalSpent = await Transaction.aggregate([{
+          $match: {
+            enterprise: ObjectId(enterprise._id),
+            status: "approved",
+            approvedAt: {$ne:null}
+          }},
+          { $group: { _id: enterprise._id, "total": {$sum: "$amount"} }},
         ]);
         totalSpent = totalSpent[0] ? totalSpent[0].total : 0;
 

@@ -15,7 +15,7 @@ const {
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const AuthService = require("../services/auth");
-
+const { redisClient } = require("../utils");
 
 /**
  * Company Login
@@ -172,15 +172,24 @@ exports.riderLogin = async (req, res) => {
 
     // compare request password with the password saved on the database
     let validPassword = await bcrypt.compare(req.body.password, rider.password);
-    if (!validPassword)
+    if (!validPassword){
       return JsonResponse(res, 400, MSG_TYPES.ACCOUNT_INVALID);
+    }
 
     const token = rider.generateToken();
+    const riderId = rider._id.toString();
 
-    rider.password = "";
-    res.header("x-auth-token", token);
-    JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, rider, null);
-    return;
+    redisClient().hset('RIDER_AUTH_TOKENS', riderId, token, (error, result) => {
+      if(error){
+        console.log("Failed to set rider token in redis: ", error);
+        return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+      }
+
+      rider.password = "";
+      res.header("x-auth-token", token);
+      return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, rider, null);
+    });
+
   } catch (error) {
     console.log(error);
     return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);

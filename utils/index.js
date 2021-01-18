@@ -7,7 +7,7 @@ const AWS = require("aws-sdk");
 const s3 = new AWS.S3();
 const sgMail = require("@sendgrid/mail");
 const RandExp = require("randexp");
-
+const redis = require("redis");
 
 
 const GenerateToken = (num) => {
@@ -147,6 +147,15 @@ const convertToMonthlyDataArray = (dataArray, dataField) => {
 }
 
 
+const redisClient = () => {
+  const client = redis.createClient(config.get("application.redis"));
+  client.on("error", (error) => {
+    console.log('Redis Client Error: ', error);
+  });
+
+  return client;
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -157,5 +166,6 @@ module.exports = {
   AsyncForEach,
   paginate,
   isObject,
-  convertToMonthlyDataArray
+  convertToMonthlyDataArray,
+  redisClient
 };

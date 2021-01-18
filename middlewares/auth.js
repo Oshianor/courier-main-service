@@ -7,7 +7,7 @@ const AdminService = require("../services/admin");
 const UserService = require("../services/user");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES, ACCOUNT_TYPES } = require("../constant/types");
-
+const { redisClient } = require("../utils");
 
 const ROLES = {
   SUPER_ADMIN: "superAdmin",
@@ -22,7 +22,7 @@ const E_ROLES = {
 };
 
 /**
- * 
+ *
  * @param {Array} roles Passing an array of string.
  */
 const hasRole = (roles = []) => {
@@ -131,6 +131,7 @@ const UserAuth = async (req, res, next) => {
     delete req.user._id;
     next();
   } catch (ex) {
+    console.log('Error ', ex);
     console.log('Exception', ex);
     if (ex.msg) {
       return JsonResponse(res, 401, ex.msg);
@@ -173,6 +174,38 @@ const isExaltService = async (req, res, next) => {
 }
 
 
+const RiderAuth = async(req, res, next) => {
+  const token = req.header("x-auth-token");
+  if (!token){
+    return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.get("application.jwt.key"));
+    const riderId = decoded.id.toString();
+
+    redisClient().hget('RIDER_AUTH_TOKENS', riderId, (err, riderToken) => {
+      if(err){
+        return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+      }
+      if(riderToken !== token){
+        return JsonResponse(res, 440, "Logged out");
+      }
+      req.user = decoded;
+      req.token = token;
+      next();
+    });
+
+  } catch (ex) {
+    console.log(ex);
+    if (ex.msg) {
+      return JsonResponse(res, 401, ex.msg);
+    }
+    return JsonResponse(res, 406, "Session Expired");
+  }
+
+}
+
 module.exports = {
   Auth,
   hasRole,
@@ -182,6 +215,7 @@ module.exports = {
   isExaltService,
   CompanyAuth,
   EnterpriseAuth,
-  E_ROLES
+  E_ROLES,
+  RiderAuth
 };
 

@@ -177,8 +177,9 @@ exports.riderLogin = async (req, res) => {
     }
 
     const token = rider.generateToken();
+    const riderId = rider._id.toString();
 
-    redisClient().hmset('RIDER_AUTH_TOKENS', rider._id.toString(), token, (error, result) => {
+    redisClient().hset('RIDER_AUTH_TOKENS', riderId, token, (error, result) => {
       if(error){
         console.log("Failed to set rider token in redis: ", error);
         return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);

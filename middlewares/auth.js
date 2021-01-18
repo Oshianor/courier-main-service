@@ -182,12 +182,13 @@ const RiderAuth = async(req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
+    const riderId = decoded.id.toString();
 
-    redisClient().hgetall('RIDER_AUTH_TOKENS', (err, riderTokens) => {
+    redisClient().hget('RIDER_AUTH_TOKENS', riderId, (err, riderToken) => {
       if(err){
         return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
       }
-      if(riderTokens[decoded.id.toString()] !== token){
+      if(riderToken !== token){
         return JsonResponse(res, 440, "Logged out");
       }
       req.user = decoded;

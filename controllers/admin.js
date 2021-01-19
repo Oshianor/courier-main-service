@@ -287,7 +287,7 @@ exports.verifyBranch = async (req, res, next) => {
  */
 exports.getEnterpriseAccounts = async (req, res, next) => {
   try {
-    const { error } = validateGetEnterpriseAccounts(req.query);
+    const { error } = validateGetEnterpriseAccounts({role: req.query.role});
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const { page, pageSize, skip } = paginate(req);

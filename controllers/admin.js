@@ -9,14 +9,17 @@ const {
   validateAdmin,
   validatePassword,
   validateUpdateAdmin,
+  validateGetEnterpriseAccounts
 } = require("../request/admin");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
 const { Container } = require("typedi");
+const EnterpriseService = require("../services/enterprise");
 const adminInstance = Container.get(AdminService);
 const userInstance = Container.get(UserService);
 const countryInstance = Container.get(CountryService);
+const enterpriseInstance = Container.get(EnterpriseService)
 
 /**
  * Create AdminModel
@@ -275,3 +278,29 @@ exports.verifyBranch = async (req, res, next) => {
     return
   }
 };
+
+
+/**
+ * Get Enterprise Accounts
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getEnterpriseAccounts = async (req, res, next) => {
+  try {
+    const { error } = validateGetEnterpriseAccounts(req.query);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const { page, pageSize, skip } = paginate(req);
+
+    const { enterpriseAccounts, total } = await enterpriseInstance.getEnterpriseAccounts(req.query.role, skip, pageSize);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseAccounts, meta);
+  } catch (error) {
+    next(error);
+  }
+}

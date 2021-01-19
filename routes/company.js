@@ -4,9 +4,10 @@ const controller = require("../controllers");
 const { Auth } = require("../middlewares/auth");
 
 // company
+
 // create a company
 router.post("/", controller.company.company);
-
+router.patch("/", Auth, controller.company.updateSingle);
 
 // company routes
 router.get("/me", Auth, controller.company.me);
@@ -71,6 +72,10 @@ router.get("/entry/:entryId", Auth, controller.company.getSingleEntry);
 
 // Dashboard statistics
 router.get("/:companyId/statistics", Auth, controller.company.getStatistics);
-router.get("/:companyId/riders/statistics", Auth, controller.company.getRiderStatistics)
+router.get("/:companyId/riders/statistics", Auth, controller.company.getRiderStatistics);
+
+// update company
+router.patch("/password", Auth, controller.company.changePassword);
+
 
 module.exports = router;

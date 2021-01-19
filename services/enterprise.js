@@ -12,6 +12,7 @@ const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
 const Order = require("../models/order");
+const { reject } = require("bcrypt/promises");
 
 class EnterpriseService {
   /**
@@ -724,6 +725,36 @@ class EnterpriseService {
         }
       } catch(error){
         return reject(error);
+      }
+    })
+  }
+
+  /**
+   * Get all Enterprise Transactions
+   * @param {string} type - owner, branch, manager
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getEnterpriseAccounts(role, skip, pageSize){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const queryFilter = {
+          role: role,
+          group: "enterprise"
+        }
+
+        const enterpriseAccounts = await User.find(queryFilter)
+        .populate('enterprise', "status verified")
+        .skip(skip)
+        .limit(pageSize)
+        .sort({createdAt: 'desc'});
+
+        const total = await User.countDocuments(queryFilter);
+
+        resolve({ enterpriseAccounts, total });
+
+      } catch(e){
+        return reject(e);
       }
     })
   }

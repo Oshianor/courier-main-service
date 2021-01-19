@@ -67,10 +67,19 @@ function validateVerifyAccount(body) {
 }
 
 
+function validateGetEnterpriseAccounts(body) {
+  const schema = Joi.object({
+    role: Joi.string().valid("owner","branch","maintainer").required(),
+  });
+
+  return schema.validate(body);
+}
+
 module.exports = {
   validateAdmin,
   validateAdminLogin,
   validateVerifyAccount,
   validateUpdateAdmin,
   validatePassword,
+  validateGetEnterpriseAccounts
 };

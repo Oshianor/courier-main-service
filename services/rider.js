@@ -28,7 +28,7 @@ class RiderSerivice {
           return;
         }
 
-        if (files.POI) {
+        if (files && files.POI) {
           const POI = await UploadFileFromBinary(
             files.POI.data,
             files.POI.name
@@ -36,7 +36,7 @@ class RiderSerivice {
           body.POI = POI.Key;
         }
 
-        if (files.img) {
+        if (files && files.img) {
           const img = await UploadFileFromBinary(
             files.img.data,
             files.img.name

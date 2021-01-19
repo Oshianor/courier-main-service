@@ -109,6 +109,14 @@ function validateCompanyVerification(body) {
   return schema.validate(body);
 }
 
+function validateChangePassword(body) {
+  const schema = Joi.object({
+    oldPassword: Joi.string().max(30).required(),
+    newPassword: Joi.string().max(30).required(),
+  });
+
+  return schema.validate(body);
+}
 
 
 module.exports = {
@@ -118,4 +126,5 @@ module.exports = {
   validateStatusUpdate,
   validateVerifyCompany,
   validateCompanyVerification,
+  validateChangePassword
 };

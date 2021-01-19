@@ -494,7 +494,8 @@ class EntryService {
   }
 
   /**
-   * dispatch entry to exalt riders
+   * dispatch entry to exalt riders silent for 
+   * enterprise shipment that goes to exalt logistics
    * @param {Object} entry
    */
   silentlyAsignRiderToEntry(entry) {

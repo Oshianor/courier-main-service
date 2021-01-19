@@ -306,13 +306,13 @@ exports.riderAssignToEntry = async (req, res, next) => {
  * @param {*} req 
  * @param {*} res 
  */
-exports.riderAcceptEntry = async (req, res) => {
+exports.riderAcceptEntry = async (req, res, next) => {
   try {
     const { error } = validateEntryID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const entry = await entryInstance.riderAcceptEntry(req.body, req.user);
+    const {entry} = await entryInstance.riderAcceptEntry(req.body, req.user);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -325,7 +325,7 @@ exports.riderAcceptEntry = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error)
   }
 };
 

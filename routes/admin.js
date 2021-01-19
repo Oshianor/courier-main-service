@@ -93,7 +93,7 @@ router.post(
 
 // wallet
 // get all enterprise wallet
-router.post(
+router.get(
   "/wallet/all",
   [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
   controller.wallet.getWalletByAdmin

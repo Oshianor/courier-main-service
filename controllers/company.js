@@ -18,7 +18,8 @@ const {
   validateUpdateCompany,
   validateStatusUpdate,
   validateCompanyVerification,
-  validateCompany
+  validateCompany,
+  validateChangePassword
 } = require("../request/company");
 const {
   UploadFileFromBinary,
@@ -241,9 +242,16 @@ exports.recruiting = async (req, res) => {
 exports.updateSingle = async (req, res) => {
   try {
     const { error } = validateUpdateCompany(req.body);
-
     if (error) {
       JsonResponse(res, 400, error.details[0].message);
+      return;
+    }
+
+    const companyId = req.user.id;
+    const company = await Company.findOne({ _id: companyId });
+
+    if (!company) {
+      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
       return;
     }
 
@@ -279,16 +287,11 @@ exports.updateSingle = async (req, res) => {
       }
     }
 
-    const companyId = req.params.companyId;
-    const company = await Company.findOne({ _id: companyId });
 
-    if (!company) {
-      JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
-      return;
-    }
     const updatedCompany = await Company.findByIdAndUpdate(companyId, data, {
       new: true,
-    });
+    })
+    .select('-password');
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedCompany, null);
   } catch (error) {
@@ -528,5 +531,20 @@ exports.getRiderStatistics = async (req, res) => {
   } catch (error) {
     JsonResponse(res, error.code, error.msg);
     return
+  }
+}
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { error } = validateChangePassword(req.body);
+    if (error) {
+      return JsonResponse(res, 400, error.details[0].message);
+    }
+
+    const updatedCompany = await companyInstance.updatePassword(req.user.id, req.body);
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    return JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
   }
 }

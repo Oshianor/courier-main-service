@@ -13,6 +13,7 @@ const Order = require("../models/order");
 const Rider = require("../models/rider");
 const { ObjectId } = mongoose.Types;
 
+
 class CompanyService {
   /**
    * Create a Company account
@@ -376,6 +377,44 @@ class CompanyService {
         return
       }
     })
+  }
+
+   /**
+   * Update password
+   * @param {Object} body request body object
+   * @param {ObjectId} companyId
+   */
+  updatePassword(companyId, body) {
+    return new Promise(async (resolve, reject) => {
+      const company = await Company.findOne({
+        _id: companyId,
+        verified: true,
+        status: "active",
+      });
+
+      if (!company) {
+        return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+      }
+
+      let validPassword = await bcrypt.compare(
+        body.oldPassword,
+        company.password
+      );
+      if (!validPassword) {
+        return reject({ code: 400, msg: "Old password incorrect" });
+      }
+      const updatedPassword = await bcrypt.hash(body.newPassword, 10);
+      const updatedCompany = await Company.updateOne(
+        { _id: companyId },
+        {
+          $set: {
+            password: updatedPassword,
+          },
+        }
+      );
+
+      resolve(updatedCompany);
+    });
   }
 
 }

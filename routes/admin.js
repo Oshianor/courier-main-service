@@ -112,4 +112,7 @@ router.get(
 );
 
 
+// Enterprise accounts management
+router.get("/enterprise/accounts", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseAccounts);
+
 module.exports = router;

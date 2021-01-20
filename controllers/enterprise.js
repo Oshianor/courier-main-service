@@ -5,8 +5,11 @@ const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
 const OrderService = require("../services/order");
 const UserService = require("../services/user");
+const StatisticsService = require("../services/statistics");
 const userInstance = new UserService();
 const enterpriseInstance = new EnterpriseService();
+const statisticsInstance = new StatisticsService();
+
 
 /**
  * Create organization
@@ -269,7 +272,7 @@ exports.getPendingOrders = async (req, res, next) => {
  */
 exports.getStatistics = async (req, res, next) => {
   try {
-    const statistics = await enterpriseInstance.getStatistics(req.enterprise);
+    const statistics = await statisticsInstance.getGeneralStatistics({enterprise: req.enterprise._id});
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
   } catch (error) {

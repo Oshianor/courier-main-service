@@ -5,6 +5,7 @@ const UserService = require("../services/user");
 const CountryService = require("../services/country");
 const RiderModel = require("../models/rider");
 const AdminService = require("../services/admin");
+const StatisticsService = require("../services/statistics");
 const {
   validateAdmin,
   validatePassword,
@@ -19,7 +20,8 @@ const EnterpriseService = require("../services/enterprise");
 const adminInstance = Container.get(AdminService);
 const userInstance = Container.get(UserService);
 const countryInstance = Container.get(CountryService);
-const enterpriseInstance = Container.get(EnterpriseService)
+const enterpriseInstance = Container.get(EnterpriseService);
+const statisticsInstance = Container.get(StatisticsService);
 
 /**
  * Create AdminModel
@@ -284,6 +286,7 @@ exports.verifyBranch = async (req, res, next) => {
  * Get Enterprise Accounts
  * @param {*} req
  * @param {*} res
+ * @param {*} next
  */
 exports.getEnterpriseAccounts = async (req, res, next) => {
   try {
@@ -301,6 +304,23 @@ exports.getEnterpriseAccounts = async (req, res, next) => {
 
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseAccounts, meta);
   } catch (error) {
+    next(error);
+  }
+}
+
+
+/**
+ * Get General stats
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.getGeneralStats = async (req, res, next) => {
+  try{
+    const statistics = await statisticsInstance.getGeneralStatistics();
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch(error){
     next(error);
   }
 }

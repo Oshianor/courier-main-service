@@ -279,7 +279,7 @@ class CompanyService {
 
   /**
   * GET a company's statistics - revenue, orders, riders summary
-  * @param {Object} updateObject
+  * @param {ObjectId} companyId
   */
   getStatistics(companyId) {
     return new Promise(async (resolve, reject) => {
@@ -378,6 +378,38 @@ class CompanyService {
       }
     })
   }
+
+  /**
+  * GET a company's transaction statistics
+  * @param {ObjectId} companyId
+  */
+ getTransactionStatistics(companyId) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const totalTransactions = await Transaction.find({company: companyId}).countDocuments();
+      const failedTransactions = await Transaction.find({company: companyId, status: "declined"}).countDocuments();
+      const totalRiders = await Rider.find({company: companyId}).countDocuments();
+
+      let totalRevenue = await Transaction.aggregate([
+        { $match: {company: ObjectId(companyId),status: "approved",approvedAt: {$ne:null}} },
+        { $group: { _id: companyId, "total": {$sum: "$amount"} }},
+      ]);
+
+      totalRevenue = totalRevenue[0] ? totalRevenue[0].total : 0;
+
+      resolve({
+        totalTransactions,
+        failedTransactions,
+        totalRiders,
+        totalRevenue,
+      });
+    } catch (error) {
+      console.log('Error => ', error);
+      reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+      return
+    }
+  })
+}
 
    /**
    * Update password

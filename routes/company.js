@@ -64,15 +64,17 @@ router.get("/entry", Auth, controller.company.entries);
 router.get("/entry/:entryId", Auth, controller.company.getSingleEntry);
 
 // Order management routes - These are supposed to be customized pool endpoints
-// router.get("/:companyId/orders", Auth, controller.order.getCompanyOrders);
 // router.get("/:companyId/orders/statistics", Auth, controller.order.getCompanyOrderStats);
 // router.patch("/:companyId/orders/:orderId/decline", Auth, controller.order.decline);
 // router.delete("/:companyId/orders/:orderId", Auth, controller.order.delete);
 // router.patch("/:companyId/orders/:orderId/assign/:riderId", Auth, controller.order.assignOrderToRider);
 
+router.get("/:companyId/orders", Auth, controller.order.getCompanyOrders);
+
 // Dashboard statistics
 router.get("/:companyId/statistics", Auth, controller.company.getStatistics);
 router.get("/:companyId/riders/statistics", Auth, controller.company.getRiderStatistics);
+router.get("/:companyId/transactions/statistics", Auth, controller.company.getTransactionStatistics);
 
 // update company
 router.patch("/password", Auth, controller.company.changePassword);

@@ -534,6 +534,11 @@ exports.getRiderStatistics = async (req, res) => {
   }
 }
 
+/**
+ * Change company password
+ * @param {*} req
+ * @param {*} res
+ */
 exports.changePassword = async (req, res) => {
   try {
     const { error } = validateChangePassword(req.body);
@@ -548,3 +553,19 @@ exports.changePassword = async (req, res) => {
     return JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
   }
 }
+
+/**
+ * GET company transactions statistics
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getTransactionStatistics = async (req, res) => {
+  try {
+    const statistics = await companyInstance.getTransactionStatistics(req.user.id);
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch (error) {
+    console.log(error);
+    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  }
+};

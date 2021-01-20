@@ -71,6 +71,8 @@ router.delete("/:adminId", Auth, hasRole(), controller.admin.destroy);
 // INFO-METRICS
 // General statistics
 router.get("/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getGeneralStats);
+// Get recent activities
+router.get("/recent-activities", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getRecentActivities);
 //orders
 router.get("/info/order-stats", Auth, hasRole([ROLES.ADMIN]), controller.info.orderStatistics);
 //revenue

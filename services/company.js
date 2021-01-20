@@ -277,7 +277,7 @@ class CompanyService {
     })
   }
 
-  /**
+  /** DEPRECATED
   * GET a company's statistics - revenue, orders, riders summary
   * @param {ObjectId} companyId
   */

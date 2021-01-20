@@ -9,6 +9,7 @@ const SubscriptionService = require("../services/subscription");
 const PricingService = require("../services/pricing");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
+const StatisticsService = require("../services/statistics");
 const { Container } = require("typedi");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -30,6 +31,7 @@ const {
 const countryInstance = Container.get(CountryService);
 const vehicleInstance = Container.get(VehicleService);
 const companyInstance = Container.get(CompanyService);
+const statisticsInstance = Container.get(StatisticsService);
 
 /**
  * Create Company
@@ -508,7 +510,7 @@ exports.getSingleEntry = async (req, res) => {
  */
 exports.getStatistics = async (req, res) => {
   try {
-    const statistics = await companyInstance.getStatistics(req.user.id);
+    const statistics = await statisticsInstance.getGeneralStatistics({company: req.user.id});
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
   } catch (error) {

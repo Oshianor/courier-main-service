@@ -336,7 +336,7 @@ exports.getGeneralStats = async (req, res, next) => {
 exports.getRecentActivities = async (req, res, next) => {
   try{
     const { orders } = await orderInstance.getAll(null,'name itemName status',
-      {path: 'entry', select: 'source'}, { pageSize: 5 }
+      {path: 'entry', select: 'source img'}, { pageSize: 5 }
     );
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);

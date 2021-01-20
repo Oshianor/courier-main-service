@@ -81,7 +81,7 @@ exports.createMaintainer = async (req, res, next) => {
  */
 exports.addCard = async (req, res, next) => {
   try {
-    const card = await enterpriseInstance.addCard(req.body, req.token);
+    const card = await userInstance.addEnterpriseCard(req.body, req.token);
     return JsonResponse(res, 200, card.data.msg, card.data.data);
   } catch (error) {
     next(error)

@@ -1,10 +1,12 @@
-const config = require("config");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const axios = require("axios");
 const Enterprise = require("../models/enterprise");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary, UploadFileFromBase64 ,convertToMonthlyDataArray } = require("../utils");
+const {
+  UploadFileFromBinary,
+  UploadFileFromBase64,
+  convertToMonthlyDataArray,
+} = require("../utils");
 const User = require("../models/users");
 const WalletService = require("./wallet");
 const CreditService = require("./credit");
@@ -12,7 +14,6 @@ const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
 const Order = require("../models/order");
-const { reject } = require("bcrypt/promises");
 
 class EnterpriseService {
   /**
@@ -21,6 +22,8 @@ class EnterpriseService {
    */
   createOrganization(body, files, authUser) {
     return new Promise(async (resolve, reject) => {
+      const userInstance = new UserService();
+
       const session = await mongoose.startSession();
 
       if (typeof files.logo === "undefined") {
@@ -54,13 +57,14 @@ class EnterpriseService {
       }
 
       // Create user account in account service (wrap account service)
-      this.createExaltUser({
-        name: body.name,
-        email: body.email,
-        countryCode: body.countryCode,
-        phoneNumber: body.phoneNumber,
-        img: body.logo,
-      })
+      userInstance
+        .createEnterpriseUser({
+          name: body.name,
+          email: body.email,
+          countryCode: body.countryCode,
+          phoneNumber: body.phoneNumber,
+          img: body.logo,
+        })
         .then(async (user) => {
           try {
             // start our transaction
@@ -89,7 +93,10 @@ class EnterpriseService {
             await courierUser.save({ session });
 
             const walletInstance = new WalletService();
-            const wallet = await walletInstance.createWallet(newEnterprise._id, session);
+            const wallet = await walletInstance.createWallet(
+              newEnterprise._id,
+              session
+            );
 
             const creditInstance = new CreditService();
             const credit = await creditInstance.createCredit(
@@ -104,10 +111,9 @@ class EnterpriseService {
             await session.commitTransaction();
             session.endSession();
 
-            resolve({newEnterprise});
+            resolve({ newEnterprise });
           } catch (error) {
             await session.abortTransaction();
-            const userInstance = new UserService();
             await userInstance.deleteUser(user._id);
             if (error.response) {
               return reject({
@@ -132,6 +138,7 @@ class EnterpriseService {
    */
   createBranch(body, files, enterprise) {
     return new Promise(async (resolve, reject) => {
+      const userInstance = new UserService();
       const session = await mongoose.startSession();
 
       if (typeof files.logo === "undefined") {
@@ -164,13 +171,14 @@ class EnterpriseService {
         return;
       }
 
-      this.createExaltUser({
-        name: body.name,
-        email: body.email,
-        countryCode: body.countryCode,
-        phoneNumber: body.phoneNumber,
-        img: body.logo,
-      })
+      userInstance
+        .createEnterpriseUser({
+          name: body.name,
+          email: body.email,
+          countryCode: body.countryCode,
+          phoneNumber: body.phoneNumber,
+          img: body.logo,
+        })
         .then(async (user) => {
           try {
             // start our transaction
@@ -231,7 +239,6 @@ class EnterpriseService {
             resolve({ newEnterprise });
           } catch (error) {
             await session.abortTransaction();
-            const userInstance = new UserService();
             await userInstance.deleteUser(user._id);
             return reject(error);
           }
@@ -249,13 +256,15 @@ class EnterpriseService {
   createMaintainer(body, enterprise) {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
+      const userInstance = new UserService();
 
-      this.createExaltUser({
-        name: body.name,
-        email: body.email,
-        countryCode: body.countryCode,
-        phoneNumber: body.phoneNumber,
-      })
+      userInstance
+        .createEnterpriseUser({
+          name: body.name,
+          email: body.email,
+          countryCode: body.countryCode,
+          phoneNumber: body.phoneNumber,
+        })
         .then(async (user) => {
           try {
             // start our transaction
@@ -287,7 +296,6 @@ class EnterpriseService {
 
             resolve({ user });
           } catch (error) {
-            const userInstance = new UserService();
             await userInstance.deleteUser(user._id);
             return reject(error);
           }
@@ -299,105 +307,20 @@ class EnterpriseService {
   }
 
   /**
-   * Create user account - request to account service
-   * @param {Object} body
-   */
-  createExaltUser(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axios.post(
-          `${config.get("api.base")}/user/enterpise`,
-          body,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
-
-        resolve(response.data.data);
-      } catch (error) {
-        console.log("error", error);
-
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        return reject(error);
-      }
-    });
-  }
-
-  /**
-   * Update user account - request to account service
-   * @param {Object} body
-   */
-  updateExaltUser(userAuthToken, body) {
-    return new Promise(async (resolve, reject) => {
-
-      const accountUpdateData = {
-        name: body.name,
-        phoneNumber: body.phoneNumber
-      };
-
-      try {
-        const response = await axios.patch(
-          `${config.get("api.base")}/user/account`,
-          accountUpdateData,
-          {
-            headers: {
-              "x-auth-token": userAuthToken,
-            },
-          }
-        );
-        resolve(response.data.data);
-      } catch (error) {
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        return reject(error);
-      }
-    });
-  }
-
-  /**
-   * Create user account on logistics service
-   * @param {Object} logisticsUser
-   */
-  createLogisticsUser(logisticsUser) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user = await User.create(logisticsUser);
-        if (!user) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-        resolve(user);
-      } catch (error) {
-        console.log("error", error);
-        // error.service = 'Create logistics user service error'
-        return reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-      }
-    });
-  }
-
-  /**
    * Get an enterprise details
    * @param {MongoDB ObjectId} userId
    */
   getEnterprise(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const organization = await User.findOne({_id: userId})
+        const organization = await User.findOne({ _id: userId })
           .select("-createdBy -deleted -deletedBy -deletedAt")
-          .populate("enterprise", "name type phoneNumber email address logo motto industry");
+          .populate(
+            "enterprise",
+            "name type phoneNumber email address logo motto industry"
+          );
 
-        if (!organization){
+        if (!organization) {
           return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
         }
         resolve(organization);
@@ -416,6 +339,8 @@ class EnterpriseService {
   getAllBranches(user, pagination) {
     return new Promise(async (resolve, reject) => {
       try {
+        const userInstance = new UserService();
+
         const enterprise = await Enterprise.findOne({
           _id: user.enterprise,
         });
@@ -430,33 +355,15 @@ class EnterpriseService {
           page * pageSize
         );
 
-        console.log(
-          "enterpriseMaintainersToRetrieve",
+        const maintainers = await userInstance.getAllMaintainers(
           enterpriseMaintainersToRetrieve
-        );
-        const maintainers = await axios.post(
-          `${config.get("api.base")}/user/maintainers`,
-          {
-            maintainers: enterpriseMaintainersToRetrieve,
-          },
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
         );
 
         resolve({
           total: enterprise.branchUserIDS.length,
-          branches: maintainers.data.data,
+          branches: maintainers.data,
         });
       } catch (error) {
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
         // error.service = "Get all maintainers service error";
         return reject(error);
       }
@@ -485,30 +392,15 @@ class EnterpriseService {
           page * pageSize
         );
 
-        const maintainers = await axios.post(
-          `${config.get("api.base")}/user/maintainers`,
-          {
-            maintainers: enterpriseMaintainersToRetrieve,
-          },
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
+        const maintainers = await userInstance.getAllMaintainers(
+          enterpriseMaintainersToRetrieve
         );
 
         resolve({
           total: enterprise.maintainers.length,
-          maintainers: maintainers.data.data,
+          maintainers: maintainers.data,
         });
       } catch (error) {
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        // error.service = "Get all maintainers service error";
         return reject(error);
       }
     });
@@ -523,14 +415,19 @@ class EnterpriseService {
   updateEnterprise(enterprise, updateObject, userAuthToken) {
     return new Promise(async (resolve, reject) => {
       try {
+        const userInstance = new UserService();
+
         const validEnterprise = await Enterprise.findOne(enterprise);
-        if (!validEnterprise){
+        if (!validEnterprise) {
           return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
         }
 
-        if(userAuthToken){
-          const updatedUserAccount = await this.updateExaltUser(userAuthToken, updateObject);
-          if(!updatedUserAccount){
+        if (userAuthToken) {
+          const updatedUserAccount = await userInstance.updateExaltUser(
+            userAuthToken,
+            updateObject
+          );
+          if (!updatedUserAccount) {
             return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
           }
         }
@@ -549,17 +446,18 @@ class EnterpriseService {
           }
         }
 
-        const updatedEnterprise = await Enterprise.findOneAndUpdate(enterprise,
+        const updatedEnterprise = await Enterprise.findOneAndUpdate(
+          enterprise,
           { $set: updateObject },
           { new: true }
         );
-        if (!updatedEnterprise){
+        if (!updatedEnterprise) {
           return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
         }
 
         resolve(updatedEnterprise);
       } catch (error) {
-        console.log('Error => ', error);
+        console.log("Error => ", error);
         if (error.response) {
           return reject({
             code: error.response.status,
@@ -569,37 +467,6 @@ class EnterpriseService {
 
         error.service = "Update enterprise service error";
         return reject(error);
-      }
-    });
-  }
-
-  /**
-   * Add card by for enterprise with account service wrapper
-   * @param {Object} body
-   */
-  addCard(body, token) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const card = await axios.post(
-          `${config.get("api.base")}/card/enterprise`,
-          body,
-          {
-            headers: {
-              "x-auth-token": token,
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
-
-        console.log("card", card);
-
-        resolve(card);
-      } catch (error) {
-        console.log("error", error);
-        console.log("error", error.response);
-
-        reject({ code: error.response.status, msg: error.response.data.msg });
-        return;
       }
     });
   }
@@ -615,8 +482,8 @@ class EnterpriseService {
       try {
         const queryFilter = {
           enterprise: enterprise._id,
-          user: { $in: [ ...enterprise.users ]}
-        }
+          user: { $in: [...enterprise.users] },
+        };
 
         const entries = await Entry.find(queryFilter)
           .populate(
@@ -627,7 +494,7 @@ class EnterpriseService {
           .populate("orders")
           .skip(skip)
           .limit(pageSize)
-          .sort({createdAt: 'desc'});
+          .sort({ createdAt: "desc" });
 
         const total = await Entry.countDocuments(queryFilter);
 
@@ -649,13 +516,13 @@ class EnterpriseService {
       try {
         const queryFilter = {
           enterprise: enterprise._id,
-        }
+        };
 
         const transactions = await Transaction.find(queryFilter)
-          .populate('user')
+          .populate("user")
           .skip(skip)
           .limit(pageSize)
-          .sort({createdAt: 'desc'});
+          .sort({ createdAt: "desc" });
 
         const total = await Transaction.countDocuments(queryFilter);
 
@@ -669,37 +536,53 @@ class EnterpriseService {
   /**
    * @param {Object} enterprise object
    */
-  getStatistics(enterprise){
-    return new Promise(async(resolve, reject) => {
-      try{
+  getStatistics(enterprise) {
+    return new Promise(async (resolve, reject) => {
+      try {
         const successfulDeliveryFilter = {
           enterprise: enterprise._id,
-          status: "delivered"
-        }
+          status: "delivered",
+        };
 
         const failedDeliveryFilter = {
           enterprise: enterprise._id,
-          status: "canceled"
-        }
+          status: "canceled",
+        };
 
         // Total deliveries by months
-        let monthlySuccessfulDeliveries = await Order.aggregate(buildOrderAggregationPipeline(successfulDeliveryFilter));
-        let monthlyFailedDeliveries = await Order.aggregate(buildOrderAggregationPipeline(failedDeliveryFilter));
-        monthlySuccessfulDeliveries = convertToMonthlyDataArray(monthlySuccessfulDeliveries, 'numberOfDeliveries');
-        monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
+        let monthlySuccessfulDeliveries = await Order.aggregate(
+          buildOrderAggregationPipeline(successfulDeliveryFilter)
+        );
+        let monthlyFailedDeliveries = await Order.aggregate(
+          buildOrderAggregationPipeline(failedDeliveryFilter)
+        );
+        monthlySuccessfulDeliveries = convertToMonthlyDataArray(
+          monthlySuccessfulDeliveries,
+          "numberOfDeliveries"
+        );
+        monthlyFailedDeliveries = convertToMonthlyDataArray(
+          monthlyFailedDeliveries,
+          "numberOfDeliveries"
+        );
 
         // Total deliveries
-        const totalSuccessfulDeliveries = await Order.countDocuments(successfulDeliveryFilter);
-        const totalFailedDeliveries = await Order.countDocuments(failedDeliveryFilter);
+        const totalSuccessfulDeliveries = await Order.countDocuments(
+          successfulDeliveryFilter
+        );
+        const totalFailedDeliveries = await Order.countDocuments(
+          failedDeliveryFilter
+        );
 
         // Total spent
-        let totalSpent = await Transaction.aggregate([{
-          $match: {
-            enterprise: ObjectId(enterprise._id),
-            status: "approved",
-            approvedAt: {$ne:null}
-          }},
-          { $group: { _id: enterprise._id, "total": {$sum: "$amount"} }},
+        let totalSpent = await Transaction.aggregate([
+          {
+            $match: {
+              enterprise: ObjectId(enterprise._id),
+              status: "approved",
+              approvedAt: { $ne: null },
+            },
+          },
+          { $group: { _id: enterprise._id, total: { $sum: "$amount" } } },
         ]);
         totalSpent = totalSpent[0] ? totalSpent[0].total : 0;
 
@@ -713,20 +596,31 @@ class EnterpriseService {
           totalSuccessfulDeliveries,
           totalBranches,
           totalManagers,
-          totalSpent
-        })
+          totalSpent,
+        });
 
-        function buildOrderAggregationPipeline(filter){
+        function buildOrderAggregationPipeline(filter) {
           return [
             { $match: { ...filter } },
-            { $group:{ _id: {$month: "$createdAt"}, numberOfDeliveries: {$sum: 1}} },
-            { $project: {_id:0, "month": "$_id", numberOfDeliveries: "$numberOfDeliveries"}}
-          ]
+            {
+              $group: {
+                _id: { $month: "$createdAt" },
+                numberOfDeliveries: { $sum: 1 },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                month: "$_id",
+                numberOfDeliveries: "$numberOfDeliveries",
+              },
+            },
+          ];
         }
-      } catch(error){
+      } catch (error) {
         return reject(error);
       }
-    })
+    });
   }
 
   /**
@@ -735,58 +629,56 @@ class EnterpriseService {
    * @param {number} skip
    * @param {number} pageSize
    */
-  getEnterpriseAccounts(role, skip, pageSize){
-    return new Promise(async(resolve, reject) => {
-      try{
+  getEnterpriseAccounts(role, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
         const queryFilter = {
           role: role,
-          group: "enterprise"
-        }
+          group: "enterprise",
+        };
 
         const enterpriseAccounts = await User.find(queryFilter)
-        .populate('enterprise', "status verified")
-        .skip(skip)
-        .limit(pageSize)
-        .sort({createdAt: 'desc'});
+          .populate("enterprise", "status verified")
+          .skip(skip)
+          .limit(pageSize)
+          .sort({ createdAt: "desc" });
 
         const total = await User.countDocuments(queryFilter);
 
         resolve({ enterpriseAccounts, total });
-
-      } catch(e){
+      } catch (e) {
         return reject(e);
       }
-    })
+    });
   }
 }
 
 module.exports = EnterpriseService;
 
-
-  // /**
-  //  * Get all Enterprise Branches
-  //  * @param {MongoDB ObjectId} enterpriseId
-  //  * @param {number} skip
-  //  * @param {number} pageSize
-  //  */
-  // getAllBranches(enterpriseId, skip, pageSize) {
-  //   return new Promise(async (resolve, reject) => {
-  //     try {
-  //       const enterpriseBranches = await Enterprise.find({
-  //         enterprise: enterpriseId,
-  //         type: "branch",
-  //       })
-  //         .select("-createdBy -deleted -deletedBy -deletedAt")
-  //         .skip(skip)
-  //         .limit(pageSize);
-  //       const totalBranches = await Enterprise.countDocuments({
-  //         enterprise: enterpriseId,
-  //         type: "branch",
-  //       });
-  //       resolve({ enterpriseBranches, totalBranches });
-  //     } catch (error) {
-  //       error.service = "Get all branches service error";
-  //       return reject(error);
-  //     }
-  //   });
-  // }
+// /**
+//  * Get all Enterprise Branches
+//  * @param {MongoDB ObjectId} enterpriseId
+//  * @param {number} skip
+//  * @param {number} pageSize
+//  */
+// getAllBranches(enterpriseId, skip, pageSize) {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const enterpriseBranches = await Enterprise.find({
+//         enterprise: enterpriseId,
+//         type: "branch",
+//       })
+//         .select("-createdBy -deleted -deletedBy -deletedAt")
+//         .skip(skip)
+//         .limit(pageSize);
+//       const totalBranches = await Enterprise.countDocuments({
+//         enterprise: enterpriseId,
+//         type: "branch",
+//       });
+//       resolve({ enterpriseBranches, totalBranches });
+//     } catch (error) {
+//       error.service = "Get all branches service error";
+//       return reject(error);
+//     }
+//   });
+// }

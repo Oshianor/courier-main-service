@@ -10,6 +10,8 @@ const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
 const OTPCode = require("../templates/otpCode");
 const EnterpriseService = require("../services/enterprise");
+const UserService = require("../services/user");
+const { ACCOUNT_SERVICE } = require("../constant/api");
 const enterpriseInstance = new EnterpriseService();
 
 class AuthSerivice {
@@ -21,7 +23,7 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}/auth/login`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.LOGIN}`,
           body
         );
         if (response.status == 200) {
@@ -171,7 +173,7 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}/auth/set-password`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.VERIFY_ACCOUNT}`,
           body,
           {
             headers: {
@@ -260,7 +262,7 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}/auth/login`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.LOGIN}`,
           body
         );
         const token = response.headers["x-auth-token"];
@@ -318,16 +320,10 @@ class AuthSerivice {
             });
           }
 
-          const response = await axios.patch(
-            `${config.get("api.base")}/auth/toggle-status`,
-            body,
-            {
-              headers: {
-                "api-key": config.get("api.key"),
-              },
-            }
-          );
-          resolve(response.data.data);
+          const userInstance = new UserService();
+          const updatedUser = await userInstance.updateBranchAndMaintainers(body);
+
+          resolve(updatedUser.data);
         }
 
         // to disable branch, check if user has role of owner
@@ -337,29 +333,18 @@ class AuthSerivice {
               _id: account.enterprise,
             });
             body.maintainers = enterprise.maintainers;
-            const response = await axios.patch(
-              `${config.get("api.base")}/auth/toggle-status`,
-              body,
-              {
-                headers: {
-                  "api-key": config.get("api.key"),
-                },
-              }
+            const userInstance = new UserService();
+            const updatedUser = await userInstance.updateBranchAndMaintainers(
+              body
             );
-            resolve(response.data.data);
+
+            resolve(updatedUser.data);
           }
         }
 
 
 
       } catch (error) {
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        error.service = "Uodate enterprise status service";
         return reject(error);
       }
     });

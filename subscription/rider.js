@@ -33,17 +33,9 @@ class RiderSubscription {
    */
   takenEntryForRiders(entry) {
     return new Promise(async (resolve, reject) => {
-
-      console.log("entry", entry);
       const request = await RiderEntryRequest.find({ entry });
-
-      console.log("request", request);
-      
       // send to an array of riders
       await AsyncForEach(request, (row, index, arr) => {
-
-        console.log("row", row);
-
         // send to rider by their room id
         // send socket to riders only
         socket.to(String(row.rider)).emit(SERVER_EVENTS.TAKEN_ENTRY, SocketResponse(false, "ok", null));

@@ -4,6 +4,7 @@ const User = require("../models/users");
 const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
+const { ACCOUNT_SERVICE } = require("../constant/api");
 const NotificationService = require("./notification");
 const { GenerateOTP, Mailer } = require("../utils");
 const { OTPCode } = require("../templates");
@@ -21,7 +22,7 @@ class UserService {
       try {
         body.group = "commercial";
         const response = await axios.post(
-          `${config.get("api.base")}/user`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.USER}`,
           body,
           {
             headers: {
@@ -48,17 +49,86 @@ class UserService {
   }
 
   /**
+   * Create enterprise user account - request to account service
+   * @param {Object} body
+   */
+  createEnterpriseUser(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.post(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.E_USER}`,
+          body,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        resolve(response.data.data);
+      } catch (error) {
+        console.log("error", error);
+
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+        return reject(error);
+      }
+    });
+  }
+
+  /**
+   * Update user account - request to account service
+   * @param {Object} body
+   */
+  updateExaltUser(userAuthToken, body) {
+    return new Promise(async (resolve, reject) => {
+      const accountUpdateData = {
+        name: body.name,
+        phoneNumber: body.phoneNumber,
+      };
+
+      try {
+        const response = await axios.patch(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.UPDATE_USER}`,
+          accountUpdateData,
+          {
+            headers: {
+              "x-auth-token": userAuthToken,
+            },
+          }
+        );
+        resolve(response.data.data);
+      } catch (error) {
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+        return reject(error);
+      }
+    });
+  }
+
+  /**
    * Delete user account
    * @param {body} body
    */
   deleteUser(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        await axios.delete(`${config.get("api.base")}/user/${userId}`, {
-          headers: {
-            "api-key": config.get("api.key"),
-          },
-        });
+        await axios.delete(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.USER}/${userId}`,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
 
         resolve();
       } catch (error) {
@@ -78,11 +148,14 @@ class UserService {
   get(token) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.get(`${config.get("api.base")}/user`, {
-          headers: {
-            "x-auth-token": token,
-          },
-        });
+        const response = await axios.get(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.USER}`,
+          {
+            headers: {
+              "x-auth-token": token,
+            },
+          }
+        );
         // console.log("response", response);
         resolve(response.data);
       } catch (error) {
@@ -99,12 +172,15 @@ class UserService {
   getAllUsers(filter) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.get(`${config.get("api.base")}/user/all`, {
-          filter,
-          headers: {
-            "api-key": config.get("api.key"),
-          },
-        });
+        const response = await axios.get(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.GET_ALL_USER}`,
+          {
+            filter,
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
         resolve(response.data);
       } catch (error) {
         reject(error.response.data);
@@ -120,7 +196,7 @@ class UserService {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.get(
-          `${config.get("api.base")}/user/${id}`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.USER}/${id}`,
           {
             headers: {
               "api-key": config.get("api.key"),
@@ -143,7 +219,7 @@ class UserService {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.get(
-          `${config.get("api.base")}/card/${card}`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.CARD}/${card}`,
           {
             headers: {
               "x-auth-token": token,
@@ -166,7 +242,7 @@ class UserService {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}/card/enterprise/single`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.E_CARD_SINGLE}`,
           {
             card,
             user,
@@ -185,6 +261,89 @@ class UserService {
   }
 
   /**
+   * Get a list of users
+   * @param {Array} users
+   */
+  getAllMaintainers(users) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const mina = await axios.post(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.GET_MAINTAINERS}`,
+          {
+            maintainers: users,
+          },
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        resolve(mina.data);
+      } catch (error) {
+        if (error.response) {
+          return reject({
+            code: error.response.status,
+            msg: error.response.data.msg,
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * Add card by for enterprise with account service wrapper
+   * @param {Object} body
+   */
+  addEnterpriseCard(body, token) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const card = await axios.post(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.ADD_E_CARD}`,
+          body,
+          {
+            headers: {
+              "x-auth-token": token,
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        console.log("card", card);
+
+        resolve(card);
+      } catch (error) {
+        reject({ code: error.response.status, msg: error.response.data.msg });
+        return;
+      }
+    });
+  }
+
+  /**
+   * Update maintainers and branch by an owner
+   * @param {Object} body
+   */
+  updateBranchAndMaintainers(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.patch(
+          `${config.get("api.base")}${ACCOUNT_SERVICE.TOGGLE_STATUS}`,
+          body,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+        resolve(response.data);
+      } catch (error) {
+        reject({ code: error.response.status, msg: error.response.data.msg });
+        return;
+      }
+    });
+  }
+
+  /**
    * Get all card for enterprise account
    * @param {ObjectId} user the user account to get their cards
    */
@@ -192,7 +351,7 @@ class UserService {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}/card/enterprise/all`,
+          `${config.get("api.base")}${ACCOUNT_SERVICE.E_CARD_ALL}`,
           {
             user,
           },
@@ -316,6 +475,39 @@ class UserService {
     });
   }
 
+  // This service is to update duplicated data silently on the logistics database.
+  /**
+   * Update a user's account details
+   * @param {ObjectId} userId
+   * @param {Object - {name, phoneNumber}} data
+   */
+  updateAccount(userId, data) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const user = await User.findOne({ _id: userId });
+        if (!user) {
+          return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
+        }
+
+        const updatedUser = await User.updateOne(
+          { _id: userId },
+          { $set: data }
+        );
+        if (!updatedUser) {
+          return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
+        }
+        resolve(updatedUser);
+      } catch (error) {
+        return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+}
+
+module.exports = UserService;
+
+
+
   // /**
   //  * Send OTP code to the
   //  * @param {Object} token otp code sent to the
@@ -349,33 +541,3 @@ class UserService {
   //     }
   //   })
   // }
-
-  /**
-   * Update a user's account details
-   * @param {ObjectId} userId
-   * @param {Object - {name, phoneNumber}} data
-   */
-  updateAccount(userId, data) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const user = await User.findOne({ _id: userId });
-        if (!user) {
-          return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
-        }
-
-        const updatedUser = await User.updateOne(
-          { _id: userId },
-          { $set: data }
-        );
-        if (!updatedUser) {
-          return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
-        }
-        resolve(updatedUser);
-      } catch (error) {
-        return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
-      }
-    });
-  }
-}
-
-module.exports = UserService;

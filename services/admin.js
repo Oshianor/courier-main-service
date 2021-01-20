@@ -159,67 +159,6 @@ class AdminService {
       }
     });
   }
-
-  /**
-   * @param {Object} enterprise object
-   */
-  getGeneralStatistics(){
-    return new Promise(async(resolve, reject) => {
-      try{
-        const successfulDeliveryFilter = {
-          status: "delivered"
-        }
-
-        const failedDeliveryFilter = {
-          status: "canceled"
-        }
-
-        // Total deliveries by months
-        let monthlySuccessfulDeliveries = await Order.aggregate(buildOrderAggregationPipeline(successfulDeliveryFilter));
-        let monthlyFailedDeliveries = await Order.aggregate(buildOrderAggregationPipeline(failedDeliveryFilter));
-        monthlySuccessfulDeliveries = convertToMonthlyDataArray(monthlySuccessfulDeliveries, 'numberOfDeliveries');
-        monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
-
-        // Total deliveries
-        const totalSuccessfulDeliveries = await Order.countDocuments(successfulDeliveryFilter);
-        const totalFailedDeliveries = await Order.countDocuments(failedDeliveryFilter);
-
-        // Total spent
-        let totalRevenue = await Transaction.aggregate([{
-          $match: {
-            status: "approved",
-            approvedAt: {$ne:null}
-          }},
-          { $group: { _id: 1, "total": {$sum: "$amount"} }},
-        ]);
-        totalRevenue = totalRevenue[0] ? totalRevenue[0].total : 0;
-
-        // const totalBranches = enterprise.branchUserIDS.length;
-        // const totalManagers = enterprise.maintainers.length;
-
-        resolve({
-          monthlySuccessfulDeliveries,
-          monthlyFailedDeliveries,
-          totalFailedDeliveries,
-          totalSuccessfulDeliveries,
-          // totalBranches,
-          // totalManagers,
-          totalRevenue
-        })
-
-        function buildOrderAggregationPipeline(filter){
-          return [
-            { $match: { ...filter } },
-            { $group:{ _id: {$month: "$createdAt"}, numberOfDeliveries: {$sum: 1}} },
-            { $project: {_id:0, "month": "$_id", numberOfDeliveries: "$numberOfDeliveries"}}
-          ]
-        }
-      } catch(error){
-        return reject(error);
-      }
-    })
-  }
-
 }
 
 

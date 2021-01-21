@@ -92,6 +92,11 @@ router.post(
   [Auth, hasRole([ROLES.ADMIN])],
   controller.credit.lineOfCredit
 );
+router.get(
+  "/credit",
+  [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
+  controller.credit.getAllCredit
+);
 
 // wallet
 // get all enterprise wallet

@@ -15,6 +15,7 @@ const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
 const Order = require("../models/order");
 
+
 class EnterpriseService {
   /**
    * Create organization HQ by Exalt admin
@@ -651,34 +652,7 @@ class EnterpriseService {
       }
     });
   }
+
 }
 
 module.exports = EnterpriseService;
-
-// /**
-//  * Get all Enterprise Branches
-//  * @param {MongoDB ObjectId} enterpriseId
-//  * @param {number} skip
-//  * @param {number} pageSize
-//  */
-// getAllBranches(enterpriseId, skip, pageSize) {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const enterpriseBranches = await Enterprise.find({
-//         enterprise: enterpriseId,
-//         type: "branch",
-//       })
-//         .select("-createdBy -deleted -deletedBy -deletedAt")
-//         .skip(skip)
-//         .limit(pageSize);
-//       const totalBranches = await Enterprise.countDocuments({
-//         enterprise: enterpriseId,
-//         type: "branch",
-//       });
-//       resolve({ enterpriseBranches, totalBranches });
-//     } catch (error) {
-//       error.service = "Get all branches service error";
-//       return reject(error);
-//     }
-//   });
-// }

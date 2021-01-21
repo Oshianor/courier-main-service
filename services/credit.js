@@ -27,7 +27,7 @@ class CreditService {
   }
 
   /**
-   * get line of credit 
+   * get line of credit
    * @param (mongoDb) enterprise Enterprise Id for the company
    */
   getCredit(enterprise) {
@@ -104,12 +104,30 @@ class CreditService {
           enterprise: user.enterprise,
         }).countDocuments();
 
-        resolve({ total, history })
+        resolve({ total, history });
       } catch (error) {
         reject(error);
       }
     });
   }
+
+  /**
+   * Get all credit accounts
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAllCredit(skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      const credit = await Credit.find().skip(skip).limit(pageSize);
+
+      const total = await Credit.countDocuments();
+
+      resolve({ credit, total });
+    });
+  }
+
+
+  
 }
 
 module.exports = CreditService;

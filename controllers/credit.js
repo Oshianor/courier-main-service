@@ -52,6 +52,31 @@ exports.get = async (req, res, next) => {
 };
 
 
+/**
+ * Get Enterprise credit accounts
+ * @param {*} req
+ * @param {*} res
+ */
+exports.getAllCredit = async (req, res, next) => {
+  try {
+
+    const { page, pageSize, skip } = paginate(req);
+
+    const creditInstance = new CreditService();
+    const { credit, total } = await creditInstance.getAllCredit(skip, pageSize);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+    
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, credit, meta);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 // /**
 //  * Get my wallet history
 //  * @param {*} req

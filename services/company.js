@@ -172,7 +172,8 @@ class CompanyService {
    */
   allTransactions(company, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
-      const transactions = await Transaction.find({ company })
+      try{
+        const transactions = await Transaction.find({ company })
         .populate("entry", "status pickupAddress deliveryAddresses")
         .populate("user", "name")
         .populate("rider", "name")
@@ -180,11 +181,16 @@ class CompanyService {
         .limit(pageSize)
         .sort({createdAt: "desc"});
 
-      const total = await Transaction.find({
-        company,
-      }).countDocuments();
+        const total = await Transaction.find({
+          company,
+        }).countDocuments();
 
-      resolve({ transactions, total });
+        resolve({ transactions, total });
+      } catch(error){
+        console.log("error", error);
+        return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+
     });
   }
 

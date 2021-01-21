@@ -495,7 +495,7 @@ class RiderSerivice {
         .lean();
 
         if(!rider){
-          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND});
+          return reject({ code: 404, msg: 'Rider '+MSG_TYPES.NOT_FOUND});
         }
 
         const riderIsWithPackage = await Entry.findOne({

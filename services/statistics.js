@@ -7,17 +7,19 @@ const Order = require("../models/order");
 const Rider = require("../models/rider");
 const Enterprise = require("../models/enterprise");
 const CreditHistory = require("../models/creditHistory");
-const { reject } = require("bcrypt/promises");
+const Company = require("../models/company");
+const User = require("../models/users");
 const { ObjectId } = mongoose.Types;
 
 
 class StatisticsService {
   constructor(){
-    this.successfulDeliveryFilter = { status: "delivered" }
-    this.failedDeliveryFilter = { status: "canceled" }
-    this.pendingDeliveryFilter = { status: "pending" }
-    this.approvedCreditFilter = { type: "loan", status: "approved"}
-    this.declinedCreditFilter = { type: "loan", status: "declined"}
+    this.successfulDeliveryFilter = { status: "delivered" };
+    this.failedDeliveryFilter = { status: "canceled" };
+    this.pendingDeliveryFilter = { status: "pending" };
+    this.activeDeliveryFilter = { status: {$nin: ["delivered","cancelled","pending"]}};
+    this.approvedCreditFilter = { type: "loan", status: "approved"};
+    this.declinedCreditFilter = { type: "loan", status: "declined"};
   }
 
   /**
@@ -30,7 +32,7 @@ class StatisticsService {
 
         const deliveryStatistics = await this.getDeliveryStatistics(filter);
         const totalRevenue = await this.getTotalRevenue(filter);
-        const totalRiders = await Rider.countDocuments({...filter});
+        const totalRiders = await this.getRiderCount(filter);
 
         // Coercing to ObjectIds because the $match stage of the aggregation needs it that way
         if(filter.enterprise && typeof(filter.enterprise) === 'string'){
@@ -170,12 +172,14 @@ class StatisticsService {
         const totalPendingDeliveries = await Order.countDocuments({...filter, ...this.pendingDeliveryFilter});
         const totalFailedDeliveries = await Order.countDocuments({...filter, ...this.failedDeliveryFilter});
         const totalSuccessfulDeliveries = await Order.countDocuments({...filter, ...this.successfulDeliveryFilter});
+        const totalActiveDeliveries = await Order.countDocuments({...filter, ...this.activeDeliveryFilter});
 
         resolve({
           totalDeliveries,
           totalFailedDeliveries,
           totalSuccessfulDeliveries,
-          totalPendingDeliveries
+          totalPendingDeliveries,
+          totalActiveDeliveries
         });
       } catch(error){
         console.log('Delivery Statistics service Error => ', error);
@@ -203,6 +207,41 @@ class StatisticsService {
         reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     })
+  }
+
+  getAccountsStatistics(){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const totalUsers = await User.countDocuments();
+        const totalCompanies = await Company.countDocuments();
+        const totalRiders = await Rider.countDocuments();
+
+        resolve({
+          totalUsers,
+          totalCompanies,
+          totalRiders
+        })
+
+      } catch(error){
+        console.log('Total revenue Statistics service Error => ', error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
+
+  /**
+  * GET transaction count
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getTransactionCount(filter = {}){
+    return Transaction.countDocuments(filter);
+  }
+  /**
+  * GET Rider count
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getRiderCount(filter = {}){
+    return Rider.countDocuments(filter);
   }
 }
 

@@ -422,6 +422,33 @@ class TransactionService {
       }
     });
   }
+
+
+   /**
+   * Get all Transactions
+   * @param {MongoDB ObjectId} enterpriseId
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAll(filter, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        const transactions = await Transaction.find(filter)
+          .populate("user", "name email")
+          .skip(skip)
+          .limit(pageSize)
+          .sort({ createdAt: "desc" });
+
+        const total = await Transaction.countDocuments(filter);
+
+        resolve({ transactions, total });
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
+
 }
 
 

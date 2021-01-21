@@ -73,8 +73,6 @@ router.delete("/:adminId", Auth, hasRole(), controller.admin.destroy);
 router.get("/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getGeneralStats);
 // Get recent activities
 router.get("/recent-activities", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getRecentActivities);
-//revenue
-router.get("/info/revenue", Auth, hasRole([ROLES.ADMIN]), controller.info.revenue);
 
 // Enterprise Info
 router.get("/enterprise/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseStatistics);
@@ -82,11 +80,28 @@ router.get("/enterprise/orders/pending", [Auth, hasRole([ROLES.ADMIN])], control
 
 // Order Info
 router.get("/orders/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getOrderStatistics);
+
+// Accounts Info
+router.get("/accounts/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getAccountsStatistics);
+
+// Company Info
+router.get("/company/:companyId/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleCompanyStatistics);
+router.get("/company/:companyId/transactions", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleCompanyTransactions);
+
 // Enterprise Updates
 router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);
 
+// Rider
+router.get("/rider/:riderId/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleRiderStatistics);
+router.get("/rider/:riderId/transactions", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleRiderTransactions);
 
+// User
+router.get("/user/:userId/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleUserStatistics);
+router.get("/user/:userId/transactions", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleUserTransactions);
 
+// Revenue
+router.get("/revenue/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getRevenueStatistics);
+router.get("/revenue/transactions", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getTransactions);
 // industry Category
 router.post("/industry-category", [Auth, hasRole([ROLES.ADMIN])], controller.industryCategory.create);
 router.get("/industry-category", controller.industryCategory.all);

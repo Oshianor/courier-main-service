@@ -435,7 +435,7 @@ class TransactionService {
       try {
 
         const transactions = await Transaction.find(filter)
-          .populate("user", "name email")
+          .populate("user", "name email countryCode phoneNumber")
           .skip(skip)
           .limit(pageSize)
           .sort({ createdAt: "desc" });

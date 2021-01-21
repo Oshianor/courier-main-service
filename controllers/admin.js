@@ -1,10 +1,11 @@
 const bcrypt = require("bcrypt");
-const AdminModel = require("../models/admin");
-const user = require("../services/user");
+const Admin = require("../models/admin");
+const User = require("../services/user");
 const UserService = require("../services/user");
 const CountryService = require("../services/country");
 const RiderModel = require("../models/rider");
 const AdminService = require("../services/admin");
+const OrderService = require("../services/order");
 const StatisticsService = require("../services/statistics");
 const {
   validateAdmin,
@@ -22,6 +23,7 @@ const userInstance = Container.get(UserService);
 const countryInstance = Container.get(CountryService);
 const enterpriseInstance = Container.get(EnterpriseService);
 const statisticsInstance = Container.get(StatisticsService);
+const orderInstance = Container.get(OrderService);
 
 /**
  * Create AdminModel
@@ -320,6 +322,24 @@ exports.getGeneralStats = async (req, res, next) => {
     const statistics = await statisticsInstance.getGeneralStatistics();
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch(error){
+    next(error);
+  }
+}
+
+/**
+ * Get recent activities
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.getRecentActivities = async (req, res, next) => {
+  try{
+    const { orders } = await orderInstance.getAll(null,'name itemName status',
+      {path: 'entry', select: 'source img'}, { pageSize: 5 }
+    );
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
   } catch(error){
     next(error);
   }

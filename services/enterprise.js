@@ -534,7 +534,7 @@ class EnterpriseService {
     });
   }
 
-  /**
+  /** DEPRECATED
    * @param {Object} enterprise object
    */
   getStatistics(enterprise) {

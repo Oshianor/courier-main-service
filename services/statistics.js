@@ -51,7 +51,6 @@ class StatisticsService {
         monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
 
 
-
         let monthlyRevenues = await Transaction.aggregate([
           { $match: {...filter, status: "approved"} },
           { $group:{ _id: {$month: "$approvedAt"}, revenue: {$sum: "$amount"}} },
@@ -69,7 +68,7 @@ class StatisticsService {
           monthlyRevenues,
         }
 
-        if(filter.enterprise && typeof(filter.enterprise) === 'string'){
+        if(filter.enterprise && ObjectId.isValid(filter.enterprise)){
           const enterpriseRecord = await Enterprise.findOne({_id: filter.enterprise});
           if(enterpriseRecord){
             statisticsData.totalBranches = enterpriseRecord.branchUserIDS.length;
@@ -129,7 +128,6 @@ class StatisticsService {
         buildCreditAggregationPipeline(this.declinedCreditFilter)
       );
 
-      console.log(monthlyDeclinedCredits, monthlyApprovedCredits)
       monthlyApprovedCredits = convertToMonthlyDataArray(monthlyApprovedCredits, 'totalAmount');
       monthlyDeclinedCredits = convertToMonthlyDataArray(monthlyDeclinedCredits, 'totalAmount');
 

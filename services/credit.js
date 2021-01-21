@@ -120,7 +120,7 @@ class CreditService {
     return new Promise(async (resolve, reject) => {
       const credit = await CreditHistory.find({ type: "loan" }).skip(skip).limit(pageSize).populate("enterprise", "name email countryCode phoneNumber");
 
-      const total = await Credit.countDocuments({ type: "loan" });
+      const total = await CreditHistory.countDocuments({ type: "loan" });
 
       resolve({ credit, total });
     });

@@ -119,6 +119,8 @@ class StatisticsService {
       totalCreditsDisbursed = totalCreditsDisbursed[0] ? totalCreditsDisbursed[0].total : 0;
       totalCreditsUsed = totalCreditsUsed[0] ? totalCreditsUsed[0].total : 0;
 
+      const totalCreditsRemaining = totalCreditsDisbursed - totalCreditsUsed;
+
       // Total deliveries by months
       let monthlyApprovedCredits = await CreditHistory.aggregate(
         buildCreditAggregationPipeline(this.approvedCreditFilter)
@@ -138,6 +140,7 @@ class StatisticsService {
          totalMaintainers,
          totalCreditsDisbursed,
          totalCreditsUsed,
+         totalCreditsRemaining,
          monthlyApprovedCredits,
          monthlyDeclinedCredits
        });

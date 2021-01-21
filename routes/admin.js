@@ -73,8 +73,6 @@ router.delete("/:adminId", Auth, hasRole(), controller.admin.destroy);
 router.get("/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getGeneralStats);
 // Get recent activities
 router.get("/recent-activities", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getRecentActivities);
-//orders
-router.get("/info/order-stats", Auth, hasRole([ROLES.ADMIN]), controller.info.orderStatistics);
 //revenue
 router.get("/info/revenue", Auth, hasRole([ROLES.ADMIN]), controller.info.revenue);
 
@@ -82,6 +80,8 @@ router.get("/info/revenue", Auth, hasRole([ROLES.ADMIN]), controller.info.revenu
 router.get("/enterprise/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseStatistics);
 router.get("/enterprise/orders/pending", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getPendingEnterpriseOrders);
 
+// Order Info
+router.get("/orders/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getOrderStatistics);
 // Enterprise Updates
 router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);
 

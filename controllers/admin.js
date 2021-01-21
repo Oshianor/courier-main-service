@@ -368,7 +368,7 @@ exports.getPendingEnterpriseOrders = async (req, res, next) => {
 
 
 /**
- * Get enterprise pending orders
+ * Get enterprise statistics
  * @param {*} req
  * @param {*} res
  * @param {*} next
@@ -380,6 +380,29 @@ exports.getEnterpriseStatistics = async (req, res, next) => {
     });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch(error){
+    next(error);
+  }
+}
+
+/**
+ * Get order statistics
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.getOrderStatistics = async (req, res, next) => {
+  try{
+    const statistics = await statisticsInstance.getDeliveryStatistics({});
+    const totalRevenue = await statisticsInstance.getTotalRevenue({});
+
+    const orderStats = {
+      ...statistics,
+      totalRevenue,
+      totalCommission: "coming soon"
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orderStats);
   } catch(error){
     next(error);
   }

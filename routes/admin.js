@@ -78,6 +78,10 @@ router.get("/info/order-stats", Auth, hasRole([ROLES.ADMIN]), controller.info.or
 //revenue
 router.get("/info/revenue", Auth, hasRole([ROLES.ADMIN]), controller.info.revenue);
 
+// Enterprise Info
+router.get("/enterprise/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseStatistics);
+router.get("/enterprise/orders/pending", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getPendingEnterpriseOrders);
+
 // Enterprise Updates
 router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);
 

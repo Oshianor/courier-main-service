@@ -1,17 +1,19 @@
 
 const mongoose = require("mongoose");
 const Transaction = require("../models/transaction");
-const { convertToMonthlyDataArray } = require("../utils");
+const { convertToMonthlyDataArray, isObject } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
+const Credit = require("../models/credit");
 const Enterprise = require("../models/enterprise");
+const CreditHistory = require("../models/creditHistory");
 const { ObjectId } = mongoose.Types;
 
 
 class StatisticsService {
   /**
-  * GET a company's statistics - revenue, orders, riders summary
+  * GET platform statistics - revenue, orders, riders summary
   * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
   */
   getGeneralStatistics(filter = {}) {
@@ -40,10 +42,10 @@ class StatisticsService {
         const totalRiders = await Rider.countDocuments({...filter});
 
         // Coercing to ObjectIds because the $match stage of the aggregation needs it that way
-        if(filter.enterprise){
+        if(filter.enterprise && typeof(filter.enterprise) === 'string'){
           filter.enterprise = ObjectId(filter.enterprise);
         }
-        if(filter.company){
+        if(filter.company && typeof(filter.company) === 'string'){
           filter.company = ObjectId(filter.company);
         }
 
@@ -79,7 +81,7 @@ class StatisticsService {
           monthlyRevenues,
         }
 
-        if(filter.enterprise){
+        if(filter.enterprise && typeof(filter.enterprise) === 'string'){
           const enterpriseRecord = await Enterprise.findOne({_id: filter.enterprise});
           if(enterpriseRecord){
             statisticsData.totalBranches = enterpriseRecord.branchUserIDS.length;
@@ -102,6 +104,46 @@ class StatisticsService {
       }
     })
   }
+
+  /**
+  * GET statistics - revenue, orders, riders summary
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+ getEnterpriseStatistics(){
+   return new Promise(async(resolve, reject) => {
+     try{
+      const generalStatistics = await this.getGeneralStatistics();
+
+      const totalAdmins = await Enterprise.countDocuments({type: "owner"});
+      const totalMaintainers = await Enterprise.countDocuments({type: "maintainer"});
+      const totalBranches = await Enterprise.countDocuments({type: "branch"});
+      let totalCreditsDisbursed = await CreditHistory.aggregate([
+        { $match: {type: "loan", status: "approved"} },
+        { $group: { _id: 1, "total": {$sum: "$amount"} }},
+      ]);
+      let totalCreditsUsed = await CreditHistory.aggregate([
+        { $match: {type: "debit"}},
+        { $group: { _id: 1, "total": {$sum: "$amount"} }},
+      ]);
+
+      totalCreditsDisbursed = totalCreditsDisbursed[0] ? totalCreditsDisbursed[0].total : 0;
+      totalCreditsUsed = totalCreditsUsed[0] ? totalCreditsUsed[0].total : 0;
+
+       resolve({
+         ...generalStatistics,
+         totalAdmins,
+         totalBranches,
+         totalMaintainers,
+         totalCreditsDisbursed,
+         totalCreditsUsed
+       })
+
+     } catch(error){
+      console.log('Statistics service Error => ', error);
+      return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+     }
+   })
+ }
 }
 
 module.exports = StatisticsService

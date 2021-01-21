@@ -344,3 +344,43 @@ exports.getRecentActivities = async (req, res, next) => {
     next(error);
   }
 }
+
+/**
+ * Get enterprise pending orders
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.getPendingEnterpriseOrders = async (req, res, next) => {
+  try{
+    const { orders } = await orderInstance.getAll(
+      {enterprise: {$ne: null}, status: "pending"},
+      "name deliveryAddress pickupAddress itemName status orderId estimatedCost",
+      {path: 'entry', select: 'source img'},
+      { pageSize: 5 }
+    );
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
+  } catch(error){
+    next(error);
+  }
+}
+
+
+/**
+ * Get enterprise pending orders
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+exports.getEnterpriseStatistics = async (req, res, next) => {
+  try{
+    const statistics = await statisticsInstance.getEnterpriseStatistics({
+      enterprise: {$ne: null}
+    });
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
+  } catch(error){
+    next(error);
+  }
+}

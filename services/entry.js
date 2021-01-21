@@ -2,17 +2,14 @@ const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
 const Entry = require("../models/entry");
-const User = require("../models/users");
 const Order = require("../models/order");
 const Company = require("../models/company");
 const Transaction = require("../models/transaction");
 const RiderEntryRequest = require("../models/riderEntryRequest");
+const Pricing = require("../models/pricing");
 const Rider = require("../models/rider");
-const UserService = require("./user");
-const CompanyService = require("./company");
 const TripLogService = require("./triplog");
 const NotificationService = require("./notification");
-const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const {
   AsyncForEach,
@@ -325,13 +322,16 @@ class EntryService {
   companyAcceptEntry(params, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: user.id,
-          // $or: [{ status: "active" }, { status: "inactive" }],
           status: "active",
           verified: true,
-        });
+        })
+
+        if (!company) {
+          reject({ code: 400, msg: "No company account was found." });
+          return;
+        }
 
         const transaction = await Transaction.findOne({ entry: params.entry });
 
@@ -340,11 +340,15 @@ class EntryService {
           return;
         }
 
+        const pricing = await Pricing.findOne({ _id: company.tier });
+        if (!pricing){
+          reject({ code: 400, msg: "You're currently not on any plan at the moment" });
+          return;
+        }
+ 
         // const currentDate = new Date();
         const entry = await this.get({
-          _id: params.entry,
-          // status: "pending",
-          // company: null,
+          _id: params.entry
         });
 
         if (entry.company) {
@@ -373,12 +377,21 @@ class EntryService {
 
         await Order.updateMany({ entry: params.entry }, { company: user.id });
 
-        await transaction.updateOne({ company: user.id });
+
+        // calculate our commision from the company pricing plan
+        const commissionAmount = transaction.amount / pricing.transactionCost;
+
+        await transaction.updateOne({
+          company: user.id,
+          commissionPercent: pricing.transactionCost,
+          commissionAmount,
+          amountWOcommision: transaction.amount - commissionAmount,
+        });
 
         resolve(entry);
       } catch (error) {
         console.log("error", error);
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }

@@ -80,6 +80,18 @@ const transactionSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    commissionPercent: {
+      type: Number,
+      default: 0,
+    },
+    commissionAmount: {
+      type: Number,
+      default: 0,
+    },
+    amountWOcommision: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

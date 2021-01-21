@@ -23,7 +23,7 @@ const CreditHistorySchema = mongoose.Schema(
     admin: {
       type: ObjectId,
       ref: "Admin",
-      default: null
+      default: null,
     },
     entry: {
       type: ObjectId,
@@ -53,6 +53,11 @@ const CreditHistorySchema = mongoose.Schema(
     note: {
       type: String,
       default: "",
+    },
+    approvedAt: {
+      // this is used to loan request sent to the admin
+      type: Date,
+      default: new Date(),
     },
   },
   {

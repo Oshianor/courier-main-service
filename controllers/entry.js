@@ -243,7 +243,7 @@ exports.singleEntry = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.companyAcceptEntry = async (req, res) => {
+exports.companyAcceptEntry = async (req, res, next) => {
   try {
 
     const entryInstance = new EntryService();
@@ -260,8 +260,7 @@ exports.companyAcceptEntry = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.COMPANY_ACCEPT);
     return;
   } catch (error) {
-    console.log("erreeeor", error);
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 

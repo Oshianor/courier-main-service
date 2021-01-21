@@ -142,6 +142,7 @@ class CreditService {
           status: "pending",
           admin: null,
           type: "loan",
+          approvedAt: null,
         });
 
         await newCreditHistory.save();
@@ -169,7 +170,11 @@ class CreditService {
         }
 
         if (body.status === "approved") {
-          await creditHistory.updateOne({ status: "approved", admin: user.id });
+          await creditHistory.updateOne({
+            status: "approved",
+            admin: user.id,
+            approvedAt: new Date(),
+          });
           await Credit.updateOne(
             { enterprise: creditHistory.enterprise },
             { $inc: { balance: creditHistory.amount, totalCredit: creditHistory.amount } }

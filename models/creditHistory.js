@@ -23,6 +23,7 @@ const CreditHistorySchema = mongoose.Schema(
     admin: {
       type: ObjectId,
       ref: "Admin",
+      default: null
     },
     entry: {
       type: ObjectId,

@@ -80,6 +80,13 @@ router.get(
   EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.OWNER]),
   controller.credit.get
 );
+// request for credit
+router.post(
+  "/credit/request",
+  UserAuth,
+  EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.OWNER]),
+  controller.credit.requestCredit
+);
 
 
 module.exports = router;

@@ -99,6 +99,11 @@ router.get(
   [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
   controller.credit.getAllCredit
 );
+router.post(
+  "/credit/approval",
+  [Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT])],
+  controller.credit.approveByAdminCredit
+);
 
 // wallet
 // get all enterprise wallet

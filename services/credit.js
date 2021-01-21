@@ -81,7 +81,7 @@ class CreditService {
 
         resolve({ newCreditHistory, credit });
       } catch (error) {
-        next(error);
+        reject(error);
       }
     });
   }
@@ -118,16 +118,76 @@ class CreditService {
    */
   getAllCredit(skip, pageSize) {
     return new Promise(async (resolve, reject) => {
-      const credit = await Credit.find().skip(skip).limit(pageSize);
+      const credit = await CreditHistory.find({ type: "loan" }).skip(skip).limit(pageSize).populate("enterprise", "name email countryCode phoneNumber");
 
-      const total = await Credit.countDocuments();
+      const total = await Credit.countDocuments({ type: "loan" });
 
       resolve({ credit, total });
     });
   }
 
+  /**
+   * request loan from admin
+   * @param {string} enterprise Enterprise Id for the company
+   */
+  requestCredit(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // add wallet history
+        const newCreditHistory = new CreditHistory({
+          enterprise: user.enterprise,
+          user: user.id,
+          txRef: nanoid(10),
+          amount: body.amount,
+          status: "pending",
+          admin: null,
+          type: "loan",
+        });
 
-  
+        await newCreditHistory.save();
+
+        resolve({ newCreditHistory });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Approve loan request
+   * @param {string} enterprise Enterprise Id for the company
+   */
+  approveCredit(body, user) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const creditHistory = await CreditHistory.findOne({ _id: body.credit, status: "pending" });
+        if (!creditHistory) {
+          return reject({
+            code: 400,
+            msg: "No Credit request was found",
+          });
+        }
+
+        if (body.status === "approved") {
+          await creditHistory.updateOne({ status: "approved", admin: user.id });
+          await Credit.updateOne(
+            { enterprise: creditHistory.enterprise },
+            { $inc: { balance: creditHistory.amount, totalCredit: creditHistory.amount } }
+          );
+
+          return resolve({ creditHistory });
+
+        }
+          
+        await creditHistory.updateOne({ status: "declined" });
+        return resolve({ creditHistory });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+
 }
 
 module.exports = CreditService;

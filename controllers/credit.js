@@ -5,6 +5,10 @@ const {
   validateFundWallet,
   validateAdminFundWallet,
 } = require("../request/wallet");
+const {
+  validateRequestFund,
+  validateAppproveLoan,
+} = require("../request/credit");
 const { paginate } = require("../utils");
 
 
@@ -77,31 +81,47 @@ exports.getAllCredit = async (req, res, next) => {
 };
 
 
-// /**
-//  * Get my wallet history
-//  * @param {*} req
-//  * @param {*} res
-//  */
-// exports.creditHistory = async (req, res, next) => {
-//   try {
-//     const { page, pageSize, skip } = paginate(req);
+/**
+ * Request credit from admin
+ * @param {*} req
+ * @param {*} res
+ */
+exports.requestCredit = async (req, res, next) => {
+  try {
+    const { error } = validateRequestFund(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
 
-//     const walletInstance = new WalletService();
-//     const { history, total } = await walletInstance.walletHistory(
-//       req.user,
-//       skip,
-//       pageSize
-//     );
+    const creditInstance = new CreditService();
+    await creditInstance.requestCredit(
+      req.body,
+      req.user
+    );
 
-//     const meta = {
-//       total,
-//       pagination: { pageSize, page },
-//     };
+    JsonResponse(res, 200, "Your loan request has been sent and it's await approval.");
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
 
-//     JsonResponse(res, 200, MSG_TYPES.FETCHED, history, meta);
-//     return;
-//   } catch (error) {
-//     next(error);
-//     return;
-//   }
-// };
+/**
+ * Approve credit for Admin
+ * @param {*} req
+ * @param {*} res
+ */
+exports.approveByAdminCredit = async (req, res, next) => {
+  try {
+    const { error } = validateAppproveLoan(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const creditInstance = new CreditService();
+    await creditInstance.approveCredit(req.body, req.user);
+
+    JsonResponse(res, 200, `Loan has been successfully ${req.body.status}`);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};

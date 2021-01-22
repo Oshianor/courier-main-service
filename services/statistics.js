@@ -209,6 +209,48 @@ class StatisticsService {
     })
   }
 
+  /**
+  * GET total commission
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getTotalCommission(filter = {}){
+    return new Promise(async(resolve, reject) => {
+      try{
+        let totalComission = await Transaction.aggregate([
+          { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
+          { $group: { _id: 1, "total": {$sum: "$commissionAmount"} }},
+        ]);
+        totalComission = totalComission[0] ? totalComission[0].total : 0;
+
+        resolve(totalComission);
+      } catch(error){
+        console.log('Total commission Statistics service Error => ', error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
+
+  /**
+  * GET total due
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+ getTotalDue(filter = {}){
+  return new Promise(async(resolve, reject) => {
+    try{
+      let totalDue = await Transaction.aggregate([
+        { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
+        { $group: { _id: 1, "total": {$sum: "$amountWOcommision"} }},
+      ]);
+      totalDue = totalDue[0] ? totalDue[0].total : 0;
+
+      resolve(totalDue);
+    } catch(error){
+      console.log('Total Due Statistics service Error => ', error);
+      reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+    }
+  })
+}
+
   getAccountsStatistics(){
     return new Promise(async(resolve, reject) => {
       try{

@@ -170,7 +170,6 @@ class AuthSerivice {
    * Set password (ENTERPRISE SETUP)
    * @param {Object} body
    */
-
   setPassword(body) {
     return new Promise(async (resolve, reject) => {
       try {
@@ -323,7 +322,9 @@ class AuthSerivice {
           }
 
           const userInstance = new UserService();
-          const updatedUser = await userInstance.updateBranchAndMaintainers(body);
+          const updatedUser = await userInstance.updateBranchAndMaintainers(
+            body
+          );
 
           resolve(updatedUser.data);
         }
@@ -343,9 +344,25 @@ class AuthSerivice {
             resolve(updatedUser.data);
           }
         }
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
 
+  /**
+   * Disable user account
+   * @param {Object} body req body
+   */
+  updateUserStatus(body) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const userInstance = new UserService();
+        const updatedUser = await userInstance.updateBranchAndMaintainers(
+          body
+        );
 
-
+        resolve(updatedUser.data);
       } catch (error) {
         return reject(error);
       }

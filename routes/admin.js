@@ -6,11 +6,10 @@ const { hasRole, ROLES, Auth } = require("../middlewares/auth");
 // Auth Routes
 router.post("/", Auth, controller.admin.createAdmin);
 router.post("/login", controller.auth.adminLogin);
-
-//Admin Routes
 router.get("/all", Auth, hasRole([ROLES.ADMIN]), controller.admin.all);
 router.get("/current", Auth, controller.admin.me);
 
+// transactions
 router.get('/transactions', Auth, hasRole([ROLES.ADMIN]), controller.transaction.allByAdmin)
 router.get('/transactions/:id', Auth, hasRole([ROLES.ADMIN]), controller.transaction.single)
 
@@ -29,6 +28,7 @@ router.delete("/companies/:companyId", Auth, hasRole(), controller.company.destr
 router.patch("/verify/company/:companyId", Auth, hasRole(ROLES.ADMIN), controller.company.verification);
 
 router.get("/unverified/companies", Auth, hasRole(ROLES.ADMIN), controller.company.allUnveried);
+
 
 // rider routes
 router.get("/rider", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.rider.allByAdmin);
@@ -59,6 +59,13 @@ router.patch("/setting", Auth, hasRole([ROLES.ADMIN]), controller.setting.update
 //user routes
 router.get("/user/all", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.allUsers);
 router.get("/user/:userId", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleUser);
+// update user status by admin
+router.patch(
+  "/update-status",
+  Auth,
+  hasRole([ROLES.ADMIN]),
+  controller.auth.updateUserStatus
+);
 
 // Admin Updates
 router.put("/update", Auth, controller.admin.updateMe);

@@ -412,13 +412,34 @@ exports.enterpriseLogin = async (req, res, next) => {
  * @param {*} req
  * @param {*} res
  */
+exports.updateEnterpriseAccountStatus = async (req, res, next) => {
+  try {
+    const { error } = validateUserStatusUpdate(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const authInstance = new AuthService();
+    await authInstance.updateEnterpriseAccountStatus(req.body, req.user);
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
+
+
+/**
+ * Update user status by admin
+ * @param {*} req
+ * @param {*} res
+ */
 exports.updateUserStatus = async (req, res, next) => {
   try {
     const { error } = validateUserStatusUpdate(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const authInstance = new AuthService();
-    await authInstance.updateEnterpriseAccountStatus(req.body, req.user)
+    await authInstance.updateUserStatus(req.body);
 
     return JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {

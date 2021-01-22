@@ -28,6 +28,10 @@ router.patch("/set-password", controllers.auth.setPassword);
 
 router.post("/enterprise-login", controllers.auth.enterpriseLogin);
 
-router.patch("/update-status", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controllers.auth.updateUserStatus);
+router.patch(
+  "/update-status",
+  [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])],
+  controllers.auth.updateEnterpriseAccountStatus
+);
 
 module.exports = router;

@@ -377,9 +377,8 @@ class EntryService {
 
         await Order.updateMany({ entry: params.entry }, { company: user.id });
 
-
         // calculate our commision from the company pricing plan
-        const commissionAmount = transaction.amount / pricing.transactionCost;
+        const commissionAmount = (transaction.amount * pricing.transactionCost) / 100;
 
         await transaction.updateOne({
           company: user.id,

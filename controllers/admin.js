@@ -401,11 +401,13 @@ exports.getOrderStatistics = async (req, res, next) => {
   try{
     const statistics = await statisticsInstance.getDeliveryStatistics({});
     const totalRevenue = await statisticsInstance.getTotalRevenue({});
+    const totalCommission = await statisticsInstance.getTotalCommission({});
+
 
     const orderStats = {
       ...statistics,
       totalRevenue,
-      totalCommission: "coming soon"
+      totalCommission
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orderStats);
@@ -425,11 +427,12 @@ exports.getAccountsStatistics = async (req, res, next) => {
   try{
     const statistics = await statisticsInstance.getAccountsStatistics();
     const totalRevenue = await statisticsInstance.getTotalRevenue({});
+    const totalCommission = await statisticsInstance.getTotalCommission({});
 
     const orderStats = {
       ...statistics,
       totalRevenue,
-      totalCommission: "coming soon"
+      totalCommission
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orderStats);

@@ -450,6 +450,8 @@ exports.getSingleCompanyStatistics = async(req, res, next) => {
 
     const filter = { company: company._id };
     const totalRevenue = await statisticsInstance.getTotalRevenue(filter);
+    const earnedCommission = await statisticsInstance.getTotalCommission(filter);
+    const totalDue = await statisticsInstance.getTotalDue(filter);
     const totalRiders = await statisticsInstance.getRiderCount(filter);
     const totalTransactions = await statisticsInstance.getTransactionCount(filter);
 
@@ -457,8 +459,8 @@ exports.getSingleCompanyStatistics = async(req, res, next) => {
       totalRiders,
       totalRevenue,
       totalTransactions,
-      earnedCommission: "coming soon",
-      totalDue: "coming soon",
+      earnedCommission,
+      totalDue,
       subscriptionFee: "coming soon"
     }
 
@@ -604,12 +606,13 @@ exports.getRevenueStatistics = async(req, res, next) => {
   try{
 
     const totalRevenue = await statisticsInstance.getTotalRevenue({});
+    const totalCommission = await statisticsInstance.getTotalCommission({});
     const totalTransactions = await statisticsInstance.getTransactionCount({});
 
     const statistics = {
       totalRevenue,
       totalTransactions,
-      totalCommission: "coming soon",
+      totalCommission,
       totalRenewalsIncome: "coming soon"
     }
 

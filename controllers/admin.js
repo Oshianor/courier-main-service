@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const Admin = require("../models/admin");
-const User = require("../services/user");
+const User = require("../models/users");
 const UserService = require("../services/user");
 const CountryService = require("../services/country");
 const RiderModel = require("../models/rider");
@@ -161,11 +161,14 @@ exports.allUsers = async (req, res) => {
 exports.singleUser = async (req, res) => {
   try {
     const data = await userInstance.getByID(req.params.userId);
+    const userDup = await User.findById(data.data._id).populate("enterprise");
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, null);
+    const user = {...userDup._doc, ...data.data};
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, user, null);
+    return
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 

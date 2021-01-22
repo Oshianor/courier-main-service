@@ -422,6 +422,36 @@ class TransactionService {
       }
     });
   }
+
+
+   /**
+   * Get all Transactions
+   * @param {MongoDB ObjectId} enterpriseId
+   * @param {number} skip
+   * @param {number} pageSize
+   */
+  getAll(filter, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        const transactions = await Transaction.find(filter)
+          .populate("user", "name email countryCode phoneNumber")
+          .populate('rider', 'name email countryCode phoneNumber')
+          .populate('company', 'name email address countryCode phoneNumber')
+          .populate('enterprise', 'name email address countryCode phoneNumber')
+          .skip(skip)
+          .limit(pageSize)
+          .sort({ createdAt: "desc" });
+
+        const total = await Transaction.countDocuments(filter);
+
+        resolve({ transactions, total });
+      } catch (error) {
+        return reject(error);
+      }
+    });
+  }
+
 }
 
 

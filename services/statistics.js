@@ -1,63 +1,57 @@
 
 const mongoose = require("mongoose");
 const Transaction = require("../models/transaction");
-const { convertToMonthlyDataArray } = require("../utils");
+const { convertToMonthlyDataArray, isObject } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
 const Enterprise = require("../models/enterprise");
+const CreditHistory = require("../models/creditHistory");
+const Company = require("../models/company");
+const User = require("../models/users");
 const { ObjectId } = mongoose.Types;
 
 
 class StatisticsService {
+  constructor(){
+    this.successfulDeliveryFilter = { status: "delivered" };
+    this.failedDeliveryFilter = { status: "canceled" };
+    this.pendingDeliveryFilter = { status: "pending" };
+    this.activeDeliveryFilter = { status: {$nin: ["delivered","cancelled","pending"]}};
+    this.approvedCreditFilter = { type: "loan", status: "approved"};
+    this.declinedCreditFilter = { type: "loan", status: "declined"};
+  }
+
   /**
-  * GET a company's statistics - revenue, orders, riders summary
+  * GET platform statistics - revenue, orders, riders summary
   * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
   */
   getGeneralStatistics(filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
 
-        const successfulDeliveryFilter = {
-          ...filter,
-          status: "delivered"
-        }
-
-        const failedDeliveryFilter = {
-          ...filter,
-          status: "canceled"
-        }
-        const pendingDeliveryFilter = {
-          ...filter,
-          status: "pending"
-        }
-
-        const totalDeliveries = await Order.countDocuments({...filter});
-        const totalPendingDeliveries = await Order.countDocuments({...pendingDeliveryFilter});
-        const totalFailedDeliveries = await Order.countDocuments({...failedDeliveryFilter});
-        const totalSuccessfulDeliveries = await Order.countDocuments({...successfulDeliveryFilter});
-
-        const totalRiders = await Rider.countDocuments({...filter});
+        const deliveryStatistics = await this.getDeliveryStatistics(filter);
+        const totalRevenue = await this.getTotalRevenue(filter);
+        const totalRiders = await this.getRiderCount(filter);
 
         // Coercing to ObjectIds because the $match stage of the aggregation needs it that way
-        if(filter.enterprise){
+        if(filter.enterprise && typeof(filter.enterprise) === 'string'){
           filter.enterprise = ObjectId(filter.enterprise);
         }
-        if(filter.company){
+        if(filter.company && typeof(filter.company) === 'string'){
           filter.company = ObjectId(filter.company);
         }
 
         // Total deliveries by months
-        let monthlySuccessfulDeliveries = await Order.aggregate(buildOrderAggregationPipeline(successfulDeliveryFilter));
-        let monthlyFailedDeliveries = await Order.aggregate(buildOrderAggregationPipeline(failedDeliveryFilter));
+        let monthlySuccessfulDeliveries = await Order.aggregate(
+          buildOrderAggregationPipeline({...filter, ...this.successfulDeliveryFilter})
+        );
+        let monthlyFailedDeliveries = await Order.aggregate(
+          buildOrderAggregationPipeline({...filter, ...this.failedDeliveryFilter})
+        );
         monthlySuccessfulDeliveries = convertToMonthlyDataArray(monthlySuccessfulDeliveries, 'numberOfDeliveries');
         monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
 
-        let totalRevenue = await Transaction.aggregate([
-          { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
-          { $group: { _id: 1, "total": {$sum: "$amount"} }},
-        ]);
-        totalRevenue = totalRevenue[0] ? totalRevenue[0].total : 0;
 
         let monthlyRevenues = await Transaction.aggregate([
           { $match: {...filter, status: "approved"} },
@@ -68,10 +62,7 @@ class StatisticsService {
 
 
         const statisticsData = {
-          totalDeliveries,
-          totalPendingDeliveries,
-          totalFailedDeliveries,
-          totalSuccessfulDeliveries,
+          ...deliveryStatistics,
           totalRiders,
           totalRevenue,
           monthlyFailedDeliveries,
@@ -79,7 +70,7 @@ class StatisticsService {
           monthlyRevenues,
         }
 
-        if(filter.enterprise){
+        if(filter.enterprise && ObjectId.isValid(filter.enterprise)){
           const enterpriseRecord = await Enterprise.findOne({_id: filter.enterprise});
           if(enterpriseRecord){
             statisticsData.totalBranches = enterpriseRecord.branchUserIDS.length;
@@ -98,9 +89,201 @@ class StatisticsService {
         }
       } catch (error) {
         console.log('Statistics service Error => ', error);
-        return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
       }
     })
+  }
+
+  /**
+  * GET statistics - revenue, orders, riders summary
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+ getEnterpriseStatistics(){
+   return new Promise(async(resolve, reject) => {
+     try{
+      const generalStatistics = await this.getGeneralStatistics();
+
+      const totalAdmins = await Enterprise.countDocuments({type: "owner"});
+      const totalMaintainers = await Enterprise.countDocuments({type: "maintainer"});
+      const totalBranches = await Enterprise.countDocuments({type: "branch"});
+
+      let totalCreditsDisbursed = await CreditHistory.aggregate([
+        { $match: {type: "loan", status: "approved"} },
+        { $group: { _id: 1, "total": {$sum: "$amount"} }},
+      ]);
+
+      let totalCreditsUsed = await CreditHistory.aggregate([
+        { $match: {type: "debit"}},
+        { $group: { _id: 1, "total": {$sum: "$amount"} }},
+      ]);
+
+      totalCreditsDisbursed = totalCreditsDisbursed[0] ? totalCreditsDisbursed[0].total : 0;
+      totalCreditsUsed = totalCreditsUsed[0] ? totalCreditsUsed[0].total : 0;
+
+      const totalCreditsRemaining = totalCreditsDisbursed - totalCreditsUsed;
+
+      // Total deliveries by months
+      let monthlyApprovedCredits = await CreditHistory.aggregate(
+        buildCreditAggregationPipeline(this.approvedCreditFilter)
+      );
+      let monthlyDeclinedCredits = await CreditHistory.aggregate(
+        buildCreditAggregationPipeline(this.declinedCreditFilter)
+      );
+
+      monthlyApprovedCredits = convertToMonthlyDataArray(monthlyApprovedCredits, 'totalAmount');
+      monthlyDeclinedCredits = convertToMonthlyDataArray(monthlyDeclinedCredits, 'totalAmount');
+
+       resolve({
+         ...generalStatistics,
+         totalAdmins,
+         totalBranches,
+         totalMaintainers,
+         totalCreditsDisbursed,
+         totalCreditsUsed,
+         totalCreditsRemaining,
+         monthlyApprovedCredits,
+         monthlyDeclinedCredits
+       });
+
+       function buildCreditAggregationPipeline(filter){
+        return [
+          { $match: { ...filter } },
+          { $group:{ _id: {$month: "$createdAt"}, totalAmount: {$sum: "$amount"}} },
+          { $project: {_id:0, "month": "$_id", totalAmount: "$totalAmount"}}
+        ]
+      }
+
+      } catch(error){
+        console.log('Statistics service Error => ', error);
+        return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
+      }
+    })
+  }
+
+  /**
+  * GET delivery statistics - total,pending,successful, failed deliveries
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getDeliveryStatistics(filter = {}){
+    return new Promise(async(resolve, reject) => {
+      try{
+
+        const totalDeliveries = await Order.countDocuments({...filter});
+        const totalPendingDeliveries = await Order.countDocuments({...filter, ...this.pendingDeliveryFilter});
+        const totalFailedDeliveries = await Order.countDocuments({...filter, ...this.failedDeliveryFilter});
+        const totalSuccessfulDeliveries = await Order.countDocuments({...filter, ...this.successfulDeliveryFilter});
+        const totalActiveDeliveries = await Order.countDocuments({...filter, ...this.activeDeliveryFilter});
+
+        resolve({
+          totalDeliveries,
+          totalFailedDeliveries,
+          totalSuccessfulDeliveries,
+          totalPendingDeliveries,
+          totalActiveDeliveries
+        });
+      } catch(error){
+        console.log('Delivery Statistics service Error => ', error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
+
+  /**
+  * GET total revenue
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getTotalRevenue(filter = {}){
+    return new Promise(async(resolve, reject) => {
+      try{
+        let totalRevenue = await Transaction.aggregate([
+          { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
+          { $group: { _id: 1, "total": {$sum: "$amount"} }},
+        ]);
+        totalRevenue = totalRevenue[0] ? totalRevenue[0].total : 0;
+
+        resolve(totalRevenue);
+      } catch(error){
+        console.log('Total revenue Statistics service Error => ', error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
+
+  /**
+  * GET total commission
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getTotalCommission(filter = {}){
+    return new Promise(async(resolve, reject) => {
+      try{
+        let totalComission = await Transaction.aggregate([
+          { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
+          { $group: { _id: 1, "total": {$sum: "$commissionAmount"} }},
+        ]);
+        totalComission = totalComission[0] ? totalComission[0].total : 0;
+
+        resolve(totalComission);
+      } catch(error){
+        console.log('Total commission Statistics service Error => ', error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
+
+  /**
+  * GET total due
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+ getTotalDue(filter = {}){
+  return new Promise(async(resolve, reject) => {
+    try{
+      let totalDue = await Transaction.aggregate([
+        { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
+        { $group: { _id: 1, "total": {$sum: "$amountWOcommision"} }},
+      ]);
+      totalDue = totalDue[0] ? totalDue[0].total : 0;
+
+      resolve(totalDue);
+    } catch(error){
+      console.log('Total Due Statistics service Error => ', error);
+      reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+    }
+  })
+}
+
+  getAccountsStatistics(){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const totalUsers = await User.countDocuments();
+        const totalCompanies = await Company.countDocuments();
+        const totalRiders = await Rider.countDocuments();
+
+        resolve({
+          totalUsers,
+          totalCompanies,
+          totalRiders
+        })
+
+      } catch(error){
+        console.log('Total revenue Statistics service Error => ', error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
+  }
+
+  /**
+  * GET transaction count
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getTransactionCount(filter = {}){
+    return Transaction.countDocuments(filter);
+  }
+  /**
+  * GET Rider count
+  * @param {Object} filter - { company: ObjectId } | { enterprise: ObjectId } | {}
+  */
+  getRiderCount(filter = {}){
+    return Rider.countDocuments(filter);
   }
 }
 

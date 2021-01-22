@@ -502,6 +502,27 @@ class UserService {
       }
     });
   }
+
+  /**
+   *
+   * @param {string} userId
+   * @returns logistics user account
+   */
+  getUser(userId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const user = await User.findOne({ _id: userId })
+
+        if(!user){
+          return reject({ code: 404, msg: 'User '+MSG_TYPES.NOT_FOUND});
+        }
+
+        resolve(user);
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 module.exports = UserService;

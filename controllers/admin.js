@@ -614,11 +614,13 @@ exports.getRevenueStatistics = async(req, res, next) => {
     const totalRevenue = await statisticsInstance.getTotalRevenue({});
     const totalCommission = await statisticsInstance.getTotalCommission({});
     const totalTransactions = await statisticsInstance.getTransactionCount({});
+    const totalVehicles = await statisticsInstance.getTotalVehicles();
 
     const statistics = {
       totalRevenue,
       totalTransactions,
       totalCommission,
+      totalVehicles,
       totalRenewalsIncome: "coming soon"
     }
 

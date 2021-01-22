@@ -479,7 +479,7 @@ exports.getSingleCompanyTransactions = async(req, res, next) => {
     const company = await companyInstance.get({_id: req.params.companyId});
 
     const { page, pageSize, skip } = paginate(req);
-    const { transactions, total } = await companyInstance.allTransactions(company._id, skip, pageSize);
+    const { transactions, total } = await transactionInstance.getAll({company: company._id}, skip, pageSize);
 
     const meta = {
       total,

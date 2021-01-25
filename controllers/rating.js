@@ -10,7 +10,7 @@ const { paginate } = require("../utils");
  * @param {*} req 
  * @param {*} res 
  */
-exports.rateUser = async (req, res) => {
+exports.rateUser = async (req, res, next) => {
   try {
     const { error } = validateRating(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -21,7 +21,7 @@ exports.rateUser = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.RATING_DONE);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
@@ -30,7 +30,7 @@ exports.rateUser = async (req, res) => {
  * @param {*} req 
  * @param {*} res 
  */
-exports.getAllRiderRatings = async (req, res) => {
+exports.getAllRiderRatings = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -38,7 +38,11 @@ exports.getAllRiderRatings = async (req, res) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const ratingInstance = new RatingService();
-    const { total, rating } = await ratingInstance.getAllRatings({ rider: req.user.id, source: 'user' }, skip, pageSize);
+    const { total, rating } = await ratingInstance.getAllRatings(
+      { rider: req.user.id, source: "user" },
+      skip,
+      pageSize
+    );
 
     const meta = {
       total,
@@ -48,6 +52,6 @@ exports.getAllRiderRatings = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rating, meta);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+        next(error);
   }
 };

@@ -20,7 +20,7 @@ class CompanySubscription {
 
   /**
    * dispatch to entries to a group of state for the company
-   * @param {String} entryId Entry id
+   * @param {Object} entry Entry
    */
   dispatchToStateRoom(entry) {
     return new Promise(async (resolve, reject) => {

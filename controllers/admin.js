@@ -36,7 +36,7 @@ const transactionInstance = Container.get(TransactionService);
  * @param {*} req
  * @param {*} res
  */
-exports.createAdmin = async (req, res) => {
+exports.createAdmin = async (req, res, next) => {
   try {
     const { error } = validateAdmin(req.body);
     if (error)
@@ -52,9 +52,7 @@ exports.createAdmin = async (req, res) => {
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, error.code, error.msg);
-    return;
+    next(error);
   }
 };
 
@@ -63,15 +61,14 @@ exports.createAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.all = async (req, res) => {
+exports.all = async (req, res, next) => {
   try {
     const admin = await adminInstance.getAll({ deleted: false });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
     return;
   } catch (err) {
-    JsonResponse(res, err.code, err.msg);
-    return;
+    next(error);
   }
 };
 
@@ -80,15 +77,13 @@ exports.all = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.me = async (req, res) => {
+exports.me = async (req, res, next) => {
   try {
     const admin = await adminInstance.get({ _id: req.user.id });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
   } catch (err) {
-    console.log(err);
-    JsonResponse(res, err.code, err.msg);
-    return;
+    next(error);
   }
 };
 
@@ -97,7 +92,7 @@ exports.me = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allRider = async (req, res) => {
+exports.allRider = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -112,8 +107,7 @@ exports.allRider = async (req, res) => {
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, meta);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -122,7 +116,7 @@ exports.allRider = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.singleRider = async (req, res) => {
+exports.singleRider = async (req, res, next) => {
   try {
     const rider = await RiderModel.findOne({ _id: req.params.rider })
       .select("-password -rememberToken")
@@ -130,8 +124,7 @@ exports.singleRider = async (req, res) => {
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider, null);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -140,7 +133,7 @@ exports.singleRider = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allUsers = async (req, res) => {
+exports.allUsers = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -148,8 +141,7 @@ exports.allUsers = async (req, res) => {
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, data.meta);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -158,7 +150,7 @@ exports.allUsers = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.singleUser = async (req, res) => {
+exports.singleUser = async (req, res, next) => {
   try {
     const data = await userInstance.getByID(req.params.userId);
     const userDup = await User.findById(data.data._id).populate("enterprise");
@@ -177,7 +169,7 @@ exports.singleUser = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.destroy = async (req, res) => {
+exports.destroy = async (req, res, next) => {
   try {
     const admin = await adminInstance.get({ _id: req.params.adminId });
 
@@ -187,8 +179,7 @@ exports.destroy = async (req, res) => {
     await admin.save();
     JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -197,7 +188,7 @@ exports.destroy = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updateMe = async (req, res) => {
+exports.updateMe = async (req, res, next) => {
   try {
     const { error } = validateUpdateAdmin(req.body);
     if (error)
@@ -209,8 +200,7 @@ exports.updateMe = async (req, res) => {
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -219,7 +209,7 @@ exports.updateMe = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.password = async (req, res) => {
+exports.password = async (req, res, next) => {
   try {
     const { error } = validatePassword(req.body);
     if (error)
@@ -229,9 +219,7 @@ exports.password = async (req, res) => {
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, error.code, error.msg);
-    return
+    next(error);
   }
 };
 
@@ -240,7 +228,7 @@ exports.password = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.disable = async (req, res) => {
+exports.disable = async (req, res, next) => {
   try {
     const admin = await adminInstance.get({ _id: req.params.adminId });
 
@@ -249,9 +237,7 @@ exports.disable = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, error.code, error.msg);
-    return
+    next(error);
   }
 };
 
@@ -260,7 +246,7 @@ exports.disable = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.enable = async (req, res) => {
+exports.enable = async (req, res, next) => {
   try {
     const admin = await adminInstance.get({ _id: req.params.adminId });
 
@@ -269,9 +255,7 @@ exports.enable = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, error.code, error.msg);
-    return
+    next(error);
   }
 };
 

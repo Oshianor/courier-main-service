@@ -15,7 +15,7 @@ const { paginate } = require("../utils");
  * @param {*} req
  * @param {*} res
  */
-exports.createUser = async (req, res) => {
+exports.createUser = async (req, res, next) => {
   try {
     const userInstance = new UserService();
     const { user } = await userInstance.createUser(req.body);
@@ -23,19 +23,16 @@ exports.createUser = async (req, res) => {
     user.password = "";
     JsonResponse(res, 200, MSG_TYPES.ACCOUNT_CREATED, user);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
-
-
 
 /**
  * Update user FCM Token
  * @param {*} req
  * @param {*} res
  */
-exports.FCMToken = async (req, res) => {
+exports.FCMToken = async (req, res, next) => {
   try {
     const { error } = validateRiderFCMToken(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -45,8 +42,7 @@ exports.FCMToken = async (req, res) => {
 
     JsonResponse(res, 200, MSG_TYPES.FCMToken);
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
@@ -55,7 +51,7 @@ exports.FCMToken = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.pending = async (req, res) => {
+exports.pending = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -74,18 +70,16 @@ exports.pending = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
-    return
+    next(error);
   }
 }
-
 
 /**
  * Get rider completed order for the day
  * @param {*} req
  * @param {*} res
  */
-exports.completed = async (req, res) => {
+exports.completed = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
     const userInstance = new UserService();
@@ -100,14 +94,17 @@ exports.completed = async (req, res) => {
       pagination: { pageSize, page },
     };
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
-    return
+    return;
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
-    return
+    next(error);
   }
-}
+};
 
-
+/**
+ * Update user account details
+ * @param {*} req
+ * @param {*} res
+ */
 exports.updateUserAccount = async (req, res, next) => {
   try {
     const userService = new UserService();

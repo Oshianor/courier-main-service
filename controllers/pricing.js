@@ -6,7 +6,7 @@ const { MSG_TYPES } = require("../constant/types");
 const { JsonResponse } = require("../lib/apiResponse");
 
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     // validate request
     const { error } = validatePricing(req.body);
@@ -26,13 +26,12 @@ exports.create = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
-    return;
+    next(error);
   }
 };
 
 
-exports.all = async (req, res) => {
+exports.all = async (req, res, next) => {
   try {
     // check if account exist
     // const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
@@ -44,14 +43,12 @@ exports.all = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, pricing, null);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
-    return;
+    next(error);
   }
 };
 
 
-exports.update = async (req, res) => {
+exports.update = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateUpdatePricing(req.body);
@@ -73,8 +70,6 @@ exports.update = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
-    return;
+    next(error);
   }
 };

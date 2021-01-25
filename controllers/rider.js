@@ -23,7 +23,7 @@ const { Verification } = require("../templates");
  * @param {*} req
  * @param {*} res
  */
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     const { error } = validateRider(req.body);
     if (error)
@@ -52,7 +52,7 @@ exports.create = async (req, res) => {
     JsonResponse(res, 201, MSG_TYPES.ACCOUNT_CREATED, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code, error.msg);
+    next(error)
   }
 };
 
@@ -61,7 +61,7 @@ exports.create = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.createSelf = async (req, res) => {
+exports.createSelf = async (req, res, next) => {
   try {
     const { error } = validateRiderSelf(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -91,7 +91,7 @@ exports.createSelf = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code, error.msg);
+    next(error)
   }
 };
 
@@ -100,7 +100,7 @@ exports.createSelf = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.me = async (req, res) => {
+exports.me = async (req, res, next) => {
   try {
     const rider = await Rider.findOne({
       _id: req.user.id,
@@ -125,7 +125,7 @@ exports.me = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -134,7 +134,7 @@ exports.me = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.single = async (req, res) => {
+exports.single = async (req, res, next) => {
   try {
     const company = await Company.findOne({ _id: req.user.id });
     if (!company) {
@@ -148,7 +148,7 @@ exports.single = async (req, res) => {
     JsonResponse(res, 200, null, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -157,7 +157,7 @@ exports.single = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.all = async (req, res) => {
+exports.all = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -185,7 +185,7 @@ exports.all = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, riders, meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -194,7 +194,7 @@ exports.all = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allByAdmin = async (req, res) => {
+exports.allByAdmin = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -213,7 +213,7 @@ exports.allByAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -222,7 +222,7 @@ exports.allByAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.requests = async (req, res) => {
+exports.requests = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -247,7 +247,7 @@ exports.requests = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -256,7 +256,7 @@ exports.requests = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updateSingle = async (req, res) => {
+exports.updateSingle = async (req, res, next) => {
   try {
     const company = await Company.findOne({
       _id: req.user.companyId,
@@ -276,7 +276,7 @@ exports.updateSingle = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED, rider);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -285,7 +285,7 @@ exports.updateSingle = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.respond = async (req, res) => {
+exports.respond = async (req, res, next) => {
   try {
     const { error } = validateStatusUpdate(req.body);
     if (error) {
@@ -311,7 +311,7 @@ exports.respond = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED, request);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -320,7 +320,7 @@ exports.respond = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.status = async (req, res) => {
+exports.status = async (req, res, next) => {
   try {
     const { error } = validateRiderStatus(req.body);
     if (error)
@@ -335,7 +335,7 @@ exports.status = async (req, res) => {
     return
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -344,7 +344,7 @@ exports.status = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.online = async (req, res) => {
+exports.online = async (req, res, next) => {
   try {
     const { error } = validateRiderLocation(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -355,8 +355,7 @@ exports.online = async (req, res) => {
     JsonResponse(res, 200, msg);
     return
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -365,7 +364,7 @@ exports.online = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.location = async (req, res) => {
+exports.location = async (req, res, next) => {
   try {
     const { error } = validateRiderLocation(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -375,7 +374,7 @@ exports.location = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -384,7 +383,7 @@ exports.location = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.destroy = async (req, res) => {
+exports.destroy = async (req, res, next) => {
   try {
     const riderInstance = new RiderService();
     await riderInstance.destroy(req.params, req.user);
@@ -392,7 +391,7 @@ exports.destroy = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code, error.msg);
+    next(error)
   }
 };
 
@@ -401,7 +400,7 @@ exports.destroy = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.FCMToken = async (req, res) => {
+exports.FCMToken = async (req, res, next) => {
   try {
     const { error } = validateRiderFCMToken(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -412,7 +411,7 @@ exports.FCMToken = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FCMToken);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
@@ -422,7 +421,7 @@ exports.FCMToken = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.basket = async (req, res) => {
+exports.basket = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const orders = await riderInstance.getRiderBasket(req.user);
@@ -430,18 +429,17 @@ exports.basket = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
-
 
 /**
  * Get rider completed order for the day
  * @param {*} req
  * @param {*} res
  */
-exports.completedOrder = async (req, res) => {
+exports.completedOrder = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const orders = await riderInstance.getRiderDeliveredBasket(req.user);
@@ -449,7 +447,7 @@ exports.completedOrder = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
@@ -459,7 +457,7 @@ exports.completedOrder = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.trips = async (req, res) => {
+exports.trips = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const trips = await riderInstance.getRiderTrips(req.user);
@@ -467,18 +465,17 @@ exports.trips = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, trips);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
-
 
 /**
  * Get rider's transaction for the month
  * @param {*} req
  * @param {*} res
  */
-exports.getTransaction = async (req, res) => {
+exports.getTransaction = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const { transaction } = await riderInstance.getRiderTransaction(req.user);
@@ -486,18 +483,17 @@ exports.getTransaction = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
-
 
 /**
  * Get rider's trip status by admin
  * @param {*} req
  * @param {*} res
  */
-exports.checkDriverTripStatus = async (req, res) => {
+exports.checkDriverTripStatus = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const { order } = await riderInstance.getDriverTripStatus(
@@ -509,7 +505,7 @@ exports.checkDriverTripStatus = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, { withPackage });
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
@@ -519,7 +515,7 @@ exports.checkDriverTripStatus = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.suspend = async (req, res) => {
+exports.suspend = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const updatedRider = await riderInstance.changeRiderStatus(req.params.riderId, req.user.id, "suspended");
@@ -527,7 +523,7 @@ exports.suspend = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
@@ -537,7 +533,7 @@ exports.suspend = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.unsuspend = async (req, res) => {
+exports.unsuspend = async (req, res, next) => {
   try {
     const riderInstance = new RiderService()
     const updatedRider = await riderInstance.changeRiderStatus(req.params.riderId, req.user.id, "active");
@@ -545,7 +541,7 @@ exports.unsuspend = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
@@ -555,7 +551,7 @@ exports.unsuspend = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getRiderTransactions = async (req, res) => {
+exports.getRiderTransactions = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -573,18 +569,17 @@ exports.getRiderTransactions = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
-
 
 /**
  * GET a rider's orders
  * @param {*} req
  * @param {*} res
  */
-exports.getRiderOrders = async (req, res) => {
+exports.getRiderOrders = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -602,7 +597,7 @@ exports.getRiderOrders = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }
@@ -612,7 +607,7 @@ exports.getRiderOrders = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getRiderStatistics = async (req, res) => {
+exports.getRiderStatistics = async (req, res, next) => {
   try {
     const companyInstance = new CompanyService()
     const transactions = await companyInstance.getRiderStatistics(req.user.id, {rider: req.params.riderId});
@@ -620,7 +615,7 @@ exports.getRiderStatistics = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions);
     return
   } catch (error) {
-    JsonResponse(res, error.code, error.msg);
+    next(error)
     return
   }
 }

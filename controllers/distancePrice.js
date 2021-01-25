@@ -18,7 +18,7 @@ const { MSG_TYPES } = require("../constant/types");
  * @param {*} req
  * @param {*} res
  */
-exports.admin = async (req, res) => {
+exports.admin = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateDistancePrice(req.body);
@@ -67,7 +67,7 @@ exports.admin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -77,7 +77,7 @@ exports.admin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.company = async (req, res) => {
+exports.company = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateDistancePriceCompany(req.body);
@@ -125,7 +125,7 @@ exports.company = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -135,7 +135,7 @@ exports.company = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getAdmin = async (req, res) => {
+exports.getAdmin = async (req, res, next) => {
   try {
     const page =
       typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
@@ -161,7 +161,7 @@ exports.getAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -171,7 +171,7 @@ exports.getAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getCompany = async (req, res) => {
+exports.getCompany = async (req, res, next) => {
   try {
     const page =
       typeof req.query.page !== "undefined" ? Math.abs(req.query.page) : 1;
@@ -209,7 +209,7 @@ exports.getCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -219,7 +219,7 @@ exports.getCompany = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updateAdmin = async (req, res) => {
+exports.updateAdmin = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateUpdateDistancePrice(req.body);
@@ -244,7 +244,7 @@ exports.updateAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -254,7 +254,7 @@ exports.updateAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updateCompany = async (req, res) => {
+exports.updateCompany = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateUpdateDistancePrice(req.body);
@@ -285,7 +285,7 @@ exports.updateCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -295,7 +295,7 @@ exports.updateCompany = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.deleteAdmin = async (req, res) => {
+exports.deleteAdmin = async (req, res, next) => {
   try {
     // check if account exist
     const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
@@ -315,7 +315,7 @@ exports.deleteAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };
@@ -325,7 +325,7 @@ exports.deleteAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.deleteCompany = async (req, res) => {
+exports.deleteCompany = async (req, res, next) => {
   try {
     // check if account exist
     const company = await Company.findOne({
@@ -351,7 +351,7 @@ exports.deleteCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error);
     return;
   }
 };

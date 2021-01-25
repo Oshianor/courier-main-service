@@ -102,14 +102,6 @@ const riderSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    forgotPassOTP: {
-      type: String,
-      default: null,
-    },
-    forgotPassOTPExpiredDate: {
-      type: String,
-      default: null,
-    },
     policyNumber: {
       type: String,
     },

@@ -34,4 +34,8 @@ router.patch(
   controllers.auth.updateEnterpriseAccountStatus
 );
 
+// Forgot password flow
+router.post("/password/forgot", controllers.auth.forgotPassword2);
+router.post("/password/reset", controllers.auth.resetPassword2);
+
 module.exports = router;

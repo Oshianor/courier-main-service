@@ -10,7 +10,10 @@ const {
   validatePasswordUpdate,
   validateForgotPassword,
   validateUserLogin,
-  validateUserStatusUpdate
+  validateUserStatusUpdate,
+
+  validateForgotPassword2,
+  validateResetPassword2
 } = require("../request/auth");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -446,3 +449,49 @@ exports.updateUserStatus = async (req, res, next) => {
     return
   }
 };
+
+
+/**
+ * Forgot-Pass email verification
+ * @param {*} req
+ * @param {*} res
+ */
+exports.forgotPassword2 = async (req, res) => {
+  try {
+    const { error } = validateForgotPassword2(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const { email, userType, verificationMode } = req.body;
+    const authInstance = new AuthService();
+    await authInstance.forgotPassword2(email, userType, verificationMode);
+
+    const verificationDevice = verificationMode === "otp" ? "phone" : "mail"
+    return JsonResponse(res, 200, `An Account recovery message has been sent to your ${verificationDevice}`);
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+  }
+};
+
+/**
+ * Reset user password with token [phone otp or email verification]
+ * @param {*} req
+ * @param {*} res
+ * @returns
+ */
+exports.resetPassword2 = async (req, res, next) => {
+  try {
+    const { error } = validateResetPassword2(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const { email, userType, token, password } = req.body;
+    const authInstance = new AuthService();
+    await authInstance.resetPassword2(email, userType, token, password);
+
+    return JsonResponse(res, 200, "Password reset successfully");
+  } catch (error) {
+    console.log(error);
+    return JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+  }
+}
+

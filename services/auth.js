@@ -71,7 +71,7 @@ class AuthSerivice {
         const forgotPassOTP = GenerateOTP(4);
         const currentDate = new Date();
         const forgotPassOTPExpiredDate = moment(currentDate)
-          .add(4, "m")
+          .add(10, "m")
           .toDate();
 
         const updateRider = await Rider.updateOne(
@@ -393,7 +393,7 @@ class AuthSerivice {
         const passwordResetToken =  isOTPVerification ? GenerateOTP(4) : GenerateToken(225);
         const currentDate = new Date();
         const passwordResetTokenExpiredDate = moment(currentDate)
-          .add(4, "m")
+          .add(10, "m")
           .toDate();
 
         const updatedUser = await UserTypeModel.findOneAndUpdate(

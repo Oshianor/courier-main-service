@@ -46,11 +46,9 @@ exports.transaction = async (req, res, next) => {
     JsonResponse(res, 201, msg);
     return;
   } catch (error) {
-    console.log(error);
-    return next(error);
+    next(error);
   }
 };
-
 
 /**
  * enterprise confirm payment method and entry
@@ -86,14 +84,12 @@ exports.enterpriseTransaction = async (req, res, next) => {
   }
 };
 
-
-
 /**
  * Rider confirm user cash payment at pickup location
  * @param {*} req
  * @param {*} res
  */
-exports.riderConfirmCashPayment = async (req, res) => {
+exports.riderConfirmCashPayment = async (req, res, next) => {
   try {
     const { error } = validateTransactionStatus(req.body);
     if (error)
@@ -119,18 +115,16 @@ exports.riderConfirmCashPayment = async (req, res) => {
     JsonResponse(res, code, msg);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
-
-
 
 /**
  * Get All
  * @param {*} req
  * @param {*} res
  */
-exports.allByAdmin = async (req, res) => {
+exports.allByAdmin = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
@@ -148,9 +142,8 @@ exports.allByAdmin = async (req, res) => {
     };
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
-  } catch (err) {
-    console.log(err);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -159,17 +152,18 @@ exports.allByAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allByUser = async (req, res) => {
+exports.allByUser = async (req, res, next) => {
   try {
-
     const { page, pageSize, skip } = paginate(req);
     const filter = { user: req.user.id };
 
     const total = await Transaction.countDocuments(filter);
     const transaction = await Transaction.find(filter)
-      .select('-_id txRef entry user rider paymentMethod amount status createdAt')
-      .populate('rider', '-_id name email')
-      .populate('entry', '-_id itemType description')
+      .select(
+        "-_id txRef entry user rider paymentMethod amount status createdAt"
+      )
+      .populate("rider", "-_id name email")
+      .populate("entry", "-_id itemType description")
       .skip(skip)
       .limit(pageSize);
 
@@ -181,9 +175,8 @@ exports.allByUser = async (req, res) => {
     };
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction, meta);
-  } catch (err) {
-    console.log(err);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -192,9 +185,8 @@ exports.allByUser = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.single = async (req, res) => {
+exports.single = async (req, res, next) => {
   try {
-
     const transaction = await Transaction.findOne({
       _id: req.params.id,
     })
@@ -207,8 +199,7 @@ exports.single = async (req, res) => {
     }
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction, null);
-  } catch (err) {
-    console.log(err);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+  } catch (error) {
+    next(error);
   }
 };

@@ -22,9 +22,7 @@ const EntrySubscription = require("../subscription/entry");
 const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
-const UserService = require("../services/user")
-
-
+const UserService = require("../services/user");
 
 /**
  * Create an Entry
@@ -35,7 +33,6 @@ exports.localEntry = async (req, res, next) => {
   try {
     const { error } = validateLocalEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
-
 
     req.body.company = null;
     req.body.enterprise = null;
@@ -53,7 +50,7 @@ exports.localEntry = async (req, res, next) => {
 
       req.body.enterprise = req.enterprise._id;
     }
-    
+
     const entryInstance = new EntryService();
     const countryInstance = new CountryService();
     const settingInstance = new SettingService();
@@ -99,13 +96,13 @@ exports.localEntry = async (req, res, next) => {
     const newEntry = await entryInstance.createEntry(body);
 
     newEntry.metaData = null;
-    // only send out a socket dispatch when it's n ot enterprise 
+    // only send out a socket dispatch when it's n ot enterprise
     // because on enterprise a company has already been assigned
     if (typeof req.enterprise === "undefined") {
       const entrySub = new EntrySubscription();
       await entrySub.newEntry(newEntry._id);
     }
-    
+
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
     return;
   } catch (error) {
@@ -118,7 +115,7 @@ exports.localEntry = async (req, res, next) => {
  * @param {*} req
  * @param {*} res
  */
-exports.calculateShipment = async (req, res) => {
+exports.calculateShipment = async (req, res, next) => {
   try {
     const { error } = validateCalculateShipment(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -137,14 +134,17 @@ exports.calculateShipment = async (req, res) => {
     const vehicle = await VehicleInstance.get(req.body.vehicle);
 
     // check if we have pricing for the location
-    const distancePrice = await DPInstance.get({country: req.body.country, state: req.body.state, vehicle: req.body.vehicle});
+    const distancePrice = await DPInstance.get({
+      country: req.body.country,
+      state: req.body.state,
+      vehicle: req.body.vehicle,
+    });
 
     // get admin settings pricing
     const setting = await settingInstance.get({ source: "admin" });
- 
+
     // get distance calculation
     const distance = await entryInstance.getDistanceMetrix(req.body);
-
 
     const body = await entryInstance.calculateLocalEntry(
       req.body,
@@ -159,34 +159,36 @@ exports.calculateShipment = async (req, res) => {
     if (req.body.pickupType === "instant") {
       body.TEC = parseFloat(body.TEC) * parseFloat(body.instantPricing);
     }
-    
+
     body.metaData = null;
     JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, body);
     return;
   } catch (error) {
-    console.log(error);
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
-
 
 /**
  * get entries by a company
  * @param {*} req
  * @param {*} res
  */
-exports.byCompany = async (req, res) => {
+exports.byCompany = async (req, res, next) => {
   try {
     //get pagination value
     const { page, pageSize, skip } = paginate(req);
 
-    const company = await Company.findOne({ _id: req.user.id, $or: [{ status: "active" }, { status: "inactive" }], verified: true });
+    const company = await Company.findOne({
+      _id: req.user.id,
+      $or: [{ status: "active" }, { status: "inactive" }],
+      verified: true,
+    });
     if (!company) JsonResponse(res, 404, MSG_TYPES.NOT_FOUND);
 
     const entries = await Entry.find({
       sourceRef: "pool",
       state: company.state,
-      status: "pending"
+      status: "pending",
       // company: null
     })
       .skip(skip)
@@ -206,9 +208,7 @@ exports.byCompany = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, entries, meta);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+    next(error);
   }
 };
 
@@ -217,9 +217,12 @@ exports.byCompany = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.singleEntry = async (req, res) => {
+exports.singleEntry = async (req, res, next) => {
   try {
-    const entry = await Entry.findOne({ _id: req.params.id, company: req.user.id })
+    const entry = await Entry.findOne({
+      _id: req.params.id,
+      company: req.user.id,
+    })
       .populate("orders")
       .populate("transaction")
       .populate("vehicle")
@@ -233,8 +236,7 @@ exports.singleEntry = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.FETCHED, entry);
     return;
   } catch (error) {
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+    next(error);
   }
 };
 
@@ -245,9 +247,8 @@ exports.singleEntry = async (req, res) => {
  */
 exports.companyAcceptEntry = async (req, res, next) => {
   try {
-
     const entryInstance = new EntryService();
-    const entry = await entryInstance.companyAcceptEntry(req.params, req.user)
+    const entry = await entryInstance.companyAcceptEntry(req.params, req.user);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -266,8 +267,8 @@ exports.companyAcceptEntry = async (req, res, next) => {
 
 /**
  * Assign a rider to a order accepted by the company
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.riderAssignToEntry = async (req, res, next) => {
   try {
@@ -295,15 +296,14 @@ exports.riderAssignToEntry = async (req, res, next) => {
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
-
 /**
  * Rider Accept entry
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.riderAcceptEntry = async (req, res, next) => {
   try {
@@ -311,7 +311,7 @@ exports.riderAcceptEntry = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const {entry} = await entryInstance.riderAcceptEntry(req.body, req.user);
+    const { entry } = await entryInstance.riderAcceptEntry(req.body, req.user);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -324,17 +324,16 @@ exports.riderAcceptEntry = async (req, res, next) => {
     JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
     return;
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
-
 /**
  * Rider Reject entry
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
-exports.riderRejectEntry = async (req, res) => {
+exports.riderRejectEntry = async (req, res, next) => {
   try {
     const { error } = validateEntryID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -345,26 +344,25 @@ exports.riderRejectEntry = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.RIDER_REJECTED);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
-
 /**
  * Start Pickup trigger by rider
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
-exports.riderStartPickup = async (req, res) => {
+exports.riderStartPickup = async (req, res, next) => {
   try {
     const { error } = validateEntryID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-     const { entry } = await entryInstance.riderStartEntryPickup(
-       req.body,
-       req.user
-     );
+    const { entry } = await entryInstance.riderStartEntryPickup(
+      req.body,
+      req.user
+    );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -378,23 +376,25 @@ exports.riderStartPickup = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
-
 /**
  * Rider Arrive a pickup location
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
-exports.riderArriveAtPickup = async (req, res) => {
+exports.riderArriveAtPickup = async (req, res, next) => {
   try {
     const { error } = validateEntryID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const {entry} = await entryInstance.riderArriveAtPickup(req.body, req.user);
+    const { entry } = await entryInstance.riderArriveAtPickup(
+      req.body,
+      req.user
+    );
 
     // send fcm notification
     // send nofication to the user device
@@ -402,7 +402,6 @@ exports.riderArriveAtPickup = async (req, res) => {
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, "", entry.user.FCMToken);
 
-    
     // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(req.body.entry);
@@ -410,17 +409,16 @@ exports.riderArriveAtPickup = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
-
 /**
  * Driver Confirm OTP code for pickup
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
-exports.riderComfirmPickupOTPCode = async (req, res) => {
+exports.riderComfirmPickupOTPCode = async (req, res, next) => {
   try {
     const { error } = validatePickupOTP(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -437,7 +435,6 @@ exports.riderComfirmPickupOTPCode = async (req, res) => {
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, "", entry.user.FCMToken);
 
-    
     // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
@@ -445,7 +442,6 @@ exports.riderComfirmPickupOTPCode = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
-

@@ -10,7 +10,11 @@ const EntryService = require("../services/entry");
 const EntrySubscription = require("../subscription/entry");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user");
-const { validateOrderID, validateOrderOTP, validateUserOrderID } = require("../request/order");
+const {
+  validateOrderID,
+  validateOrderOTP,
+  validateUserOrderID,
+} = require("../request/order");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { SERVER_EVENTS } = require("../constant/events");
@@ -21,22 +25,21 @@ const { validateRiderID } = require("../request/rating");
 const moment = require("moment");
 const CompanyService = require("../services/company");
 
-
-
-
 /**
  * Start Delivery trigger by rider
  * @param {*} req
  * @param {*} res
  */
-exports.riderInitiateOrderDelivery = async (req, res) => {
+exports.riderInitiateOrderDelivery = async (req, res, next) => {
   try {
     const { error } = validateOrderID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-
     const orderInstance = new OrderService();
-    const { order, entry } = await orderInstance.startOrderDelivery(req.body, req.user);
+    const { order, entry } = await orderInstance.startOrderDelivery(
+      req.body,
+      req.user
+    );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -52,25 +55,25 @@ exports.riderInitiateOrderDelivery = async (req, res) => {
     return;
   } catch (error) {
     console.log("error", error);
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
-
-
 
 /**
  * Start Delivery trigger by rider
  * @param {*} req
  * @param {*} res
  */
-exports.riderArriveAtDelivery = async (req, res) => {
+exports.riderArriveAtDelivery = async (req, res, next) => {
   try {
     const { error } = validateOrderID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-
     const orderInstance = new OrderService();
-    const { order, entry } = await orderInstance.arriveAtLocation(req.body, req.user);
+    const { order, entry } = await orderInstance.arriveAtLocation(
+      req.body,
+      req.user
+    );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -86,23 +89,25 @@ exports.riderArriveAtDelivery = async (req, res) => {
     return;
   } catch (error) {
     console.log("error", error);
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
-
 
 /**
  * Driver Confirm OTP code for delivery
  * @param {*} req
  * @param {*} res
  */
-exports.confirmDelivery = async (req, res) => {
+exports.confirmDelivery = async (req, res, next) => {
   try {
     const { error } = validateOrderOTP(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
-    const { entry, msg } = await orderInstance.confirmDelivery(req.body, req.user);
+    const { entry, msg } = await orderInstance.confirmDelivery(
+      req.body,
+      req.user
+    );
 
     // send fcm notification
     // send nofication to the user device
@@ -118,7 +123,7 @@ exports.confirmDelivery = async (req, res) => {
     JsonResponse(res, 200, msg);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
@@ -127,18 +132,25 @@ exports.confirmDelivery = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.orderDetails = async (req, res) => {
+exports.orderDetails = async (req, res, next) => {
   try {
     const { error } = validateUserOrderID(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
-    const orderDetails = await orderInstance.getOrderDetails({ orderId: req.body.orderId });
+    const orderDetails = await orderInstance.getOrderDetails({
+      orderId: req.body.orderId,
+    });
 
-    JsonResponse(res, 200, 'Order details retrieved successfully', orderDetails);
+    JsonResponse(
+      res,
+      200,
+      "Order details retrieved successfully",
+      orderDetails
+    );
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
@@ -147,24 +159,26 @@ exports.orderDetails = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.orderOverview = async (req, res) => {
+exports.orderOverview = async (req, res, next) => {
   try {
     const { error } = validateRiderID({ rider: req.user.id });
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-
-    const beginningOfWeek = moment().startOf('isoWeek').toDate();
+    const beginningOfWeek = moment().startOf("isoWeek").toDate();
     const tripInstance = new TripLogService();
-    const orderDetails = await tripInstance.getOverview({ rider: mongoose.Types.ObjectId(req.user.id), type: 'delivered', createdAt: { $gte: beginningOfWeek } });
-    JsonResponse(res, 200, 'Order overview fetched successfully', orderDetails);
+    const orderDetails = await tripInstance.getOverview({
+      rider: mongoose.Types.ObjectId(req.user.id),
+      type: "delivered",
+      createdAt: { $gte: beginningOfWeek },
+    });
+    JsonResponse(res, 200, "Order overview fetched successfully", orderDetails);
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
-
-exports.orderHistory = async (req, res) => {
+exports.orderHistory = async (req, res, next) => {
   try {
     if (!ObjectId.isValid(req.params.orderId)) {
       return JsonResponse(res, 400, "Please provide a valid order ID");
@@ -175,10 +189,15 @@ exports.orderHistory = async (req, res) => {
       req.params.orderId
     );
 
-    JsonResponse(res, 200, 'Order details retrieved successfully', orderDetails);
+    JsonResponse(
+      res,
+      200,
+      "Order details retrieved successfully",
+      orderDetails
+    );
     return;
   } catch (error) {
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 };
 
@@ -187,33 +206,38 @@ exports.orderHistory = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getCompanyOrders  = async (req, res) => {
+exports.getCompanyOrders = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
     const orderInstance = new OrderService();
     const companyInstance = new CompanyService();
 
-    const company = await companyInstance.get({_id: req.params.companyId});
+    const company = await companyInstance.get({ _id: req.params.companyId });
 
     // Pull order query params from request route
-    const orderQueryParams = ['status'];
+    const orderQueryParams = ["status"];
     const orderQuery = {};
-    for(let key in req.query){
-      if(orderQueryParams.hasOwnProperty(key)){
+    for (let key in req.query) {
+      if (orderQueryParams.hasOwnProperty(key)) {
         orderQuery[key] = req.query[key];
       }
     }
 
-    const { orders, total } = await orderInstance.getAll({company: company._id, ...orderQuery},{},'',{skip, pageSize});
+    const { orders, total } = await orderInstance.getAll(
+      { company: company._id, ...orderQuery },
+      {},
+      "",
+      { skip, pageSize }
+    );
     const meta = {
       total,
-      pagination: { pageSize, page }
-    }
+      pagination: { pageSize, page },
+    };
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, orders, meta);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -222,26 +246,26 @@ exports.getCompanyOrders  = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getCompanyOrderStats  = async (req, res) => {
+exports.getCompanyOrderStats = async (req, res, next) => {
   try {
     const orderInstance = new OrderService();
     const companyInstance = new CompanyService();
 
-    const company = await companyInstance.get({_id: req.params.companyId});
+    const company = await companyInstance.get({ _id: req.params.companyId });
 
-    const total = await orderInstance.totalOrders({company: company._id});
+    const total = await orderInstance.totalOrders({ company: company._id });
     // Get other totals - local, interstate, intl
     const statistics = {
       total: total,
       local: total,
       interstate: 0,
-      international: 0
-    }
+      international: 0,
+    };
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -250,7 +274,7 @@ exports.getCompanyOrderStats  = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.decline  = async (req, res) => {
+exports.decline = async (req, res, next) => {
   try {
     const orderInstance = new OrderService();
 
@@ -261,7 +285,7 @@ exports.decline  = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -270,7 +294,7 @@ exports.decline  = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.delete = async (req, res) => {
+exports.delete = async (req, res, next) => {
   try {
     const orderInstance = new OrderService();
     const { orderId } = req.params;
@@ -280,7 +304,7 @@ exports.delete = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.DELETED);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };
 
@@ -289,16 +313,20 @@ exports.delete = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.assignOrderToRider = async (req, res) => {
+exports.assignOrderToRider = async (req, res, next) => {
   try {
     const orderInstance = new OrderService();
     const { orderId, riderId } = req.params;
 
-    const updatedOrder = await orderInstance.assignToRider(orderId, riderId, req.user.id);
+    const updatedOrder = await orderInstance.assignToRider(
+      orderId,
+      riderId,
+      req.user.id
+    );
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedOrder);
   } catch (error) {
     console.log(error);
-    JsonResponse(res, error.code || 500, error.msg || MSG_TYPES.SERVER_ERROR);
+    next(error);
   }
 };

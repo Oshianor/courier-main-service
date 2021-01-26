@@ -6,7 +6,7 @@ const { JsonResponse } = require("../lib/apiResponse");
 const IndustryCategoryService = require("../services/industryCategory")
 
 
-exports.create = async (req, res) => {
+exports.create = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateIC(req.body);
@@ -19,21 +19,19 @@ exports.create = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.CREATED);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+        next(error);
+
   }
 };
 
-exports.all = async (req, res) => {
+exports.all = async (req, res, next) => {
   try {
     const ic = await IndustryCategory.find()
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, ic);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+        next(error);
+
   }
 };

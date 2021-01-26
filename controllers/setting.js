@@ -12,7 +12,7 @@ const { MSG_TYPES } = require("../constant/types");
  * @param {*} req
  * @param {*} res
  */
-exports.getAdmin = async (req, res) => {
+exports.getAdmin = async (req, res, next) => {
   try {
     // check if account exist
     const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
@@ -27,7 +27,7 @@ exports.getAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error)
     return;
   }
 };
@@ -37,7 +37,7 @@ exports.getAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.getCompany = async (req, res) => {
+exports.getCompany = async (req, res, next) => {
   try {
     // check if account exist
     const company = await Company.findOne({
@@ -60,7 +60,7 @@ exports.getCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error)
     return;
   }
 };
@@ -70,7 +70,7 @@ exports.getCompany = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updateAdmin = async (req, res) => {
+exports.updateAdmin = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateUpdateSettings(req.body);
@@ -96,7 +96,7 @@ exports.updateAdmin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error)
     return;
   }
 };
@@ -106,7 +106,7 @@ exports.updateAdmin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updateCompany = async (req, res) => {
+exports.updateCompany = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateUpdateSettings(req.body);
@@ -141,7 +141,7 @@ exports.updateCompany = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR, null, null);
+    next(error)
     return;
   }
 };

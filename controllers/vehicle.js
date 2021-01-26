@@ -9,7 +9,13 @@ const { JsonResponse } = require("../lib/apiResponse");
 const { UploadFileFromBinary } = require("../utils");
 
 
-exports.vehicle = async (req, res) => {
+/**
+ * Create Vehicle by admin
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.vehicle = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateVehicle(req.body);
@@ -38,40 +44,51 @@ exports.vehicle = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.CREATED);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+    next(error);
   }
 };
 
-exports.all = async (req, res) => {
+/**
+ * Get all vehicles
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.all = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.find().sort({ weight: 1 });
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+    next(error);
   }
 };
 
-
-exports.single = async (req, res) => {
+/**
+ * Get a single vehicle
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.single = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.findById(req.params.vehicleId);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, vehicle);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+    next(error);
   }
 };
 
-exports.updateVehicle = async (req, res) => {
+/**
+ * Update a vehicle details
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.updateVehicle = async (req, res, next) => {
   try {
     // validate request
     const { error } = validateUpdateVehicle(req.body);
@@ -103,8 +120,6 @@ exports.updateVehicle = async (req, res) => {
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
     return;
   } catch (error) {
-    console.log(error);
-    JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
-    return;
+    next(error);
   }
 };

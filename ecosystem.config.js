@@ -25,5 +25,23 @@ module.exports = {
       instance_var,
       log_date_format,
     },
+    {
+      namespace: name,
+      name: "entryManagement",
+      script: "./crons/entryManagement.js",
+      env: {
+        NODE_ENV: "development",
+      },
+      env_production: {
+        NODE_ENV: "production",
+      },
+      instances: 1,
+      exec_mode: "fork",
+      cron_restart: "*/5 * * * *",
+      watch: false,
+      autorestart: false,
+      instance_var: "PM2_APP_INSTANCE_ID_CRON",
+      log_date_format,
+    },
   ],
 };

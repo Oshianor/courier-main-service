@@ -22,7 +22,7 @@ const { redisClient } = require("../utils");
  * @param {*} req
  * @param {*} res
  */
-exports.userLogin = async (req, res) => {
+exports.userLogin = async (req, res, next) => {
   try {
     const { error } = validateUserLogin(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -33,8 +33,7 @@ exports.userLogin = async (req, res) => {
     res.header("x-auth-token", token);
     return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, user);
   } catch (error) {
-    console.log(error);
-    return JsonResponse(res, error.code, error.msg);
+    next(error);
   }
 }
 
@@ -43,7 +42,7 @@ exports.userLogin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.companyLogin = async (req, res) => {
+exports.companyLogin = async (req, res, next) => {
   try {
     const { error } = validateCompanyLogin(req.body);
 
@@ -84,7 +83,7 @@ exports.companyLogin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -93,7 +92,7 @@ exports.companyLogin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.adminLogin = async (req, res) => {
+exports.adminLogin = async (req, res, next) => {
   try {
     const { error } = validateAdminLogin(req.body);
 
@@ -134,7 +133,7 @@ exports.adminLogin = async (req, res) => {
     return;
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -143,7 +142,7 @@ exports.adminLogin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.riderLogin = async (req, res) => {
+exports.riderLogin = async (req, res, next) => {
   try {
     const { error } = validateRiderLogin(req.body);
     if (error)
@@ -192,7 +191,7 @@ exports.riderLogin = async (req, res) => {
 
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -201,7 +200,7 @@ exports.riderLogin = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.accountVerify = async (req, res) => {
+exports.accountVerify = async (req, res, next) => {
   try {
     const { error } = validateVerifyAccount(req.body);
     if (error)
@@ -241,7 +240,7 @@ exports.accountVerify = async (req, res) => {
     JsonResponse(res, null, MSG_TYPES.ACCOUNT_VERIFIED);
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -250,7 +249,7 @@ exports.accountVerify = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.companyVerify = async (req, res) => {
+exports.companyVerify = async (req, res, next) => {
   try {
     const { error } = validateVerifyCompany(req.query);
     if (error)
@@ -277,7 +276,7 @@ exports.companyVerify = async (req, res) => {
     return res.send(MSG_TYPES.AWAIT_ADMIN);
   } catch (error) {
     console.log(error);
-    return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
+    next(error)
   }
 };
 
@@ -286,7 +285,7 @@ exports.companyVerify = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.updatePassword = async (req, res) => {
+exports.updatePassword = async (req, res, next) => {
   try {
     const { error } = validatePasswordUpdate(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -309,7 +308,7 @@ exports.updatePassword = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.validateEmail = async (req, res) => {
+exports.validateEmail = async (req, res, next) => {
   try {
     const { error } = validateForgotPassword(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -329,7 +328,7 @@ exports.validateEmail = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.validateOTP = async (req, res) => {
+exports.validateOTP = async (req, res, next) => {
   try {
     const { error } = validateForgotPassword(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
@@ -349,7 +348,7 @@ exports.validateOTP = async (req, res) => {
  * @param {*} req
  * @param {*} res
  */
-exports.resetPassword = async (req, res) => {
+exports.resetPassword = async (req, res, next) => {
   try {
     const { error } = validateForgotPassword(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);

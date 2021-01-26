@@ -345,6 +345,8 @@ class EntryService {
           reject({ code: 400, msg: "You're currently not on any plan at the moment" });
           return;
         }
+
+        
  
         // const currentDate = new Date();
         const entry = await this.get({
@@ -571,6 +573,7 @@ class EntryService {
    */
   riderAcceptEntry(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const currentDate = new Date();
 
@@ -628,21 +631,33 @@ class EntryService {
           return;
         }
 
-        await entry.updateOne({
-          rider: user.id,
-          riderAcceptedAt: currentDate,
-          status: "driverAccepted",
-        });
+        session.startTransaction();
 
-        await Order.updateMany({ entry: body.entry }, { rider: user.id });
+        await entry.updateOne(
+          {
+            rider: user.id,
+            riderAcceptedAt: currentDate,
+            status: "driverAccepted",
+          },
+          { session }
+        );
 
-        await reqEntry.updateOne({ status: "accepted" });
+        await Order.updateMany(
+          { entry: body.entry },
+          { rider: user.id },
+          { session }
+        );
 
-        await transaction.updateOne({ rider: user.id });
+        await reqEntry.updateOne({ status: "accepted" }, { session });
+
+        await transaction.updateOne({ rider: user.id }, { session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({ entry, reqEntry });
       } catch (error) {
-        console.log("error", error);
+        await session.abortTransaction();
         reject(error);
       }
     });

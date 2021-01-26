@@ -114,9 +114,8 @@ class AuthSerivice {
           reject({ code: 400, msg: "OTP invalid" });
           return;
         }
-        if (moment(rider.rememberToken.expiredDate).isSameOrAfter(moment())) {
-          reject({ code: 400, msg: "OTP Expired Try Again" });
-          return;
+        if (moment().isSameOrAfter(moment(rider.rememberToken.expiredDate))){
+          return reject({ code: 400, msg: "OTP Expired Try Again" });
         }
         const updateRider = await Rider.updateOne(
           { email: email },

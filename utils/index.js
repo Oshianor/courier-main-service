@@ -8,6 +8,7 @@ const s3 = new AWS.S3();
 const sgMail = require("@sendgrid/mail");
 const RandExp = require("randexp");
 const redis = require("redis");
+const axios = require("axios");
 
 
 const GenerateToken = (num) => {
@@ -156,6 +157,34 @@ const redisClient = () => {
   return client;
 }
 
+
+/**
+ * Send OTP messsage to a receipant
+ * @param {String} sms message to be sent
+ * @param {String} to phone number of the receipant
+ * @param {*} channel whether it's dnd or whatsApp
+ */
+const sendOTPByTermii = async (sms, to, channel = "dnd") => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      const request = {
+        to,
+        from: channel === "whatsapp" ? "Exalt Church" : "N-Alert",
+        sms,
+        type: "plain",
+        channel: channel === "whatsapp" ? "whatsapp" : "dnd",
+        api_key: config.get("termii.key"),
+      };
+      const otp = await axios.post("https://termii.com/api/sms/send", request);
+
+      console.log("otpotp", otp.data);
+      resolve(otp.data);
+    } catch (error) {
+      console.log("error", to, error);
+      resolve(null)
+    }
+  })
+};
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -167,5 +196,6 @@ module.exports = {
   paginate,
   isObject,
   convertToMonthlyDataArray,
-  redisClient
+  redisClient,
+  sendOTPByTermii
 };

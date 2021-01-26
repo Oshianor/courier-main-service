@@ -58,10 +58,35 @@ function validateUserStatusUpdate(body) {
 }
 
 
+// NEW
+
+function validateForgotPassword2(body) {
+  const schema = Joi.object({
+    email: Joi.string().email().label("Email").max(50).required(),
+    userType: Joi.string().valid("rider","company").required(),
+    verificationMode: Joi.string().valid("otp", "email").required(),
+  });
+
+  return schema.validate(body);
+}
+
+function validateResetPassword2(body) {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    userType: Joi.string().valid("rider","company").required(),
+    token: Joi.string().required(),
+    password: passwordComplexity(complexityOptions).required(),
+  });
+
+  return schema.validate(body);
+}
+
 module.exports = {
   validateRiderLogin,
   validatePasswordUpdate,
   validateForgotPassword,
   validateUserLogin,
-  validateUserStatusUpdate
+  validateUserStatusUpdate,
+  validateForgotPassword2,
+  validateResetPassword2
 };

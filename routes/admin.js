@@ -94,6 +94,7 @@ router.get("/accounts/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.ad
 // Company Info
 router.get("/company/:companyId/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleCompanyStatistics);
 router.get("/company/:companyId/transactions", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleCompanyTransactions);
+router.get("/company/approval/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getCompanyApprovalStatistics);
 
 // Enterprise Updates
 router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);

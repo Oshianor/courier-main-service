@@ -172,11 +172,12 @@ class RiderSerivice {
             "company",
             "name email phoneNumber type logo address countryCode"
           )
-          .populate("transaction");
+          .populate("transaction")
+          .sort({ pickupType: -1 });
 
         resolve(order);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }
@@ -214,7 +215,7 @@ class RiderSerivice {
 
         resolve(order);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }
@@ -243,7 +244,7 @@ class RiderSerivice {
 
         resolve(trips);
       } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }

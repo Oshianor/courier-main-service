@@ -38,6 +38,7 @@ const orderSchema = mongoose.Schema(
     status: {
       type: String,
       enum: [
+        "request",
         "pending", // accepted driver/company
         "enrouteToPickup", //on the way to pickup
         "arrivedAtPickup", // arrived at pickup location and awaiting comfirmation
@@ -45,9 +46,9 @@ const orderSchema = mongoose.Schema(
         "enrouteToDelivery", // on the road to delivery.
         "arrivedAtDelivery", // await customer confirmation on delivery
         "delivered", // customer confirmed deluvery
-        "cancelled" // company declined an order
+        "cancelled", // company declined an order
       ],
-      default: "pending",
+      default: "request",
     },
     entry: {
       type: ObjectId,

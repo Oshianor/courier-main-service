@@ -95,6 +95,7 @@ class TransactionService {
         await Order.updateMany(
           { entry: body.entry },
           {
+            status: "pending",
             transaction: newTransaction._id,
             pickupType: body.pickupType,
           },
@@ -234,6 +235,7 @@ class TransactionService {
         await Order.updateMany(
           { entry: body.entry },
           {
+            status: "pending",
             transaction: newTransaction._id,
             enterprise: enterprise._id,
             pickupType: body.pickupType,

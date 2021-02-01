@@ -1,109 +1,63 @@
 const config = require("config");
-const TripLog = require("../models/tripLog")
+const TripLog = require("../models/tripLog");
 const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach } = require("../utils");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
 
-
 class TripLogService {
   /**
    * Log pickup initiation data
-   * @param {ObjectID} rider
-   * @param {String} user
-   * @param {ObjectID} entry
-   * @param {Array} order
-   * @param {Number} latitude
-   * @param {Number} longitude
-   * @param {metaData} metaData
+   * @param {Object} logs
+   * @param {String} session
    */
-  createLog(
-    type,
-    order,
-    rider,
-    user,
-    entry,
-    latitude,
-    longitude,
-    metaData = {}
-  ) {
+  createLog(logs, session) {
     return new Promise(async (resolve, reject) => {
       try {
         const triplogged = [];
         const add = await this.getGooglePlaceFromCoords(
-          `${latitude},${longitude}`
+          `${logs.latitude},${logs.longitude}`
         );
-
-        console.log("add", add);
-        metaData.address = add;
-
-        await AsyncForEach(order, (data, index, arr) => {
+        // logs.metaData.address = add;
+        await AsyncForEach(logs.order, (data, index, arr) => {
           triplogged.push({
-            type,
-            rider: rider,
-            user: user,
-            entry: entry,
+            ...logs,
             order: data,
-            latitude: latitude,
-            longitude: longitude,
             address: add.results[0].formatted_address,
-            metaData,
           });
         });
 
-        const newTripLog = await TripLog.create(triplogged);
+        const newTripLog = await TripLog.create(triplogged, { session });
 
         resolve(newTripLog);
       } catch (error) {
-        console.log("error", error);
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error)
       }
     });
   }
 
   /**
    * Log Order delivery initiation data
-   * @param {ObjectID} rider
-   * @param {String} user
-   * @param {ObjectID} entry
-   * @param {Array} order
-   * @param {Number} latitude
-   * @param {Number} longitude
-   * @param {metaData} metaData
+   * @param {Object} logs
+   * @param {String} session
    */
-  createOrderLog(
-    type,
-    order,
-    rider,
-    user,
-    entry,
-    latitude,
-    longitude,
-    metaData = {}
-  ) {
+  createOrderLog(logs, session) {
     return new Promise(async (resolve, reject) => {
       try {
         const add = await this.getGooglePlaceFromCoords(
-          `${latitude},${longitude}`
+          `${logs.latitude},${logs.longitude}`
         );
-        metaData.address = add;
+        
+        // logs.metaData.address = add;
         const newTripLog = new TripLog({
-          type,
-          rider,
-          user,
-          entry,
-          order,
-          latitude,
-          longitude,
-          metaData,
+          ...logs,
           address: add.results[0].formatted_address,
         });
-        await newTripLog.save();
+        await newTripLog.save({ session });
 
         resolve(newTripLog);
       } catch (error) {
-        console.log("error", error);
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }

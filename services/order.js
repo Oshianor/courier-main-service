@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Order = require("../models/order");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
@@ -8,8 +9,7 @@ const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
 const { OTPCode } = require("../templates");
 const TripLog = require("../models/tripLog");
-const { reject } = require("bcrypt/promises");
-
+const moment = require("moment");
 
 class OrderService {
   /**
@@ -48,11 +48,11 @@ class OrderService {
           .populate(populate)
           .skip(pagination.skip)
           .limit(pagination.pageSize)
-          .sort({createdAt: "desc"});
+          .sort({ createdAt: "desc" });
 
         const total = await Order.find(filter).countDocuments();
 
-        resolve({orders, total});
+        resolve({ orders, total });
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
@@ -89,6 +89,7 @@ class OrderService {
    */
   startOrderDelivery(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -138,6 +139,32 @@ class OrderService {
           return;
         }
 
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
         // find out if the rider is already on a delivery trip
         const onTrip = await Order.findOne({
           $or: [
@@ -156,26 +183,34 @@ class OrderService {
           return;
         }
 
+        // start our transaction
+        session.startTransaction();
+
         // update the order and entry status
-        await order.updateOne({ status: "enrouteToDelivery" });
-        await entry.updateOne({ status: "enrouteToDelivery" });
+        await order.updateOne({ status: "enrouteToDelivery" }, { session });
+        await entry.updateOne({ status: "enrouteToDelivery" }, { session });
 
         // log the user last location
+        const logs = {
+          type: "enrouteToDelivery",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createOrderLog(
-          "enrouteToDelivery",
-          order._id,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude
-        );
+        await tripLogInstance.createOrderLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({ order, entry, rider, company });
       } catch (error) {
-        console.log("error", error);
-        reject({ code: 404, msg: "This order delivery couldn't be started" });
+        await session.abortTransaction();
+        reject(error);
         return;
       }
     });
@@ -188,6 +223,8 @@ class OrderService {
    */
   arriveAtLocation(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -237,11 +274,43 @@ class OrderService {
           return;
         }
 
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
+        // start our transaction
+        session.startTransaction();
+
         const token = GenerateOTP(4);
 
         // update the order and entry status
-        await order.updateOne({ status: "arrivedAtDelivery", OTPCode: token });
-        await entry.updateOne({ status: "arrivedAtDelivery" });
+        await order.updateOne(
+          { status: "arrivedAtDelivery", OTPCode: token },
+          { session }
+        );
+        await entry.updateOne({ status: "arrivedAtDelivery" }, { session });
 
         // send OTP code to the receipant
         const subject = `Delivery OTP Code for ${order.orderId}`;
@@ -263,27 +332,29 @@ class OrderService {
         }
 
         // log trip status
-        const metaData = {
-          OTPCode: token,
+        const logs = {
+          type: "arrivedAtDelivery",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {
+            OTPCode: token,
+          },
         };
         // log the user last location
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createOrderLog(
-          "arrivedAtDelivery",
-          order._id,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude,
-          metaData
-        );
+        await tripLogInstance.createOrderLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({ order, entry, rider, company });
       } catch (error) {
-        console.log("error", error);
-        reject({ code: 404, msg: "This order delivery couldn't be started" });
-        return;
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
@@ -295,6 +366,8 @@ class OrderService {
    */
   confirmDelivery(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -342,6 +415,32 @@ class OrderService {
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
+        }
+
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
         }
 
         // get the total tries
@@ -399,23 +498,32 @@ class OrderService {
           return;
         }
 
+        // start our transaction
+        session.startTransaction();
+
         entry.status = "delivered";
         entry.OTPCode = null;
         order.status = "delivered";
 
-        await entry.save();
-        await order.save();
         console.log("Got Here");
+        const logs = {
+          type: "delivered",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createOrderLog(
-          "delivered",
-          order._id,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude
-        );
+        await tripLogInstance.createOrderLog(logs, session);
+
+        await entry.save({ session });
+        await order.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         // check if all orders has been processed
         const orderNotDelivered = await Order.findOne({
@@ -424,8 +532,8 @@ class OrderService {
         });
 
         if (!orderNotDelivered) {
-          entry.status = "completed";
-          await entry.save();
+          await Entry.updateOne({ _id: entry._id }, { status: "completed" });
+
           resolve({
             entry,
             rider,
@@ -443,11 +551,8 @@ class OrderService {
           return;
         }
       } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 400,
-          msg: "Something went wrong. You can't confirm this delivery",
-        });
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
@@ -484,26 +589,28 @@ class OrderService {
    */
   getOrderHistory(orderId) {
     return new Promise(async (resolve, reject) => {
-      const logs = await TripLog.find({ order: orderId }).sort({ createdAt: 1 }).select({ metaData: 0 });
+      const logs = await TripLog.find({ order: orderId })
+        .sort({ createdAt: 1 })
+        .select({ metaData: 0 });
       resolve(logs);
-    })
+    });
   }
 
   /**
- * Get total orders
- * @param {Object} filter
- */
+   * Get total orders
+   * @param {Object} filter
+   */
   totalOrders(filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-        const total = await Order.countDocuments(filter)
+        const total = await Order.countDocuments(filter);
         if (total < 0) {
           reject({ code: 404, msg: "No Orders" });
         }
         resolve(total);
       } catch (error) {
-        reject(error)
-        return
+        reject(error);
+        return;
       }
     });
   }
@@ -527,8 +634,8 @@ class OrderService {
         // )
         // resolve(totalRevenue);
       } catch (error) {
-        reject(error)
-        return
+        reject(error);
+        return;
       }
     });
   }
@@ -541,12 +648,12 @@ class OrderService {
   declineOrder(companyId, orderId) {
     return new Promise(async (resolve, reject) => {
       try {
-        let order = await Order.findOne({_id: orderId, company: companyId});
-        if(!order){
-          return reject({code: 404, msg: MSG_TYPES.NOT_FOUND});
+        let order = await Order.findOne({ _id: orderId, company: companyId });
+        if (!order) {
+          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
         }
 
-        order = await order.updateOne({status: "declined"});
+        order = await order.updateOne({ status: "declined" });
 
         resolve(order);
       } catch (error) {
@@ -554,7 +661,6 @@ class OrderService {
       }
     });
   }
-
 
   /**
    * Delete One Order by company
@@ -564,7 +670,6 @@ class OrderService {
   destroy(orderId, userId) {
     return new Promise(async (resolve, reject) => {
       try {
-
         const order = await Order.findOne({
           _id: orderId,
           company: userId,
@@ -595,8 +700,8 @@ class OrderService {
   assignToRider(orderId, riderId, companyId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const rider = await Rider.findOne({_id: riderId, company: companyId});
-        let order = await Order.findOne({_id: orderId, company: companyId});
+        const rider = await Rider.findOne({ _id: riderId, company: companyId });
+        let order = await Order.findOne({ _id: orderId, company: companyId });
 
         if (!order || !rider) {
           return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });

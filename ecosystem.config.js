@@ -37,7 +37,7 @@ module.exports = {
       },
       instances: 1,
       exec_mode: "fork",
-      cron_restart: "*/5 * * * *",
+      cron_restart: "*/30 * * * *",
       watch: false,
       autorestart: false,
       instance_var: "PM2_APP_INSTANCE_ID_CRON",

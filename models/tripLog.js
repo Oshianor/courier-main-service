@@ -7,6 +7,7 @@ const tripLogSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: [
+        "driverAccepted",
         "enrouteToPickup",
         "pickedup",
         "enrouteToDelivery",

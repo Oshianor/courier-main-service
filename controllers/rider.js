@@ -11,7 +11,8 @@ const {
   validateRiderSelf,
   validateRiderFCMToken,
   validateRiderLocation,
-  validateRiderStatus
+  validateRiderStatus,
+  validateEarningStatistics
 } = require("../request/rider");
 const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
@@ -617,5 +618,26 @@ exports.getRiderStatistics = async (req, res, next) => {
   } catch (error) {
     next(error)
     return
+  }
+}
+
+/**
+ * GET Rider order earning statistics
+ * @param {*} req
+ * @param {*} res
+ */
+
+exports.getEarningStatistics = async (req, res, next) => {
+  try {
+    const { error } = validateEarningStatistics(req.query);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const riderInstance = new RiderService()
+    const data = await riderInstance.getEarningStatistics(req.user.id, req.query.date);
+
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
+  } catch (error) {
+    console.log(error)
+    next(error)
   }
 }

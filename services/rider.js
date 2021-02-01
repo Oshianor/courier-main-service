@@ -9,7 +9,9 @@ const Company = require("../models/company");
 const Transaction = require("../models/transaction");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary, Mailer, GenerateToken } = require("../utils");
+const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray } = require("../utils");
+const { JsonResponse } = require("../lib/apiResponse");
+const mongoose = require("mongoose");
 
 class RiderSerivice {
   /**
@@ -511,6 +513,42 @@ class RiderSerivice {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
+  }
+
+  getEarningStatistics(riderId, date) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const rider = await Rider.findOne({_id: riderId});
+        if(!rider){
+          return reject({code: 404, msg: "Rider not found"});
+        }
+
+        const beginningOfWeek = moment(date).startOf("isoWeek").toDate();
+        const endOfWeek = moment(date).endOf("week").toDate();
+
+        const filter = {
+          status: "delivered",
+          rider: mongoose.Types.ObjectId(riderId),
+          createdAt: {
+            $gte: beginningOfWeek,
+            $lte: endOfWeek
+          }
+        }
+
+        let data = await Order.aggregate([
+          { $match: {...filter } },
+          { $group:{ _id: {$dayOfWeek: "$createdAt"}, amount: {$sum: "$estimatedCost"}} },
+          { $project: {_id:0, "day":"$_id", amount: "$amount"}}
+        ]);
+
+        data = convertToDailyDataArray(data, "amount");
+
+        resolve(data);
+      } catch(error){
+        console.log(error);
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
   }
 }
 

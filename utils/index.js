@@ -185,6 +185,23 @@ const sendOTPByTermii = async (sms, to, channel = "dnd") => {
     }
   })
 };
+
+const convertToDailyDataArray = (dataArray, dataField) => {
+  // 1 <= i <= 7 because there are 7 days in a year
+  const dailyData = [];
+  for(let i=1; i <= 7; i++){
+    let currentDayData = dataArray.find((data) => data.day === i);
+    if(!currentDayData){
+      dailyData.push({day: i, [dataField]: 0});
+    } else {
+      dailyData.push(currentDayData);
+    }
+  }
+  console.log(dailyData)
+
+  return dailyData.sort().map((data) => data[dataField]);
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -197,5 +214,6 @@ module.exports = {
   isObject,
   convertToMonthlyDataArray,
   redisClient,
-  sendOTPByTermii
+  sendOTPByTermii,
+  convertToDailyDataArray
 };

@@ -114,7 +114,13 @@ function validateRiderFCMToken(body) {
   return schema.validate(body);
 }
 
+function validateEarningStatistics(body) {
+  const schema = Joi.object({
+    date: Joi.date().required()
+  });
 
+  return schema.validate(body);
+}
 module.exports = {
   validateRider,
   validateUpdateRider,
@@ -122,5 +128,6 @@ module.exports = {
   validateRiderLogin,
   validateRiderStatus,
   validateRiderLocation,
-  validateRiderFCMToken
+  validateRiderFCMToken,
+  validateEarningStatistics
 };

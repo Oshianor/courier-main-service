@@ -24,5 +24,7 @@ router.get("/trips", RiderAuth, controller.rider.trips);
 
 router.get("/transaction", RiderAuth, controller.rider.getTransaction);
 
+router.get("/earning/statistics", RiderAuth, controller.rider.getEarningStatistics);
+
 
 module.exports = router;

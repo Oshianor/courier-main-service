@@ -118,7 +118,11 @@ class CreditService {
    */
   getAllCredit(skip, pageSize) {
     return new Promise(async (resolve, reject) => {
-      const credit = await CreditHistory.find({ type: "loan" }).skip(skip).limit(pageSize).populate("enterprise", "name email countryCode phoneNumber");
+      const credit = await CreditHistory.find({ type: "loan" })
+      .skip(skip)
+      .limit(pageSize)
+      .populate("enterprise", "name email countryCode phoneNumber")
+      .sort({createdAt: "desc"});
 
       const total = await CreditHistory.countDocuments({ type: "loan" });
 
@@ -183,7 +187,7 @@ class CreditService {
           return resolve({ creditHistory });
 
         }
-          
+
         await creditHistory.updateOne({ status: "declined" });
         return resolve({ creditHistory });
       } catch (error) {

@@ -7,13 +7,14 @@ const User = require("../models/users");
 const Enterprise = require("../models/enterprise");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
-const { Mailer, GenerateToken, GenerateOTP } = require("../utils");
+const { Mailer, GenerateToken, GenerateOTP, sendOTPByTermii } = require("../utils");
 const OTPCode = require("../templates/otpCode");
 const EnterpriseService = require("../services/enterprise");
 const UserService = require("../services/user");
 const { ACCOUNT_SERVICE } = require("../constant/api");
+const Company = require("../models/company");
 const enterpriseInstance = new EnterpriseService();
-
+const passwordResetHTML = require("../templates/passwordReset");
 
 
 class AuthSerivice {
@@ -70,7 +71,7 @@ class AuthSerivice {
         const forgotPassOTP = GenerateOTP(4);
         const currentDate = new Date();
         const forgotPassOTPExpiredDate = moment(currentDate)
-          .add(4, "m")
+          .add(10, "m")
           .toDate();
 
         const updateRider = await Rider.updateOne(
@@ -114,9 +115,8 @@ class AuthSerivice {
           reject({ code: 400, msg: "OTP invalid" });
           return;
         }
-        if (moment(rider.rememberToken.expiredDate).isSameOrAfter(moment())) {
-          reject({ code: 400, msg: "OTP Expired Try Again" });
-          return;
+        if (moment().isSameOrAfter(moment(rider.rememberToken.expiredDate))){
+          return reject({ code: 400, msg: "OTP Expired Try Again" });
         }
         const updateRider = await Rider.updateOne(
           { email: email },
@@ -365,6 +365,115 @@ class AuthSerivice {
         resolve(updatedUser.data);
       } catch (error) {
         return reject(error);
+      }
+    });
+  }
+
+  /**
+   * Validate forgot password email and send OTP (FORGOT PASSWORD MODULE)
+   * @param {String} email
+   * @param {string} verificationMode - enum ['otp','email']
+   */
+  forgotPassword2(email, userType, verificationMode) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const UserTypeModel = userType === 'rider' ? Rider : Company;
+
+        const user = await UserTypeModel.findOne({
+          email: email,
+          verified: true,
+          status: "active"
+        });
+
+        if (!user) {
+          return reject({ code: 400, msg: MSG_TYPES.ACCOUNT_INVALID });
+        }
+        const isOTPVerification = verificationMode === 'otp';
+
+        const passwordResetToken =  isOTPVerification ? GenerateOTP(4) : GenerateToken(225);
+        const currentDate = new Date();
+        const passwordResetTokenExpiredDate = moment(currentDate)
+          .add(10, "m")
+          .toDate();
+
+        const updatedUser = await UserTypeModel.findOneAndUpdate(
+          { _id: user._id },
+          {
+            $set: {
+              rememberToken: {
+                token: passwordResetToken,
+                expiredDate: passwordResetTokenExpiredDate,
+              },
+            },
+          }
+        );
+
+        // send OTP code to the receipant
+        const emailSubject = "Exalt Account Recovery";
+        if(isOTPVerification){
+          const smsMsg = `Your Exalt Account recovery code is ${passwordResetToken}`;
+          const smsTo = user.countryCode + user.phoneNumber;
+          const html = OTPCode(passwordResetToken);
+
+          sendOTPByTermii(smsMsg, smsTo);
+          Mailer(email, emailSubject, html);
+        } else {
+          // verification mode is mail
+          const html = passwordResetHTML(passwordResetToken, email, user.name);
+          Mailer(email, emailSubject, html);
+        }
+
+        resolve(updatedUser);
+      } catch (error) {
+        console.log(error);
+        return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
+  /**
+   * Reset password
+   * @param {String} email
+   * @param {string} token
+   * @param {string} newPassword
+   */
+  resetPassword2(email, userType, token, newPassword) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const UserTypeModel = userType === 'rider' ? Rider : Company;
+
+        const user = await UserTypeModel.findOne({
+          email: email,
+          verified: true,
+          status: "active",
+        });
+
+        if (!user) {
+          return reject({ code: 400, msg: MSG_TYPES.ACCOUNT_INVALID });
+        }
+        if(!(user.rememberToken.token === token)){
+          return reject({code: 400, msg: "Password reset token incorrect"});
+        }
+
+        if(moment().isSameOrAfter(moment(user.rememberToken.expiredDate))){
+          return reject({code: 400, msg: "Password reset token expired"});
+        }
+
+        const passwordUpdate = await bcrypt.hash(newPassword, 13);
+
+        const updatedUser = await UserTypeModel.findOneAndUpdate(
+          { _id: user._id },
+          { $set: {
+              rememberToken: null,
+              password: passwordUpdate
+            },
+          }
+        );
+
+        resolve(updatedUser);
+      } catch (error) {
+        console.log(error);
+        return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

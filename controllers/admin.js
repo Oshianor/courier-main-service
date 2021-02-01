@@ -592,7 +592,7 @@ exports.getSingleUserTransactions = async(req, res, next) => {
  * @param {*} res
  * @param {*} next
  */
-exports.getRevenueStatistics = async(req, res, next) => {
+exports.getRevenueStatistics = async (req, res, next) => {
   try{
 
     const totalRevenue = await statisticsInstance.getTotalRevenue({});
@@ -632,6 +632,26 @@ exports.getTransactions = async(req, res, next) => {
     };
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transactions, meta);
+  } catch(error){
+    next(error);
+  }
+}
+
+exports.getCompanyApprovalStatistics = async (req, res, next) => {
+  try{
+
+    const totalApproved = await statisticsInstance.getTotalRevenue({});
+    const totalCommission = await statisticsInstance.getTotalCommission({});
+    const totalTransactions = await statisticsInstance.getTransactionCount({});
+    const totalVehicles = await statisticsInstance.getTotalVehicles();
+
+    const statistics = {
+      totalApproved,
+      totaRejected,
+      totalPending
+    }
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);
   } catch(error){
     next(error);
   }

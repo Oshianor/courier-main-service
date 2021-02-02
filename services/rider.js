@@ -560,7 +560,7 @@ class RiderSerivice {
           { $match: { ...baseFilter, status: "completed" }},
           { $group: { _id: 1, "amount": { $sum: "$TEC" }}}
         ])
-        totalAmount = totalAmount[0] ? totalAmount[0].amount : 0;
+        totalAmount = totalAmount[0] ? totalAmount[0].amount.toFixed(2) : 0;
 
 
         data = {

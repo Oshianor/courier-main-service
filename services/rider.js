@@ -523,12 +523,16 @@ class RiderSerivice {
           return reject({code: 404, msg: "Rider not found"});
         }
 
+        const baseFilter = {
+          rider: mongoose.Types.ObjectId(riderId),
+        }
+
         const beginningOfWeek = moment(date).startOf("isoWeek").toDate();
         const endOfWeek = moment(date).endOf("week").toDate();
 
-        const filter = {
+        const dailyOrderFilter = {
+          ...baseFilter,
           status: "delivered",
-          rider: mongoose.Types.ObjectId(riderId),
           createdAt: {
             $gte: beginningOfWeek,
             $lte: endOfWeek
@@ -536,12 +540,35 @@ class RiderSerivice {
         }
 
         let data = await Order.aggregate([
-          { $match: {...filter } },
-          { $group:{ _id: {$dayOfWeek: "$createdAt"}, amount: {$sum: "$estimatedCost"}} },
-          { $project: {_id:0, "day":"$_id", amount: "$amount"}}
+          { $match: {...dailyOrderFilter } },
+          { $group: {
+              _id: {$dayOfWeek: "$createdAt"},
+              amount: {$sum: "$estimatedCost"},
+              distance: {$sum: "$estimatedDistance"}
+            }
+          },
+          { $project: {
+              _id:0,
+              day:"$_id",
+              amount: "$amount",
+              distance: "$distance"
+            }
+          }
         ]);
 
-        data = convertToDailyDataArray(data, "amount");
+        let totalAmount = await Entry.aggregate([
+          { $match: { ...baseFilter, status: "completed" }},
+          { $group: { _id: 1, "amount": { $sum: "$TEC" }}}
+        ])
+        totalAmount = totalAmount[0] ? totalAmount[0].amount : 0;
+
+
+        data = {
+          amounts: convertToDailyDataArray(data, "amount"),
+          distances: convertToDailyDataArray(data, "distance"),
+          totalAmount
+        }
+
 
         resolve(data);
       } catch(error){

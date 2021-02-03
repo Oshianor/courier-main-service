@@ -13,7 +13,7 @@ const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray } =
 const { JsonResponse } = require("../lib/apiResponse");
 const mongoose = require("mongoose");
 
-class RiderSerivice {
+class RiderService {
   /**
    * Create Rider account
    * @param {*} req
@@ -559,14 +559,24 @@ class RiderSerivice {
         let totalAmount = await Entry.aggregate([
           { $match: { ...baseFilter, status: "completed" }},
           { $group: { _id: 1, "amount": { $sum: "$TEC" }}}
-        ])
-        totalAmount = totalAmount[0] ? totalAmount[0].amount.toFixed(2) : 0;
+        ]);
 
+        let totalDistance = await Order.aggregate([
+          { $match: { ...baseFilter, status: "delivered" }},
+          { $group: { _id: 1, "distance": { $sum: "$estimatedDistance"}}}
+        ]);
+
+        const totalOrders = await Order.countDocuments(baseFilter);
+
+        totalAmount = totalAmount[0] ? totalAmount[0].amount.toFixed(2) : 0;
+        totalDistance = totalDistance[0] ? totalDistance[0].distance.toFixed(2) : 0;
 
         data = {
           amounts: convertToDailyDataArray(data, "amount"),
           distances: convertToDailyDataArray(data, "distance"),
-          totalAmount
+          totalAmount,
+          totalDistance,
+          totalOrders
         }
 
 
@@ -579,4 +589,4 @@ class RiderSerivice {
   }
 }
 
-module.exports = RiderSerivice;
+module.exports = RiderService;

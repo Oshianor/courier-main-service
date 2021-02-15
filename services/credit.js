@@ -1,6 +1,6 @@
 const Credit = require("../models/credit");
 const CreditHistory = require("../models/creditHistory");
-const Enterprise = require("../models/enterprise");
+// const Enterprise = require("../models/enterprise");
 const config = require("config");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
@@ -14,13 +14,13 @@ class CreditService {
    * @param {string} enterprise Enterprise Id for the company
    * @param {MongoDb session} session Enterprise Id for the company
    */
-  createCredit(enterprise, session) {
+  createCredit(enterprise) {
     return new Promise(async (resolve, reject) => {
       const newCredit = new Credit({
         enterprise,
       });
 
-      await newCredit.save({ session });
+      await newCredit.save();
 
       resolve(newCredit);
     });
@@ -45,13 +45,6 @@ class CreditService {
   assignCredit(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        const enterprise = await Enterprise.findOne({ _id: body.enterprise });
-        if (!enterprise) {
-          return reject({
-            code: 400,
-            msg: "No Enterprise account was found",
-          });
-        }
 
         const credit = await Credit.findOne({ enterprise: body.enterprise });
 

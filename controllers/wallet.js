@@ -9,6 +9,28 @@ const { paginate } = require("../utils");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 
+
+
+/**
+ * Create wallet account
+ * @param {*} req
+ * @param {*} res
+ */
+exports.createWallet = async (req, res, next) => {
+  try {
+
+    const walletInstance = new WalletService();
+    const wallet = await walletInstance.createWallet(req.body.enterprise);
+
+    JsonResponse(res, 201, "ok", wallet);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
+
+
 /**
  * Fund wallet by onwer and branch
  * @param {*} req

@@ -5,8 +5,15 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers");
-const { UserAuth, EnterpriseAuth, E_ROLES } = require("../middlewares/auth");
+const {
+  UserAuth,
+  EnterpriseAuth,
+  E_ROLES,
+  isExaltService,
+} = require("../middlewares/auth");
 
+// create wallet account for enterprise
+router.post("/", isExaltService, controller.wallet.createWallet);
 
 // fund wallet
 router.post(

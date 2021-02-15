@@ -5,10 +5,10 @@ const { convertToMonthlyDataArray, isObject } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
-const Enterprise = require("../models/enterprise");
+// const Enterprise = require("../models/enterprise");
 const CreditHistory = require("../models/creditHistory");
 const Company = require("../models/company");
-const User = require("../models/users");
+// const User = require("../models/users");
 const Vehicle = require("../models/vehicle");
 const { ObjectId } = mongoose.Types;
 
@@ -72,11 +72,12 @@ class StatisticsService {
         }
 
         if(filter.enterprise && ObjectId.isValid(filter.enterprise)){
-          const enterpriseRecord = await Enterprise.findOne({_id: filter.enterprise});
-          if(enterpriseRecord){
-            statisticsData.totalBranches = enterpriseRecord.branchUserIDS.length;
-            statisticsData.totalManagers = enterpriseRecord.maintainers.length;
-          }
+
+          // const enterpriseRecord = await Enterprise.findOne({_id: filter.enterprise});
+          // if(enterpriseRecord){
+          //   statisticsData.totalBranches = enterpriseRecord.branchUserIDS.length;
+          //   statisticsData.totalManagers = enterpriseRecord.maintainers.length;
+          // }
         }
 
         resolve(statisticsData);
@@ -104,9 +105,12 @@ class StatisticsService {
      try{
       const generalStatistics = await this.getGeneralStatistics();
 
-      const totalAdmins = await Enterprise.countDocuments({type: "owner"});
-      const totalMaintainers = await Enterprise.countDocuments({type: "maintainer"});
-      const totalBranches = await Enterprise.countDocuments({type: "branch"});
+      // const totalAdmins = await Enterprise.countDocuments({type: "owner"});
+      // const totalMaintainers = await Enterprise.countDocuments({type: "maintainer"});
+      // const totalBranches = await Enterprise.countDocuments({type: "branch"});
+      const totalAdmins = 1;
+      const totalMaintainers = 1;
+      const totalBranches = 1;
 
       let totalCreditsDisbursed = await CreditHistory.aggregate([
         { $match: {type: "loan", status: "approved"} },
@@ -255,16 +259,16 @@ class StatisticsService {
   getAccountsStatistics(){
     return new Promise(async(resolve, reject) => {
       try{
-        const totalUsers = await User.countDocuments();
+        // const totalUsers = await User.countDocuments();
+        const totalUsers = 1;
         const totalCompanies = await Company.countDocuments();
         const totalRiders = await Rider.countDocuments();
 
         resolve({
           totalUsers,
           totalCompanies,
-          totalRiders
-        })
-
+          totalRiders,
+        });
       } catch(error){
         console.log('Total revenue Statistics service Error => ', error);
         reject({code: 500, msg: MSG_TYPES.SERVER_ERROR });

@@ -3,8 +3,8 @@ const moment = require("moment");
 const bcrypt = require("bcrypt");
 const axios = require("axios");
 const Rider = require("../models/rider");
-const User = require("../models/users");
-const Enterprise = require("../models/enterprise");
+// const User = require("../models/users");
+// const Enterprise = require("../models/enterprise");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP, sendOTPByTermii } = require("../utils");
@@ -18,40 +18,6 @@ const passwordResetHTML = require("../templates/passwordReset");
 
 
 class AuthSerivice {
-  /**
-   * Login user
-   * @param {Object} body
-   */
-  loginUser(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axios.post(
-          `${config.get("api.base")}${ACCOUNT_SERVICE.LOGIN}`,
-          body
-        );
-        if (response.status == 200) {
-          const token = response.headers["x-auth-token"];
-          const exaltUser = response.data.data;
-          const logisticUser = await User.findById(exaltUser._id);
-          if (logisticUser) {
-            resolve({ user: logisticUser, token });
-          } else {
-            const user = await User.create(exaltUser);
-            resolve({ user, token });
-          }
-        } else {
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
-        }
-      } catch (error) {
-        reject({
-          code: error.response.status,
-          msg: error.response.data.msg,
-        });
-        return;
-      }
-    });
-  }
-
   /**
    * Validate forgot password email and send OTP (FORGOT PASSWORD MODULE)
    * @param {String} email

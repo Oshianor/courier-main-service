@@ -1,5 +1,5 @@
 const Admin = require("../models/admin");
-const Enterprise = require("../models/enterprise");
+// const Enterprise = require("../models/enterprise");
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const moment = require("moment")
@@ -138,22 +138,22 @@ class AdminService {
   verifyBranch(branchId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const branch = await Enterprise.findOne({ _id: branchId, type: "Branch" });
-        if (!branch) {
-          reject({ code: 400, msg: "Branch does not exist" });
-          return;
-        }
-        if (branch.verified == true) {
-          reject({ code: 400, msg: "Already Verified" });
-          return;
-        }
-        const updatedEnterprise = await Enterprise.updateOne(
-          { _id: branchId },
-          {
-            $set: { verified: true },
-          }
-        );
-        resolve(updatedEnterprise);
+        // const branch = await Enterprise.findOne({ _id: branchId, type: "Branch" });
+        // if (!branch) {
+        //   reject({ code: 400, msg: "Branch does not exist" });
+        //   return;
+        // }
+        // if (branch.verified == true) {
+        //   reject({ code: 400, msg: "Already Verified" });
+        //   return;
+        // }
+        // const updatedEnterprise = await Enterprise.updateOne(
+        //   { _id: branchId },
+        //   {
+        //     $set: { verified: true },
+        //   }
+        // );
+        // resolve(updatedEnterprise);
       } catch (error) {
         reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
       }

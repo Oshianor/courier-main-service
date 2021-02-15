@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
-const Enterprise = require("../models/enterprise");
 const { MSG_TYPES } = require("../constant/types");
 const {
   UploadFileFromBinary,
@@ -47,30 +46,30 @@ class EnterpriseService {
   getAllBranches(user, pagination) {
     return new Promise(async (resolve, reject) => {
       try {
-        const userInstance = new UserService();
+        // const userInstance = new UserService();
 
-        const enterprise = await Enterprise.findOne({
-          _id: user.enterprise,
-        });
+        // const enterprise = await Enterprise.findOne({
+        //   _id: user.enterprise,
+        // });
 
-        if (!enterprise) {
-          return reject({ code: 404, msg: "No enterprise account was found." });
-        }
+        // if (!enterprise) {
+        //   return reject({ code: 404, msg: "No enterprise account was found." });
+        // }
 
-        const { skip, page, pageSize } = pagination;
-        const enterpriseMaintainersToRetrieve = enterprise.branchUserIDS.slice(
-          skip,
-          page * pageSize
-        );
+        // const { skip, page, pageSize } = pagination;
+        // const enterpriseMaintainersToRetrieve = enterprise.branchUserIDS.slice(
+        //   skip,
+        //   page * pageSize
+        // );
 
-        const maintainers = await userInstance.getAllMaintainers(
-          enterpriseMaintainersToRetrieve
-        );
+        // const maintainers = await userInstance.getAllMaintainers(
+        //   enterpriseMaintainersToRetrieve
+        // );
 
-        resolve({
-          total: enterprise.branchUserIDS.length,
-          branches: maintainers.data,
-        });
+        // resolve({
+        //   total: enterprise.branchUserIDS.length,
+        //   branches: maintainers.data,
+        // });
       } catch (error) {
         // error.service = "Get all maintainers service error";
         return reject(error);
@@ -86,28 +85,28 @@ class EnterpriseService {
   getAllMaintainers(user, pagination) {
     return new Promise(async (resolve, reject) => {
       try {
-        const enterprise = await Enterprise.findOne({
-          _id: user.enterprise,
-        });
+        // const enterprise = await Enterprise.findOne({
+        //   _id: user.enterprise,
+        // });
 
-        if (!enterprise) {
-          return reject({ code: 404, msg: "No enterprise account was found." });
-        }
+        // if (!enterprise) {
+        //   return reject({ code: 404, msg: "No enterprise account was found." });
+        // }
 
-        const { skip, page, pageSize } = pagination;
-        const enterpriseMaintainersToRetrieve = enterprise.maintainers.slice(
-          skip,
-          page * pageSize
-        );
+        // const { skip, page, pageSize } = pagination;
+        // const enterpriseMaintainersToRetrieve = enterprise.maintainers.slice(
+        //   skip,
+        //   page * pageSize
+        // );
 
-        const maintainers = await userInstance.getAllMaintainers(
-          enterpriseMaintainersToRetrieve
-        );
+        // const maintainers = await userInstance.getAllMaintainers(
+        //   enterpriseMaintainersToRetrieve
+        // );
 
-        resolve({
-          total: enterprise.maintainers.length,
-          maintainers: maintainers.data,
-        });
+        // resolve({
+        //   total: enterprise.maintainers.length,
+        //   maintainers: maintainers.data,
+        // });
       } catch (error) {
         return reject(error);
       }
@@ -123,47 +122,47 @@ class EnterpriseService {
   updateEnterprise(enterprise, updateObject, userAuthToken) {
     return new Promise(async (resolve, reject) => {
       try {
-        const userInstance = new UserService();
+        // const userInstance = new UserService();
 
-        const validEnterprise = await Enterprise.findOne(enterprise);
-        if (!validEnterprise) {
-          return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
-        }
+        // const validEnterprise = await Enterprise.findOne(enterprise);
+        // if (!validEnterprise) {
+        //   return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND });
+        // }
 
-        if (userAuthToken) {
-          const updatedUserAccount = await userInstance.updateExaltUser(
-            userAuthToken,
-            updateObject
-          );
-          if (!updatedUserAccount) {
-            return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
-          }
-        }
+        // if (userAuthToken) {
+        //   const updatedUserAccount = await userInstance.updateExaltUser(
+        //     userAuthToken,
+        //     updateObject
+        //   );
+        //   if (!updatedUserAccount) {
+        //     return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        //   }
+        // }
 
-        // Upload image to s3 if any
-        if (updateObject.logo) {
-          const imageUpload = await UploadFileFromBase64(
-            updateObject.logo,
-            `${enterprise._id}_image`
-          );
+        // // Upload image to s3 if any
+        // if (updateObject.logo) {
+        //   const imageUpload = await UploadFileFromBase64(
+        //     updateObject.logo,
+        //     `${enterprise._id}_image`
+        //   );
 
-          if (imageUpload && imageUpload.key) {
-            updateObject.logo = imageUpload.key;
-          } else {
-            return reject({ code: 500, msg: "Image upload failed" });
-          }
-        }
+        //   if (imageUpload && imageUpload.key) {
+        //     updateObject.logo = imageUpload.key;
+        //   } else {
+        //     return reject({ code: 500, msg: "Image upload failed" });
+        //   }
+        // }
 
-        const updatedEnterprise = await Enterprise.findOneAndUpdate(
-          enterprise,
-          { $set: updateObject },
-          { new: true }
-        );
-        if (!updatedEnterprise) {
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
-        }
+        // const updatedEnterprise = await Enterprise.findOneAndUpdate(
+        //   enterprise,
+        //   { $set: updateObject },
+        //   { new: true }
+        // );
+        // if (!updatedEnterprise) {
+        //   return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        // }
 
-        resolve(updatedEnterprise);
+        // resolve(updatedEnterprise);
       } catch (error) {
         console.log("Error => ", error);
         if (error.response) {

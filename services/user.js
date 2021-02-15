@@ -78,7 +78,7 @@ class UserService {
    * Get a user by it's token
    * @param {String} token
    */
-  get(token) {
+  getByToken(token) {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.get(

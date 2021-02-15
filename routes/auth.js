@@ -3,8 +3,7 @@ const router = express.Router();
 const controllers = require("../controllers");
 const { Auth, UserAuth, EnterpriseAuth, E_ROLES, } = require("../middlewares/auth");
 
-// login as a user
-router.post("/user", controllers.auth.userLogin);
+
 // login as a company
 router.post("/company", controllers.auth.companyLogin);
 // login as a rider

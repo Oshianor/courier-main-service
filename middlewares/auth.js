@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
 const config = require("config");
-const User = require("../models/users");
-const Enterprise = require("../models/enterprise");
 const Company = require("../models/company");
 const AdminService = require("../services/admin");
 const UserService = require("../services/user");
@@ -44,13 +42,10 @@ const hasRole = (roles = []) => {
       if (roles.length < 1) {
         return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
-      for (let role of roles) {
-        if (admin.role === role) {
-          next();
-        } else {
-          return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-        }
+      if (roles.includes(admin.role)) {
+        return next();
       }
+      return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
     }
   };
 };
@@ -123,7 +118,7 @@ const UserAuth = async (req, res, next) => {
   try {
     // call user account service to get details
     const userInstance = new UserService();
-    const userParent = await userInstance.get(token);
+    const userParent = await userInstance.getByToken(token);
 
     req.user = userParent.data;
     req.user.id = req.user._id;
@@ -142,15 +137,10 @@ const UserAuth = async (req, res, next) => {
 
 const EnterpriseAuth = (roles = []) => {
   return async (req, res, next) => {
-    if (req.user.group !== "enterprise") return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
-    const user = await User.findById(req.user.id).populate("enterprise");
+    if (req.user.group !== "enterprise")
+      return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
 
-    if (!user) return JsonResponse(res, 400, MSG_TYPES.NO_ENTERPRISE);
-    req.user = user;
-    req.user.id = req.user._id;
     req.enterprise = req.user.enterprise;
-    req.user.enterprise = req.user.enterprise._id;
-
     if (user.role === E_ROLES.OWNER) {
       next();
     } else {
@@ -162,7 +152,7 @@ const EnterpriseAuth = (roles = []) => {
       }
       return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
     }
-  }
+  };
 };
 
 const isExaltService = async (req, res, next) => {

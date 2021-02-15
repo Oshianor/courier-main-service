@@ -10,7 +10,6 @@ const PricingService = require("../services/pricing");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
 const StatisticsService = require("../services/statistics");
-const { Container } = require("typedi");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { nanoid } = require("nanoid");
@@ -28,10 +27,10 @@ const {
   GenerateToken,
   paginate,
 } = require("../utils");
-const countryInstance = Container.get(CountryService);
-const vehicleInstance = Container.get(VehicleService);
-const companyInstance = Container.get(CompanyService);
-const statisticsInstance = Container.get(StatisticsService);
+const countryInstance = new CountryService();
+const vehicleInstance = new VehicleService();
+const companyInstance = new CompanyService();
+const statisticsInstance = new StatisticsService();
 
 /**
  * Create Company

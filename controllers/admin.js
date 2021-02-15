@@ -16,20 +16,19 @@ const {
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
-const { Container } = require("typedi");
 const EnterpriseService = require("../services/enterprise");
 const CompanyService = require("../services/company");
 const RiderService = require("../services/rider");
 const TransactionService = require("../services/transaction");
-const adminInstance = Container.get(AdminService);
-const userInstance = Container.get(UserService);
-const countryInstance = Container.get(CountryService);
-const enterpriseInstance = Container.get(EnterpriseService);
-const statisticsInstance = Container.get(StatisticsService);
-const orderInstance = Container.get(OrderService);
-const companyInstance = Container.get(CompanyService);
-const riderInstance = Container.get(RiderService);
-const transactionInstance = Container.get(TransactionService);
+const adminInstance = new AdminService();
+const userInstance = new UserService();
+const countryInstance = new CountryService();
+const enterpriseInstance = new EnterpriseService();
+const statisticsInstance = new StatisticsService();
+const orderInstance = new OrderService();
+const companyInstance = new CompanyService();
+const riderInstance = new RiderService();
+const transactionInstance = new TransactionService();
 
 /**
  * Create AdminModel

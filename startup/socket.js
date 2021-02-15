@@ -1,17 +1,15 @@
-const config = require("config");
 const app = require("./routes");
 const http = require("http").createServer(app);
 const EntrySubscription = require("../subscription/entry");
 const redisAdapter = require("socket.io-redis");
-const { Container } = require("typedi");
 const { SocketAuth } = require("../middlewares/auth");
-const { SERVER_EVENTS, CLIENT_EVENTS } = require("../constant/events");
+const { SERVER_EVENTS, CLIENT_EVENTS, REDIS_CONFIG } = require("../constant/events");
 const io = require("socket.io")(http, {
   path: "/sio",
   transports: ["websocket"],
 });
-io.adapter(redisAdapter(config.get("application.redis")));
-const entryInstance = Container.get(EntrySubscription);
+io.adapter(redisAdapter(REDIS_CONFIG));
+const entryInstance = new EntrySubscription();
 
 io.use(SocketAuth);
 

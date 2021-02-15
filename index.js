@@ -18,6 +18,6 @@ mongoose
   })
   .then(() => {
     console.log("Connected to MongoDB...");
-    http.listen(port, () => console.error(`listening on http://localhost:${port}`));
+    http.listen(port, () => console.error(`Logiistics Service listening on http://localhost:${port}`));
   })
   .catch((err) => console.error("Could not connect to MongoDB..."));

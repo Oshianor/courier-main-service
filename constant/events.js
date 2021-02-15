@@ -1,3 +1,9 @@
+const REDIS_CONFIG = Object.freeze({
+  host: "127.0.0.1",
+  port: 6379,
+});
+
+
 const SERVER_EVENTS = Object.freeze({
   // connect to socket
   CONNECTION: "connection",
@@ -43,4 +49,5 @@ const CLIENT_EVENTS = Object.freeze({
 module.exports = {
   SERVER_EVENTS,
   CLIENT_EVENTS,
+  REDIS_CONFIG,
 }; 

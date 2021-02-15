@@ -1,15 +1,10 @@
-const config = require("config");
 const io = require("socket.io-emitter");
 const Entry = require("../models/entry")
-const Order = require("../models/order")
 const Company = require("../models/company");
 const RiderEntryRequest = require("../models/riderEntryRequest");
-const Rider = require("../models/rider");
-const Transaction = require("../models/transaction");
-const User = require("../models/users");
 const { SocketResponse } = require("../lib/apiResponse");
-const { SERVER_EVENTS } = require("../constant/events");
-const socket = new io(config.get("application.redis"), { key: "/sio" });
+const { SERVER_EVENTS, REDIS_CONFIG } = require("../constant/events");
+const socket = new io(REDIS_CONFIG, { key: "/sio" });
 
 
 class EntrySubscription {

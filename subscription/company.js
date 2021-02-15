@@ -1,9 +1,6 @@
-const config = require("config");
 const io = require("socket.io-emitter");
-const { SocketResponse } = require("../lib/apiResponse");
-const { SERVER_EVENTS } = require("../constant/events");
-const { AsyncForEach } = require("../utils");
-const socket = new io(config.get("application.redis"), { key: "/sio" });
+const { SERVER_EVENTS, REDIS_CONFIG } = require("../constant/events");
+const socket = new io(REDIS_CONFIG, { key: "/sio" });
 
 
 class CompanySubscription {

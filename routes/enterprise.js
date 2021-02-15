@@ -10,14 +10,6 @@ const {
   UserAuth
 } = require("../middlewares/auth");
 
-// create organisation
-router.post("/create-organization", [Auth, hasRole([ROLES.ADMIN])], controller.enterprise.createOrganization);
-
-// create branch
-router.post("/create-branch", [UserAuth, EnterpriseAuth([E_ROLES.OWNER])], controller.enterprise.createBranch);
-
-// create maintainer
-router.post("/create-maintainer", [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.createMaintainer);
 
 // get enterprise
 router.get("/", [UserAuth, EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.OWNER, E_ROLES.BRANCH])], controller.enterprise.getEnterprise);

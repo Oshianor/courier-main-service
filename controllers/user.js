@@ -1,31 +1,9 @@
-const moment = require("moment");
-const User = require("../models/users");
 const UserService = require("../services/user");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { validateRiderFCMToken } = require("../request/rider");
 const { paginate } = require("../utils");
 
-
-
-
-
-/**
- * Create a user
- * @param {*} req
- * @param {*} res
- */
-exports.createUser = async (req, res, next) => {
-  try {
-    const userInstance = new UserService();
-    const { user } = await userInstance.createUser(req.body);
-
-    user.password = "";
-    JsonResponse(res, 200, MSG_TYPES.ACCOUNT_CREATED, user);
-  } catch (error) {
-    next(error);
-  }
-};
 
 /**
  * Update user FCM Token

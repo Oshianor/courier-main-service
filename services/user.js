@@ -1,6 +1,6 @@
 const config = require("config");
 const axios = require("axios");
-const User = require("../models/users");
+// const User = require("../models/users");
 const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
@@ -13,73 +13,6 @@ const { OTPCode } = require("../templates");
  * User service class
  */
 class UserService {
-  /**
-   * create a user
-   * @param {String} token
-   */
-  createUser(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        body.group = "commercial";
-        const response = await axios.post(
-          `${config.get("api.base")}${ACCOUNT_SERVICE.USER}`,
-          body,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
-        if (response.status == 200) {
-          const user = await User.create({
-            ...response.data.data,
-          });
-          resolve({ user });
-        } else {
-          return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
-        }
-      } catch (error) {
-        reject({
-          code: error.response.status,
-          msg: error.response.data.msg,
-        });
-        return;
-      }
-    });
-  }
-
-  /**
-   * Create enterprise user account - request to account service
-   * @param {Object} body
-   */
-  createEnterpriseUser(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axios.post(
-          `${config.get("api.base")}${ACCOUNT_SERVICE.E_USER}`,
-          body,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
-
-        resolve(response.data.data);
-      } catch (error) {
-        console.log("error", error);
-
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        return reject(error);
-      }
-    });
-  }
-
   /**
    * Update user account - request to account service
    * @param {Object} body
@@ -376,7 +309,7 @@ class UserService {
   updateFCMToken(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        await User.updateOne({ _id: user.id }, { FCMToken: body.FCMToken });
+        // await User.updateOne({ _id: user.id }, { FCMToken: body.FCMToken });
 
         resolve(null);
       } catch (error) {
@@ -484,19 +417,19 @@ class UserService {
   updateAccount(userId, data) {
     return new Promise(async (resolve, reject) => {
       try {
-        const user = await User.findOne({ _id: userId });
-        if (!user) {
-          return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
-        }
+        // const user = await User.findOne({ _id: userId });
+        // if (!user) {
+        //   return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
+        // }
 
-        const updatedUser = await User.updateOne(
-          { _id: userId },
-          { $set: data }
-        );
-        if (!updatedUser) {
-          return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
-        }
-        resolve(updatedUser);
+        // const updatedUser = await User.updateOne(
+        //   { _id: userId },
+        //   { $set: data }
+        // );
+        // if (!updatedUser) {
+        //   return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
+        // }
+        // resolve(updatedUser);
       } catch (error) {
         return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
@@ -511,13 +444,13 @@ class UserService {
   getUser(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const user = await User.findOne({ _id: userId })
+        // const user = await User.findOne({ _id: userId })
 
-        if(!user){
-          return reject({ code: 404, msg: 'User '+MSG_TYPES.NOT_FOUND});
-        }
+        // if(!user){
+        //   return reject({ code: 404, msg: 'User '+MSG_TYPES.NOT_FOUND});
+        // }
 
-        resolve(user);
+        // resolve(user);
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
@@ -526,39 +459,3 @@ class UserService {
 }
 
 module.exports = UserService;
-
-
-
-  // /**
-  //  * Send OTP code to the
-  //  * @param {Object} token otp code sent to the
-  //  * @param {Object} entry
-  //  * @param {Object} user
-  //  */
-  // sendUserPickupOTP(token, entry, user=null) {
-  //   return new Promise((resolve, reject) => {
-  //     try {
-  //       const token = GenerateOTP(4);
-
-  //       const subject = "Pickup OTP Code";
-  //       const html = OTPCode(token);
-  //       Mailer(entry.email, subject, html);
-
-  //       // send OTP code
-  //       const notifyInstance = new NotificationService();
-  //       const msg = `Your Pickup verification OTP code is ${token}`;
-  //       const to = entry.countryCode + entry.phoneNumber;
-  //       await notifyInstance.sendOTPByTermii(msg, to);
-
-  //       if (user) {
-  //         Mailer(user.email, subject, html);
-  //         const toUser = user.countryCode + user.phoneNumber;
-  //         await notifyInstance.sendOTPByTermii(msg, toUser);
-  //       }
-
-  //       resolve(token)
-  //     } catch (error) {
-  //       console.log("error", error);
-  //     }
-  //   })
-  // }

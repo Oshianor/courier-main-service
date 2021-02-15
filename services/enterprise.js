@@ -7,9 +7,6 @@ const {
   UploadFileFromBase64,
   convertToMonthlyDataArray,
 } = require("../utils");
-const User = require("../models/users");
-const WalletService = require("./wallet");
-const CreditService = require("./credit");
 const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
@@ -18,313 +15,23 @@ const Order = require("../models/order");
 
 class EnterpriseService {
   /**
-   * Create organization HQ by Exalt admin
-   * @param {Object} body
-   */
-  createOrganization(body, files, authUser) {
-    return new Promise(async (resolve, reject) => {
-      const userInstance = new UserService();
-
-      const session = await mongoose.startSession();
-
-      if (typeof files.logo === "undefined") {
-        reject({ code: 404, msg: MSG_TYPES.ENTERPRISE_LOGO });
-        return;
-      }
-
-      // create enterprise account
-      if (files.logo.data != null) {
-        const logo = await UploadFileFromBinary(
-          files.logo.data,
-          files.logo.name
-        );
-        body.logo = logo.Key;
-      }
-
-      // check if enterprise exists
-      const existingEnterprise = await Enterprise.findOne({
-        name: body.name,
-        type: body.type,
-        email: body.email,
-        phoneNumber: body.phoneNumber,
-      });
-
-      if (existingEnterprise) {
-        reject({
-          code: 400,
-          msg: "An Enterprise exists with same name email or phone number",
-        });
-        return;
-      }
-
-      // Create user account in account service (wrap account service)
-      userInstance
-        .createEnterpriseUser({
-          name: body.name,
-          email: body.email,
-          countryCode: body.countryCode,
-          phoneNumber: body.phoneNumber,
-          img: body.logo,
-        })
-        .then(async (user) => {
-          try {
-            // start our transaction
-            session.startTransaction();
-
-            body.status = "inactive";
-            body.type = "owner";
-            body.verified = true;
-            body.user = user._id;
-            body.users = [user._id];
-            body.usersAll = [user._id];
-            body.createdBy = authUser.id;
-
-            // create enterprise document
-            const newEnterprise = new Enterprise(body);
-            newEnterprise.HQ = newEnterprise._id;
-
-            // create user in logistics service
-            const courierUser = new User({
-              ...user,
-              role: "owner",
-              group: "enterprise",
-              enterprise: newEnterprise._id,
-              img: body.logo,
-            });
-            await courierUser.save({ session });
-
-            const walletInstance = new WalletService();
-            const wallet = await walletInstance.createWallet(
-              newEnterprise._id,
-              session
-            );
-
-            const creditInstance = new CreditService();
-            const credit = await creditInstance.createCredit(
-              newEnterprise._id,
-              session
-            );
-
-            newEnterprise.credit = credit;
-            newEnterprise.wallet = wallet;
-            await newEnterprise.save({ session });
-
-            await session.commitTransaction();
-            session.endSession();
-
-            resolve({ newEnterprise });
-          } catch (error) {
-            await session.abortTransaction();
-            await userInstance.deleteUser(user._id);
-            if (error.response) {
-              return reject({
-                code: error.response.status,
-                msg: error.response.data.msg,
-              });
-            }
-            return reject({ code: error.code, msg: error.msg });
-          }
-        })
-        .catch((error) => {
-          return reject(error);
-        });
-    });
-  }
-
-  /**
-   * Create organization branch by organization HQ
-   * @param {Object} body
-   * @param {Object} files
-   * @param {Object} enterprise
-   */
-  createBranch(body, files, enterprise) {
-    return new Promise(async (resolve, reject) => {
-      const userInstance = new UserService();
-      const session = await mongoose.startSession();
-
-      if (typeof files.logo === "undefined") {
-        reject({ code: 404, msg: MSG_TYPES.ENTERPRISE_LOGO });
-        return;
-      }
-
-      // create enterprise account
-      if (files && files.logo.data != null) {
-        const logo = await UploadFileFromBinary(
-          files.logo.data,
-          files.logo.name
-        );
-        body.logo = logo.Key;
-      }
-
-      // check if enterprise exists
-      const existingEnterprise = await Enterprise.findOne({
-        name: body.name,
-        type: body.type,
-        email: body.email,
-        phoneNumber: body.phoneNumber,
-      });
-
-      if (existingEnterprise) {
-        reject({
-          code: 400,
-          msg: "An Enterprise exists with same name email or phone number",
-        });
-        return;
-      }
-
-      userInstance
-        .createEnterpriseUser({
-          name: body.name,
-          email: body.email,
-          countryCode: body.countryCode,
-          phoneNumber: body.phoneNumber,
-          img: body.logo,
-        })
-        .then(async (user) => {
-          try {
-            // start our transaction
-            session.startTransaction();
-
-            body.type = "branch";
-            body.enterprise = enterprise._id;
-            body.HQ = enterprise._id;
-            body.user = user._id;
-            body.users = [user._id];
-
-            // create enterprise document
-            const newEnterprise = new Enterprise(body);
-
-            // create user in logistics service
-            const courierUser = new User({
-              ...user,
-              role: "branch",
-              group: "enterprise",
-              enterprise: newEnterprise._id,
-              img: body.logo,
-            });
-            await courierUser.save({ session });
-
-            const walletInstance = new WalletService();
-            const wallet = await walletInstance.createWallet(
-              newEnterprise._id,
-              session
-            );
-
-            const creditInstance = new CreditService();
-            const credit = await creditInstance.createCredit(
-              newEnterprise._id,
-              session
-            );
-
-            newEnterprise.credit = credit;
-            newEnterprise.wallet = wallet;
-
-            await Enterprise.updateMany(
-              { _id: enterprise._id },
-              {
-                $addToSet: {
-                  branchIDS: newEnterprise._id,
-                  branchIDSWithHQ: newEnterprise._id,
-                  usersAll: user._id,
-                  branchUserIDS: user._id,
-                },
-              },
-              { session }
-            );
-
-            await newEnterprise.save({ session });
-
-            await session.commitTransaction();
-            session.endSession();
-
-            resolve({ newEnterprise });
-          } catch (error) {
-            await session.abortTransaction();
-            await userInstance.deleteUser(user._id);
-            return reject(error);
-          }
-        })
-        .catch((error) => {
-          return reject(error);
-        });
-    });
-  }
-
-  /**
-   * Create maintainer  by organization HQ or branch
-   * @param {Object} body
-   */
-  createMaintainer(body, enterprise) {
-    return new Promise(async (resolve, reject) => {
-      const session = await mongoose.startSession();
-      const userInstance = new UserService();
-
-      userInstance
-        .createEnterpriseUser({
-          name: body.name,
-          email: body.email,
-          countryCode: body.countryCode,
-          phoneNumber: body.phoneNumber,
-        })
-        .then(async (user) => {
-          try {
-            // start our transaction
-            session.startTransaction();
-
-            // create user in logistics service
-            const courierUser = new User({
-              ...user,
-              role: "maintainer",
-              group: "enterprise",
-              enterprise: enterprise._id,
-            });
-            await courierUser.save({ session });
-
-            await Enterprise.updateMany(
-              { _id: enterprise._id },
-              {
-                $addToSet: {
-                  usersAll: user._id,
-                  users: user._id,
-                  maintainers: user._id,
-                },
-              },
-              { session }
-            );
-
-            await session.commitTransaction();
-            session.endSession();
-
-            resolve({ user });
-          } catch (error) {
-            await userInstance.deleteUser(user._id);
-            return reject(error);
-          }
-        })
-        .catch((error) => {
-          return reject(error);
-        });
-    });
-  }
-
-  /**
    * Get an enterprise details
    * @param {MongoDB ObjectId} userId
    */
   getEnterprise(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const organization = await User.findOne({ _id: userId })
-          .select("-createdBy -deleted -deletedBy -deletedAt")
-          .populate(
-            "enterprise",
-            "name type phoneNumber email address logo motto industry"
-          );
+        // const organization = await User.findOne({ _id: userId })
+        //   .select("-createdBy -deleted -deletedBy -deletedAt")
+        //   .populate(
+        //     "enterprise",
+        //     "name type phoneNumber email address logo motto industry"
+        //   );
 
-        if (!organization) {
-          return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
-        }
-        resolve(organization);
+        // if (!organization) {
+        //   return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        // }
+        // resolve(organization);
       } catch (error) {
         // error.service = 'Get enterprise service error'
         return reject(error);
@@ -633,20 +340,20 @@ class EnterpriseService {
   getEnterpriseAccounts(role, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const queryFilter = {
-          role: role,
-          group: "enterprise",
-        };
+        // const queryFilter = {
+        //   role: role,
+        //   group: "enterprise",
+        // };
 
-        const enterpriseAccounts = await User.find(queryFilter)
-          .populate("enterprise", "status verified")
-          .skip(skip)
-          .limit(pageSize)
-          .sort({ createdAt: "desc" });
+        // const enterpriseAccounts = await User.find(queryFilter)
+        //   .populate("enterprise", "status verified")
+        //   .skip(skip)
+        //   .limit(pageSize)
+        //   .sort({ createdAt: "desc" });
 
-        const total = await User.countDocuments(queryFilter);
+        // const total = await User.countDocuments(queryFilter);
 
-        resolve({ enterpriseAccounts, total });
+        // resolve({ enterpriseAccounts, total });
       } catch (e) {
         return reject(e);
       }

@@ -281,16 +281,11 @@ exports.getEnterpriseAccounts = async (req, res, next) => {
     const { error } = validateGetEnterpriseAccounts({role: req.query.role});
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const { page, pageSize, skip } = paginate(req);
+    const { page, pageSize } = paginate(req);
 
-    const { enterpriseAccounts, total } = await enterpriseInstance.getEnterpriseAccounts(req.query.role, skip, pageSize);
+    const { data, meta } = await enterpriseInstance.getEnterpriseAccounts(req.query.role, page, pageSize);
 
-    const meta = {
-      total,
-      pagination: { pageSize, page },
-    };
-
-    return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseAccounts, meta);
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, data, meta);
   } catch (error) {
     next(error);
   }

@@ -36,6 +36,12 @@ const ACCOUNT_SERVICE = Object.freeze({
 
   // update maintainers and branch account by enterprise owner
   TOGGLE_STATUS: "/auth/toggle-status",
+
+  // Get enterprise accounts - (ADMIN)
+  GET_ENTERPRISE_ACCOUNTS: "/enterprise/accounts",
+
+  ENTERPRISE_FINDONE: "/enterprise/findone",
+  ENTERPRISE_FIND: "/enterprise/find",
 });
 
 module.exports = {

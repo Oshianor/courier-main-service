@@ -77,7 +77,7 @@ class EntryService {
       } catch (error) {
         console.log(error);
         await session.abortTransaction();
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }
@@ -296,8 +296,8 @@ class EntryService {
         });
 
         // console.log("distance", JSON.stringify(distance.data));
-        console.log("distance", distance.data);
-        console.log("distance", distance.data.results);
+        // console.log("distance", distance.data);
+        // console.log("distance", distance.data.results);
 
         if (distance.data.status !== "OK") {
           reject({ code: 400, msg: "Your address couldn't be verified" });

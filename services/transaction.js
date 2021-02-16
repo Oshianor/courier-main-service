@@ -4,6 +4,7 @@ const Entry = require("../models/entry");
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const UserService = require("./user");
+const CardService = require("./card");
 const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const { MSG_TYPES } = require("../constant/types");
@@ -11,6 +12,8 @@ const Wallet = require("../models/wallet");
 const WalletHistory = require("../models/walletHistory");
 const Credit = require("../models/credit");
 const CreditHistory = require("../models/creditHistory");
+const cardInstance = new CardService();
+const userInstance = new UserService();
 
 
 
@@ -25,6 +28,9 @@ class TransactionService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
+        // start our transaction
+        session.startTransaction();
+
         const entry = await Entry.findOne({
           _id: body.entry,
           status: "request",
@@ -49,9 +55,8 @@ class TransactionService {
 
         let msgRES;
         if (body.paymentMethod === "card") {
-          const userInstance = new UserService();
-          const card = await userInstance.getCard(token, body.card);
-          const { trans } = await this.changeCard(card, amount);
+          const card = await cardInstance.get({ _id: body.card, user: user.id });
+          const { trans } = await this.chargeCard(card, amount)
 
           body.amount = amount;
           body.user = user.id;
@@ -74,7 +79,7 @@ class TransactionService {
         }
 
         // start our transaction
-        session.startTransaction();
+        // session.startTransaction();
 
         const newTransaction = new Transaction(body);
         await newTransaction.save({ session });
@@ -108,10 +113,7 @@ class TransactionService {
       } catch (error) {
         await session.abortTransaction();
         console.log("error", error);
-        reject({
-          code: 500,
-          msg: "Your Transaction could't be processed at the moment",
-        });
+        reject(error);
       }
     });
   }
@@ -126,6 +128,9 @@ class TransactionService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
+        // start our transaction
+        session.startTransaction();
+
         const entry = await Entry.findOne({
           _id: body.entry,
           status: "request",
@@ -153,14 +158,7 @@ class TransactionService {
 
         let msg;
         if (body.paymentMethod === "card") {
-          const userInstance = new UserService();
-          const card = await userInstance.getSingleEnterpriseCard(
-            enterprise.user,
-            body.card
-          );
-
-        console.log("card", card);
-
+          const card = await cardInstance.get({ _id: body.card, user: user.id });
 
           const { trans } = await this.chargeCard(card, amount);
 
@@ -213,7 +211,7 @@ class TransactionService {
         }
 
         // start our transaction
-        session.startTransaction();
+        // session.startTransaction();
 
         const newTransaction = new Transaction(body);
         await newTransaction.save({ session });
@@ -265,8 +263,8 @@ class TransactionService {
       try {
         const trans = await paystack.transaction.charge({
           reference: nanoid(20),
-          authorization_code: card.data.token,
-          email: card.data.email,
+          authorization_code: card.token,
+          email: card.email,
           amount: parseFloat(amount).toFixed(2) * 100,
         });
         console.log("trans", trans);

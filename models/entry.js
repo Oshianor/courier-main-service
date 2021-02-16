@@ -77,7 +77,7 @@ const entrySchema = mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
-      ref: "User",
+      // ref: "User",
     },
     orders: [
       {

@@ -244,7 +244,7 @@ const orderSchema = mongoose.Schema(
     },
     deletedBy: {
       type: ObjectId,
-      ref: "User",
+      // ref: "User",
       default: null,
     },
   },

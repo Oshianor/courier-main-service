@@ -148,7 +148,7 @@ exports.allUsers = async (req, res, next) => {
  */
 exports.singleUser = async (req, res, next) => {
   try {
-    const data = await userInstance.getByID(req.params.userId);
+    const data = await userInstance.get(req.params.userId);
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, data, null);
     return
@@ -531,7 +531,7 @@ exports.getSingleRiderTransactions = async(req, res, next) => {
  */
 exports.getSingleUserStatistics = async(req, res, next) => {
   try{
-    const user = await userInstance.getUser(req.params.userId);
+    const user = await userInstance.get(req.params.userId);
 
     const filter = { user: user._id };
     const totalSpent = await statisticsInstance.getTotalRevenue(filter);
@@ -556,7 +556,7 @@ exports.getSingleUserStatistics = async(req, res, next) => {
  */
 exports.getSingleUserTransactions = async(req, res, next) => {
   try{
-    const user = await userInstance.getUser(req.params.userId);
+    const user = await userInstance.get(req.params.userId);
 
     const filter = { user: user._id };
     const { page, pageSize, skip } = paginate(req);

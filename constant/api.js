@@ -1,43 +1,36 @@
-
+const account = "http://localhost:6000/api/v1";
+const card = "http://localhost:6002/api/v1";
 
 const ACCOUNT_SERVICE = Object.freeze({
   // create/delete/get single user on the account service for commercial account
-  USER: "/user",
+  USER: `${account}/user`,
 
   // create enterprise user account
-  E_USER: "/user/enterpise",
+  E_USER: `${account}/user/enterpise`,
 
   // get all user on the account service
-  GET_ALL_USER: "/user/all",
-
-  // get card details for user
-  CARD: "/card",
-
-  // get single card for enterprise
-  E_CARD_SINGLE: "/card/enterprise/single",
-
-  // get all card for an enterprise
-  E_CARD_ALL: "/card/enterprise/all",
+  GET_ALL_USER: `${account}/user/all`,
 
   // update user account
-  UPDATE_USER: "/user/account",
+  UPDATE_USER: `${account}/user/account`,
 
   // get all the maintainers
-  GET_MAINTAINERS: "/user/maintainers",
-
-  // add card for enterprise
-  ADD_E_CARD: "/card/enterprise",
-
-  // user login for commercial
-  LOGIN: "/auth/login",
-
-  // verify account for enterprise
-  VERIFY_ACCOUNT: "/auth/set-password",
+  GET_MAINTAINERS: `${account}/user/maintainers`,
 
   // update maintainers and branch account by enterprise owner
   TOGGLE_STATUS: "/auth/toggle-status",
 });
 
+const CARD_SERVICE = Object.freeze({
+  // get card details for user
+  CARD_FINDONE: `${card}/findone`,
+
+  // get card details for user
+  CARD_FIND: `${card}/find`
+});
+
+
 module.exports = {
-  ACCOUNT_SERVICE
+  ACCOUNT_SERVICE,
+  CARD_SERVICE,
 };

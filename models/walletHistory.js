@@ -43,7 +43,7 @@ const WalletHistorySchema = mongoose.Schema(
       type: ObjectId,
       index: true,
       required: true,
-      ref: "User",
+      // ref: "User",
     },
     amount: {
       type: Number,

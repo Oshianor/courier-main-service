@@ -17,7 +17,7 @@ const transactionSchema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
-      ref: "User",
+      // ref: "User",
     },
     card: {
       type: ObjectId,

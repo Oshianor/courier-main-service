@@ -141,13 +141,13 @@ const EnterpriseAuth = (roles = []) => {
       return JsonResponse(res, 403, MSG_TYPES.NOT_ALLOWED);
 
     req.enterprise = req.user.enterprise;
-    if (user.role === E_ROLES.OWNER) {
+    if (req.user.role === E_ROLES.OWNER) {
       next();
     } else {
       if (roles.length < 1) {
         return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
-      if (roles.includes(user.role)) {
+      if (roles.includes(req.user.role)) {
         return next();
       }
       return JsonResponse(res, 403, MSG_TYPES.PERMISSION);

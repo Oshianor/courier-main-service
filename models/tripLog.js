@@ -31,7 +31,7 @@ const tripLogSchema = new mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
-      ref: "User",
+      // ref: "User",
     },
     entry: {
       type: ObjectId,

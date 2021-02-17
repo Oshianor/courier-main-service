@@ -12,6 +12,28 @@ const {
 const { paginate } = require("../utils");
 
 
+
+/**
+ * Create wallet wallet account
+ * @param {*} req
+ * @param {*} res
+ */
+exports.createCredit = async (req, res, next) => {
+  try {
+
+    const creditInstance = new CreditService();
+    const credit = await creditInstance.createCredit(req.body.enterprise);
+
+    JsonResponse(res, 201, "ok", credit);
+    return;
+  } catch (error) {
+    next(error);
+    return;
+  }
+};
+
+
+
 /**
  * Admin fund wallet for branch or owner
  * @param {*} req

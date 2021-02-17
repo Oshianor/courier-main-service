@@ -1,8 +1,5 @@
 const Credit = require("../models/credit");
 const CreditHistory = require("../models/creditHistory");
-// const Enterprise = require("../models/enterprise");
-const config = require("config");
-const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");

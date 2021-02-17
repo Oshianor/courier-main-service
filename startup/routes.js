@@ -21,6 +21,7 @@ const bank = require("../routes/bank");
 const subscription = require("../routes/subscription");
 const card = require("../routes/card");
 const wallet = require("../routes/wallet");
+const credit = require("../routes/credit");
 const enterprise = require("../routes/enterprise");
 const corsOptions = {
   origin: "*",
@@ -48,6 +49,7 @@ app.use("/api/v1/bank", bank);
 app.use("/api/v1/subscription", subscription);
 app.use("/api/v1/card", card);
 app.use("/api/v1/wallet", wallet);
+app.use("/api/v1/credit", credit);
 app.use("/api/v1/enterprise", enterprise);
 app.use(endpointNotFound);
 app.use(error);

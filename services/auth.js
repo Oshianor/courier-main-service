@@ -140,7 +140,7 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}${ACCOUNT_SERVICE.VERIFY_ACCOUNT}`,
+          `${ACCOUNT_SERVICE.VERIFY_ACCOUNT}`,
           body,
           {
             headers: {
@@ -229,7 +229,7 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}${ACCOUNT_SERVICE.LOGIN}`,
+          `${ACCOUNT_SERVICE.LOGIN}`,
           body
         );
         const token = response.headers["x-auth-token"];

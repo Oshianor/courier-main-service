@@ -11,25 +11,26 @@ const enterpriseInstance = new EnterpriseService();
 const statisticsInstance = new StatisticsService();
 
 
+// [moved to accounts service]
 /**
  * Update enterprise information
  * @param {*} req
  * @param {*} res
  */
-exports.updateEnterprise = async (req, res, next) => {
-  try {
-    const { error } = validateEnterpriseUpdate(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
+// exports.updateEnterprise = async (req, res, next) => {
+//   try {
+//     const { error } = validateEnterpriseUpdate(req.body);
+//     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const enterpriseId = req.enterprise._id;
-    const updatedEnterprise = await enterpriseInstance.updateEnterprise({ _id:enterpriseId },  req.body, req.token);
+//     const enterpriseId = req.enterprise._id;
+//     const updatedEnterprise = await enterpriseInstance.updateEnterprise({ _id:enterpriseId },  req.body, req.token);
 
-    return JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedEnterprise);
-  } catch (error) {
-    next(error)
-    return
-  }
-};
+//     return JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedEnterprise);
+//   } catch (error) {
+//     next(error)
+//     return
+//   }
+// };
 
 // [moved to accounts service]
 /**

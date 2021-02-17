@@ -7,7 +7,8 @@ const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
 const template = require("../templates");
 const { nanoid } = require("nanoid");
-const { UploadFileFromBinary, Mailer, GenerateToken, isObject, convertToMonthlyDataArray } = require("../utils");
+const { UploadFileFromBinary, Mailer,
+  GenerateToken, isObject, convertToMonthlyDataArray, populateMultiple } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
@@ -173,13 +174,16 @@ class CompanyService {
   allTransactions(company, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try{
-        const transactions = await Transaction.find({ company })
+        let transactions = await Transaction.find({ company })
         .populate("entry", "status pickupAddress deliveryAddresses")
-        .populate("user", "name")
+        // .populate("user", "name")
         .populate("rider", "name")
         .skip(skip)
         .limit(pageSize)
-        .sort({createdAt: "desc"});
+        .sort({createdAt: "desc"})
+        .lean();
+
+        transactions = await populateMultiple(transactions, "user", "name");
 
         const total = await Transaction.find({
           company,
@@ -250,13 +254,15 @@ class CompanyService {
         return;
       }
 
-      const entry = await Entry.find({ company: user.id, _id: entryId })
+      let entry = await Entry.find({ company: user.id, _id: entryId })
         .populate("orders")
         .populate("transaction")
-        .populate("user", "name countryCode phoneNumber")
+        // .populate("user", "name countryCode phoneNumber")
         .populate("rider", "email onlineStatus name countryCode phoneNumber")
         .select({ metaData: 0 })
+        .lean();
 
+      entry = await populateMultiple(entry, "user", "name countryCode phoneNumber");
       resolve({ entry });
     });
   }

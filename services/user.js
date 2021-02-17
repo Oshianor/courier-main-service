@@ -102,13 +102,16 @@ class UserService {
    * Get all users by admin
    * @param {Object} filter
    */
-  getAllUsers(filter) {
+  getAllUsers(filter, option) {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.get(
           `${ACCOUNT_SERVICE.GET_ALL_USER}`,
           {
             filter,
+            option: option ? option : null
+          },
+          {
             headers: {
               "api-key": config.get("api.key"),
             },
@@ -125,11 +128,15 @@ class UserService {
    * Get a single user by it's ID
    * @param {ObjectId} filter
    */
-  get(id) {
+  get(id, option) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.get(
-          `${ACCOUNT_SERVICE.USER}/${id}`,
+        const response = await axios.post(
+          `${ACCOUNT_SERVICE.GET_USER}`,
+          {
+            filter: { _id: id},
+            option
+          },
           {
             headers: {
               "api-key": config.get("api.key"),
@@ -139,6 +146,33 @@ class UserService {
         resolve(response.data);
       } catch (error) {
         reject(error.response.data);
+      }
+    });
+  }
+
+
+  getAll(users, select){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const response = await axios.get(`
+          ${ACCOUNT_SERVICE.GET_USERS}`,
+          {
+            headers: {
+            "api-key": config.get("api.key")
+          },
+          params: {
+            users,
+            select: select ? select : null
+          }
+        });
+
+        if(response && response.data){
+          resolve(response.data.data);
+        } else {
+          reject({code: 404, msg: "users not found"});
+        }
+      } catch(error){
+        reject(error);
       }
     });
   }

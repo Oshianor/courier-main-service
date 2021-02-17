@@ -3,7 +3,7 @@ const CreditHistory = require("../models/creditHistory");
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");
-const { populate } = require("../utils");
+const { populateMultiple } = require("../utils");
 
 
 class CreditService {
@@ -116,7 +116,7 @@ class CreditService {
       .sort({createdAt: "desc"})
       .lean();
 
-      credit = await populate(credit, "enterprise");
+      credit = await populateMultiple(credit, "enterprise");
 
       const total = await CreditHistory.countDocuments({ type: "loan" });
 

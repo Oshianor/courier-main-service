@@ -9,7 +9,7 @@ const Company = require("../models/company");
 const Transaction = require("../models/transaction");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray } = require("../utils");
+const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray, populateMultiple } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const mongoose = require("mongoose");
 
@@ -160,12 +160,12 @@ class RiderService {
           return;
         }
 
-        const order = await Order.find({
+        let order = await Order.find({
           rider: user.id,
           status: { $ne: "delivered" },
           // createdAt: { $gte: start, $lt: end },
         })
-          .populate("user", "name email phoneNumber countryCode")
+          // .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
             "status type source paymentMethod transaction itemType TEC TED TET"
@@ -175,7 +175,10 @@ class RiderService {
             "name email phoneNumber type logo address countryCode"
           )
           .populate("transaction")
-          .sort({ pickupType: -1 });
+          .sort({ pickupType: -1 })
+          .lean();
+
+        order = await populateMultiple(order, "user", "name email phoneNumber countryCode");
 
         resolve(order);
       } catch (error) {
@@ -199,12 +202,12 @@ class RiderService {
 
         const start = moment().startOf("day");
         const end = moment().endOf("day");
-        const order = await Order.find({
+        let order = await Order.find({
           rider: user.id,
           status: "delivered",
           createdAt: { $gte: start, $lt: end },
         })
-          .populate("user", "name email phoneNumber countryCode")
+          // .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
             "status type source paymentMethod transaction itemType TEC TED TET"
@@ -213,7 +216,10 @@ class RiderService {
             "company",
             "name email phoneNumber type logo address countryCode"
           )
-          .populate("transaction");
+          .populate("transaction")
+          .lean();
+
+        order = await populateMultiple(order, "user", "name email phoneNumber countryCode");
 
         resolve(order);
       } catch (error) {
@@ -474,11 +480,14 @@ class RiderService {
   getOrders(filter, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const orders = await Order.find(filter)
-        .populate("user", "-password -rememberToken")
+        let orders = await Order.find(filter)
+        // .populate("user", "-password -rememberToken")
         .skip(skip)
         .limit(pageSize)
-        .sort({createdAt: "desc"});
+        .sort({createdAt: "desc"})
+        .lean();
+
+        orders = await populateMultiple(orders, "user", "-password -rememberToken");
 
         const total = await Order.countDocuments(filter);
 

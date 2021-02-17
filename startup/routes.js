@@ -5,6 +5,7 @@ const app = express();
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
 const error = require("../middlewares/error");
+const endpointNotFound = require("../middlewares/404");
 const entry = require("../routes/entry");
 const order = require("../routes/order");
 const auth = require("../routes/auth");
@@ -48,6 +49,7 @@ app.use("/api/v1/subscription", subscription);
 app.use("/api/v1/card", card);
 app.use("/api/v1/wallet", wallet);
 app.use("/api/v1/enterprise", enterprise);
+app.use(endpointNotFound);
 app.use(error);
 
 module.exports = app;

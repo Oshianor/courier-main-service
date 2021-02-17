@@ -31,75 +31,78 @@ exports.updateEnterprise = async (req, res, next) => {
   }
 };
 
+// [moved to accounts service]
 /**
  * Get enterprise information
  * @param {*} req
  * @param {*} res
  */
-exports.getEnterprise = async (req, res, next) => {
-  try {
-    const enterprise = await enterpriseInstance.getEnterprise(req.user.id);
-    return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterprise);
-  } catch (error) {
-    next(error)
-    return
-  }
-};
+// exports.getEnterprise = async (req, res, next) => {
+//   try {
+//     const enterprise = await enterpriseInstance.getEnterprise(req.user.id);
+//     return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterprise);
+//   } catch (error) {
+//     next(error)
+//     return
+//   }
+// };
 
+// [moved to accounts service]
 /**
  * Get All Enterprise branches
  * @param {*} req
  * @param {*} res
  */
-exports.allBranches = async (req, res, next) => {
-  try {
-    const { page, pageSize, skip } = paginate(req);
+// exports.allBranches = async (req, res, next) => {
+//   try {
+//     const { page, pageSize, skip } = paginate(req);
 
-    const pagination = {
-      page,
-      skip,
-      pageSize,
-    };
-    const {
-      total,
-      branches,
-    } = await enterpriseInstance.getAllBranches(req.user, pagination);
-    const meta = {
-      total,
-      pagination: { pageSize, page },
-    };
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, branches, meta);
-  } catch (error) {
-    next(error);
-  }
-};
+//     const pagination = {
+//       page,
+//       skip,
+//       pageSize,
+//     };
+//     const {
+//       total,
+//       branches,
+//     } = await enterpriseInstance.getAllBranches(req.user, pagination);
+//     const meta = {
+//       total,
+//       pagination: { pageSize, page },
+//     };
+//     JsonResponse(res, 200, MSG_TYPES.FETCHED, branches, meta);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
+// [moved to accounts service]
 /**
  * Get All Enterprise maintainers
  * @param {*} req
  * @param {*} res
  */
-exports.allMaintainers = async (req, res, next) => {
-  try {
-    const { page, pageSize, skip } = paginate(req);
-    const pagination = {
-      page,
-      skip,
-      pageSize
-    }
+// exports.allMaintainers = async (req, res, next) => {
+//   try {
+//     const { page, pageSize, skip } = paginate(req);
+//     const pagination = {
+//       page,
+//       skip,
+//       pageSize
+//     }
 
-    const { total, maintainers } = await enterpriseInstance.getAllMaintainers(req.user, pagination);
+//     const { total, maintainers } = await enterpriseInstance.getAllMaintainers(req.user, pagination);
 
-    const meta = {
-      total,
-      pagination: { pageSize, page },
-    };
+//     const meta = {
+//       total,
+//       pagination: { pageSize, page },
+//     };
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, maintainers, meta);
-  } catch (error) {
-    next(error);
-  }
-};
+//     JsonResponse(res, 200, MSG_TYPES.FETCHED, maintainers, meta);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 /**
  * Get All Enterprise Entries

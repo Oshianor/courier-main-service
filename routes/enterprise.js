@@ -8,17 +8,20 @@ const {
 } = require("../middlewares/auth");
 
 
+// [moved to accounts service]
 // get enterprise
-router.get("/", [UserAuth, EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.BRANCH])], controller.enterprise.getEnterprise);
+// router.get("/", [UserAuth, EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.BRANCH])], controller.enterprise.getEnterprise);
 
 // edit enterprise account
 router.patch("/", [UserAuth, EnterpriseAuth([E_ROLES.BRANCH])], controller.enterprise.updateEnterprise);
 
+// [moved to accounts service]
 // get enterprise branches
-router.get("/branches", [UserAuth, EnterpriseAuth(E_ROLES.OWNER)], controller.enterprise.allBranches);
+// router.get("/branches", [UserAuth, EnterpriseAuth(E_ROLES.OWNER)], controller.enterprise.allBranches);
 
+// [moved to accounts service]
 // get enterprise maintainers
-router.get("/maintainers", [UserAuth, EnterpriseAuth([E_ROLES.BRANCH])], controller.enterprise.allMaintainers);
+// router.get("/maintainers", [UserAuth, EnterpriseAuth([E_ROLES.BRANCH])], controller.enterprise.allMaintainers);
 
 // get enterprise shippings (entries)
 router.get("/shipping", [UserAuth, EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.BRANCH])], controller.enterprise.allEntries);

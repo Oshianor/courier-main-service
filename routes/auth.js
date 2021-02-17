@@ -25,13 +25,17 @@ router.post("/reset-password", controllers.auth.resetPassword);
 // ENTERPRISE ROUTES
 router.patch("/set-password", controllers.auth.setPassword);
 
-router.post("/enterprise-login", controllers.auth.enterpriseLogin);
+// [moved > accounts-service]
+// router.post("/enterprise-login", controllers.auth.enterpriseLogin);
 
-router.patch(
-  "/update-status",
-  [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])],
-  controllers.auth.updateEnterpriseAccountStatus
-);
+//
+
+// [moved > accounts-service]
+// router.patch(
+//   "/update-status",
+//   [UserAuth, EnterpriseAuth([E_ROLES.OWNER, E_ROLES.BRANCH])],
+//   controllers.auth.updateEnterpriseAccountStatus
+// );
 
 // Forgot password flow
 router.post("/password/forgot", controllers.auth.forgotPassword2);

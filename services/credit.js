@@ -6,6 +6,7 @@ const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");
+const { populate } = require("../utils");
 
 
 class CreditService {
@@ -111,11 +112,14 @@ class CreditService {
    */
   getAllCredit(skip, pageSize) {
     return new Promise(async (resolve, reject) => {
-      const credit = await CreditHistory.find({ type: "loan" })
+      let credit = await CreditHistory.find({ type: "loan" })
       .skip(skip)
       .limit(pageSize)
-      .populate("enterprise", "name email countryCode phoneNumber")
-      .sort({createdAt: "desc"});
+      // .populate("enterprise", "name email countryCode phoneNumber")
+      .sort({createdAt: "desc"})
+      .lean();
+
+      credit = await populate(credit, "enterprise");
 
       const total = await CreditHistory.countDocuments({ type: "loan" });
 

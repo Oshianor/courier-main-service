@@ -143,61 +143,63 @@ class UserService {
     });
   }
 
+  // [moved to accounts service]
   /**
    * Get a list of users
    * @param {Array} users
    */
-  getAllMaintainers(users) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const mina = await axios.post(
-          `${ACCOUNT_SERVICE.GET_MAINTAINERS}`,
-          {
-            maintainers: users,
-          },
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
+  // getAllMaintainers(users) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const mina = await axios.post(
+  //         `${ACCOUNT_SERVICE.GET_MAINTAINERS}`,
+  //         {
+  //           maintainers: users,
+  //         },
+  //         {
+  //           headers: {
+  //             "api-key": config.get("api.key"),
+  //           },
+  //         }
+  //       );
 
-        resolve(mina.data);
-      } catch (error) {
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-      }
-    });
-  }
+  //       resolve(mina.data);
+  //     } catch (error) {
+  //       if (error.response) {
+  //         return reject({
+  //           code: error.response.status,
+  //           msg: error.response.data.msg,
+  //         });
+  //       }
+  //     }
+  //   });
+  // }
 
 
+  // [moved to accounts-service]
   /**
    * Update maintainers and branch by an owner
    * @param {Object} body
    */
-  updateBranchAndMaintainers(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axios.patch(
-          `${ACCOUNT_SERVICE.TOGGLE_STATUS}`,
-          body,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
-        resolve(response.data);
-      } catch (error) {
-        reject({ code: error.response.status, msg: error.response.data.msg });
-        return;
-      }
-    });
-  }
+  // updateBranchAndMaintainers(body) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const response = await axios.patch(
+  //         `${ACCOUNT_SERVICE.TOGGLE_STATUS}`,
+  //         body,
+  //         {
+  //           headers: {
+  //             "api-key": config.get("api.key"),
+  //           },
+  //         }
+  //       );
+  //       resolve(response.data);
+  //     } catch (error) {
+  //       reject({ code: error.response.status, msg: error.response.data.msg });
+  //       return;
+  //     }
+  //   });
+  // }
 
   /**
    * Update user FCMToken from firebase

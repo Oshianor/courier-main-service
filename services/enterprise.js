@@ -10,42 +10,46 @@ const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");
 const Order = require("../models/order");
+const axios = require("axios");
+const config = require("config");
+const { ACCOUNT_SERVICE } = require("../constant/api");
 
 
 class EnterpriseService {
+  // [moved to accounts service]
   /**
    * Get an enterprise details
    * @param {MongoDB ObjectId} userId
    */
-  getEnterprise(userId) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // const organization = await User.findOne({ _id: userId })
-        //   .select("-createdBy -deleted -deletedBy -deletedAt")
-        //   .populate(
-        //     "enterprise",
-        //     "name type phoneNumber email address logo motto industry"
-        //   );
+  // getEnterprise(userId) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       // const organization = await User.findOne({ _id: userId })
+  //       //   .select("-createdBy -deleted -deletedBy -deletedAt")
+  //       //   .populate(
+  //       //     "enterprise",
+  //       //     "name type phoneNumber email address logo motto industry"
+  //       //   );
 
-        // if (!organization) {
-        //   return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
-        // }
-        // resolve(organization);
-      } catch (error) {
-        // error.service = 'Get enterprise service error'
-        return reject(error);
-      }
-    });
-  }
+  //       // if (!organization) {
+  //       //   return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+  //       // }
+  //       // resolve(organization);
+  //     } catch (error) {
+  //       // error.service = 'Get enterprise service error'
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
   /**
    * Get all Enterprise Branches
    * @param {Object} user
    * @param {Object} pagination
    */
-  getAllBranches(user, pagination) {
-    return new Promise(async (resolve, reject) => {
-      try {
+  // getAllBranches(user, pagination) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
         // const userInstance = new UserService();
 
         // const enterprise = await Enterprise.findOne({
@@ -70,21 +74,21 @@ class EnterpriseService {
         //   total: enterprise.branchUserIDS.length,
         //   branches: maintainers.data,
         // });
-      } catch (error) {
-        // error.service = "Get all maintainers service error";
-        return reject(error);
-      }
-    });
-  }
+  //     } catch (error) {
+  //       // error.service = "Get all maintainers service error";
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
   /**
    * Get all Enterprise Maintainers
    * @param {Object} user
    * @param {Object} pagination
    */
-  getAllMaintainers(user, pagination) {
-    return new Promise(async (resolve, reject) => {
-      try {
+  // getAllMaintainers(user, pagination) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
         // const enterprise = await Enterprise.findOne({
         //   _id: user.enterprise,
         // });
@@ -107,11 +111,11 @@ class EnterpriseService {
         //   total: enterprise.maintainers.length,
         //   maintainers: maintainers.data,
         // });
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  }
+  //     } catch (error) {
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
   /**
    * update enterprise
@@ -330,35 +334,107 @@ class EnterpriseService {
     });
   }
 
+  // [moved > accounts-service]
   /**
    * Get all Enterprise Transactions
    * @param {string} type - owner, branch, manager
    * @param {number} skip
    * @param {number} pageSize
    */
-  getEnterpriseAccounts(role, skip, pageSize) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // const queryFilter = {
-        //   role: role,
-        //   group: "enterprise",
-        // };
+  // getEnterpriseAccounts(role, page, pageSize) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const response = await axios.get(
+  //         `${config.get("api.base")}${ACCOUNT_SERVICE.GET_ENTERPRISE_ACCOUNTS}`,
+  //         {
+  //           headers: {
+  //             "api-key": config.get("api.key"),
+  //           },
+  //           params: {
+  //             role, page, pageSize
+  //           }
+  //         }
+  //       );
+  //       resolve(response.data);
+  //     } catch (e) {
+  //       console.log(e);
+  //       return reject(e);
+  //     }
+  //   });
+  // }
 
-        // const enterpriseAccounts = await User.find(queryFilter)
-        //   .populate("enterprise", "status verified")
-        //   .skip(skip)
-        //   .limit(pageSize)
-        //   .sort({ createdAt: "desc" });
+  /**
+   * Get an enterprise record
+   * @param {ObjectId} enterprise
+   * */
+  get(enterprise){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const response = await axios.get(`
+        ${config.get("api.base")}${ACCOUNT_SERVICE.ENTERPRISE_FINDONE}`,
+        {
+          headers: {
+          "api-key": config.get("api.key")
+        },
+        params: { enterprise }
+      });
 
-        // const total = await User.countDocuments(queryFilter);
-
-        // resolve({ enterpriseAccounts, total });
-      } catch (e) {
-        return reject(e);
+      if(response && response.data){
+        resolve(response.data.data);
+      } else {
+        reject({code: 404, msg: "Enterprise not found"});
+      }
+      } catch(error){
+        reject(error);
       }
     });
   }
 
+  getAll(enterprises){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const response = await axios.get(`
+          ${config.get("api.base")}${ACCOUNT_SERVICE.ENTERPRISE_FIND}`,
+          {
+            headers: {
+            "api-key": config.get("api.key")
+          },
+          params: { enterprises }
+        });
+
+        if(response && response.data){
+          resolve(response.data.data);
+        } else {
+          reject({code: 404, msg: "Enterprise not found"});
+        }
+      } catch(error){
+        reject(error);
+      }
+    });
+  }
+
+  getCount(filter){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const response = await axios.get(`
+          ${config.get("api.base")}${ACCOUNT_SERVICE.ENTERPRISE_COUNT}`,
+          {
+            headers: {
+            "api-key": config.get("api.key")
+          },
+          params: { filter }
+        });
+
+        if(response && response.data){
+          resolve(response.data.data);
+        } else {
+          reject({code: 404, msg: "Enterprise not found"});
+        }
+      } catch(error){
+        reject(error);
+      }
+    });
+  }
 }
 
 module.exports = EnterpriseService;

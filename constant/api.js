@@ -25,6 +25,7 @@ const ACCOUNT_SERVICE = Object.freeze({
 
   ENTERPRISE_FINDONE: "/enterprise/findone",
   ENTERPRISE_FIND: "/enterprise/find",
+  ENTERPRISE_COUNT: "/enterprise/count"
 });
 
 const CARD_SERVICE = Object.freeze({

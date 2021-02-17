@@ -5,6 +5,7 @@ const {
   UploadFileFromBinary,
   UploadFileFromBase64,
   convertToMonthlyDataArray,
+  populateMultiple,
 } = require("../utils");
 const UserService = require("./user");
 const Entry = require("../models/entry");
@@ -117,15 +118,16 @@ class EnterpriseService {
   //   });
   // }
 
+  // [moved to accounts-service]
   /**
    * update enterprise
    * @param {Object} enterprise
    * @param {Object} updateObject
    * @param {string } userAuthToken Optional param, Should be provided for accounts service update
    */
-  updateEnterprise(enterprise, updateObject, userAuthToken) {
-    return new Promise(async (resolve, reject) => {
-      try {
+  // updateEnterprise(enterprise, updateObject, userAuthToken) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
         // const userInstance = new UserService();
 
         // const validEnterprise = await Enterprise.findOne(enterprise);
@@ -167,20 +169,20 @@ class EnterpriseService {
         // }
 
         // resolve(updatedEnterprise);
-      } catch (error) {
-        console.log("Error => ", error);
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
+  //     } catch (error) {
+  //       console.log("Error => ", error);
+  //       if (error.response) {
+  //         return reject({
+  //           code: error.response.status,
+  //           msg: error.response.data.msg,
+  //         });
+  //       }
 
-        error.service = "Update enterprise service error";
-        return reject(error);
-      }
-    });
-  }
+  //       error.service = "Update enterprise service error";
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
   /**
    * Get all Enterprise Entries
@@ -229,11 +231,14 @@ class EnterpriseService {
           enterprise: enterprise._id,
         };
 
-        const transactions = await Transaction.find(queryFilter)
-          .populate("user")
+        let transactions = await Transaction.find(queryFilter)
+          // .populate("user")
           .skip(skip)
           .limit(pageSize)
-          .sort({ createdAt: "desc" });
+          .sort({ createdAt: "desc" })
+          .lean();
+
+        transactions = await populateMultiple(transactions, "user");
 
         const total = await Transaction.countDocuments(queryFilter);
 

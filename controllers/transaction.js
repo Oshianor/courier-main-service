@@ -3,7 +3,7 @@ const Entry = require("../models/entry");
 const Company = require("../models/company");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { paginate } = require("../utils");
+const { paginate, populateMultiple, populateSingle } = require("../utils");
 const {
   validateTransaction,
   validateTransactionStatus,
@@ -35,7 +35,7 @@ exports.transaction = async (req, res, next) => {
 
     console.log("entry", entry);
 
-    
+
     const companySub = new CompanySubscription();
     await companySub.dispatchToStateRoom(entry);
 
@@ -72,7 +72,7 @@ exports.enterpriseTransaction = async (req, res, next) => {
       const riderSub = new RiderSubscription();
       await riderSub.sendRidersEntries(riderIDS, entry);
     }
-     
+
     // send socket to admin for update
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
@@ -110,7 +110,6 @@ exports.riderConfirmCashPayment = async (req, res, next) => {
       // send socket to admin for update
       const entrySub = new EntrySubscription();
       await entrySub.updateEntryAdmin(entry._id);
-    
 
     JsonResponse(res, code, msg);
     return;
@@ -128,11 +127,14 @@ exports.allByAdmin = async (req, res, next) => {
   try {
     const { page, pageSize, skip } = paginate(req);
 
-    const transactions = await Transaction.find({})
-      .populate("user")
+    let transactions = await Transaction.find({})
+      // .populate("user")
       .populate("rider")
       .skip(skip)
-      .limit(pageSize);
+      .limit(pageSize)
+      .lean();
+
+    transactions = await populateMultiple(transactions, "user","name phoneNumber");
 
     const total = await Transaction.find({}).countDocuments();
 
@@ -187,16 +189,19 @@ exports.allByUser = async (req, res, next) => {
  */
 exports.single = async (req, res, next) => {
   try {
-    const transaction = await Transaction.findOne({
+    let transaction = await Transaction.findOne({
       _id: req.params.id,
     })
-      .populate("user")
-      .populate("rider");
+    // .populate("user")
+    .populate("rider")
+    .lean();
 
     if (!transaction) {
       JsonResponse(res, 404, MSG_TYPES.NOT_FOUND, null, null);
       return;
     }
+
+    transaction = await populateSingle(transaction, "user","name phone");
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, transaction, null);
   } catch (error) {

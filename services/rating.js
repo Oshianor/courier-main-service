@@ -3,6 +3,7 @@ const Order = require("../models/order");
 const { MSG_TYPES } = require("../constant/types");
 const Rider = require("../models/rider");
 const Company = require("../models/company");
+const { populateMultiple } = require("../utils");
 
 class RatingService {
   /**
@@ -35,7 +36,7 @@ class RatingService {
 
         await order.updateOne({ userRated: true, userRating: createRating._id });
 
-        // calculate rider avarage rating 
+        // calculate rider avarage rating
         const riderRating = await this.calculateRiderAverageRating(order.rider);
         const companyRating = await this.calculateCompanyAverageRating(order.company);
 
@@ -62,11 +63,14 @@ class RatingService {
   getAllRatings(filter = {}, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       const total = await Rating.countDocuments(filter);
-      const rating = await Rating.find(filter)
+      let rating = await Rating.find(filter)
         .select("-_id user rating comment")
-        .populate("user", "-_id name email")
+        // .populate("user", "-_id name email")
         .skip(skip)
-        .limit(pageSize);
+        .limit(pageSize)
+        .lean();
+
+      rating = await populateMultiple(rating, "user", "-_id name email");
 
       if (rating.length < 1)
         return reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
@@ -78,7 +82,7 @@ class RatingService {
 
   /**
    * Get the average for a rider
-   * @param {ObjectId} rider 
+   * @param {ObjectId} rider
    */
   calculateRiderAverageRating(rider) {
     return new Promise(async (resolve, reject) => {
@@ -99,7 +103,7 @@ class RatingService {
 
     /**
    * Get the average for a company
-   * @param {ObjectId} company 
+   * @param {ObjectId} company
    */
   calculateCompanyAverageRating(company) {
     return new Promise(async (resolve, reject) => {

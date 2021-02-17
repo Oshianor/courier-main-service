@@ -12,8 +12,9 @@ const {
 // get enterprise
 // router.get("/", [UserAuth, EnterpriseAuth([E_ROLES.MAINTAINER, E_ROLES.BRANCH])], controller.enterprise.getEnterprise);
 
+// [moved to accounts service]
 // edit enterprise account
-router.patch("/", [UserAuth, EnterpriseAuth([E_ROLES.BRANCH])], controller.enterprise.updateEnterprise);
+// router.patch("/", [UserAuth, EnterpriseAuth([E_ROLES.BRANCH])], controller.enterprise.updateEnterprise);
 
 // [moved to accounts service]
 // get enterprise branches

@@ -4,6 +4,8 @@ const card = "http://localhost:6002/api/v1";
 const ACCOUNT_SERVICE = Object.freeze({
   // create/delete/get single user on the account service for commercial account
   USER: `${account}/user`,
+  GET_USER: `${account}/user/findOne`,
+  GET_USERS: `${account}/user/find`,
 
   // create enterprise user account
   E_USER: `${account}/user/enterpise`,

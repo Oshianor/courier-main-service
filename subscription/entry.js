@@ -4,6 +4,7 @@ const Company = require("../models/company");
 const RiderEntryRequest = require("../models/riderEntryRequest");
 const { SocketResponse } = require("../lib/apiResponse");
 const { SERVER_EVENTS, REDIS_CONFIG } = require("../constant/events");
+const { populateSingle, populateMultiple } = require("../utils");
 const socket = new io(REDIS_CONFIG, { key: "/sio" });
 
 
@@ -14,11 +15,11 @@ class EntrySubscription {
    */
   newEntry(entryId) {
     return new Promise(async (resolve, reject) => {
-      const entry = await Entry.findOne(entryId)
+      let entry = await Entry.findOne(entryId)
         .populate("transaction")
         .populate("orders")
         .populate("vehicle")
-        .populate("user", "name email phoneNumber countryCode")
+        // .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
           "name email phoneNumber type logo address countryCode"
@@ -26,7 +27,10 @@ class EntrySubscription {
         .populate(
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
-        );
+        )
+        .lean();
+
+      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode");
 
       socket
         .to("admin")
@@ -34,7 +38,7 @@ class EntrySubscription {
           SERVER_EVENTS.NEW_ENTRY_ADMIN,
           SocketResponse(false, "ok", entry)
         );
-      
+
       resolve(SocketResponse(false, "ok", entry));
     });
   }
@@ -45,13 +49,13 @@ class EntrySubscription {
    */
   getPoolAdmin(socket) {
     return new Promise(async (resolve, reject) => {
-      const entries = await Entry.find()
+      let entries = await Entry.find()
         .select("-metaData")
         .limit(10)
         .populate("transaction")
         .populate("orders")
         .populate("vehicle")
-        .populate("user", "name email phoneNumber countryCode")
+        // .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
           "name email phoneNumber type logo address countryCode"
@@ -60,7 +64,10 @@ class EntrySubscription {
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
         )
-        .sort({ updatedAt: -1 });
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode");
       const total = await Entry.find().countDocuments();
 
       const meta = {
@@ -84,14 +91,14 @@ class EntrySubscription {
       const pageSize = data.pageSize ?? 10;
       const skip = (page - 1) * pageSize
 
-      const entries = await Entry.find()
+      let entries = await Entry.find()
         .select("-metaData")
         .limit(pageSize)
         .skip(skip)
         .populate("transaction")
         .populate("orders")
         .populate("vehicle")
-        .populate("user", "name email phoneNumber countryCode")
+        // .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
           "name email phoneNumber type logo address countryCode"
@@ -100,10 +107,13 @@ class EntrySubscription {
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
         )
-        .sort({ updatedAt: -1 });
+        .sort({ updatedAt: -1 })
+        .lean();
+
+      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode");
 
       const total = await Entry.find().countDocuments();
-      
+
       const meta = {
         total,
         pagination: {
@@ -176,13 +186,16 @@ class EntrySubscription {
         return;
       }
 
-      const entries = await Entry.findOne({
+      let entries = await Entry.findOne({
         status: "companyAccepted",
         _id: riderER.entry,
       })
         .populate("orders")
-        .populate("user", "name email phoneNumber countryCode")
-        .select("-metaData");
+        // .populate("user", "name email phoneNumber countryCode")
+        .select("-metaData")
+        .lean();
+
+      entries = await populateSingle(entries, "user", "name email phoneNumber countryCode");
 
       resolve(SocketResponse(false, "ok", entries));
     });
@@ -191,10 +204,10 @@ class EntrySubscription {
 
   updateEntryAdmin(entryId) {
     return new Promise(async (resolve, reject) => {
-      const entry = await Entry.findById(entryId)
+      let entry = await Entry.findById(entryId)
         .populate("transaction")
         .populate("orders")
-        .populate("user", "name email phoneNumber countryCode")
+        // .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
           "name email phoneNumber type logo address countryCode"
@@ -202,7 +215,10 @@ class EntrySubscription {
         .populate(
           "rider",
           "name email phoneNumber countryCode onlineStatus latitude longitude"
-        );
+        )
+        .lean();
+
+      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode");
 
       socket.to("admin").emit( SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN, SocketResponse(false, "ok", entry));
 

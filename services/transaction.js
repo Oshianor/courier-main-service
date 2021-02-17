@@ -14,7 +14,7 @@ const Credit = require("../models/credit");
 const CreditHistory = require("../models/creditHistory");
 const EnterpriseService = require("./enterprise");
 const cardInstance = new CardService();
-const { populate } = require("../utils");
+const { populateMultiple } = require("../utils");
 
 
 class TransactionService {
@@ -138,7 +138,7 @@ class TransactionService {
         })
           .populate("orders")
           .populate("user", "name email phoneNumber countryCode")
-          .select("-metaData");
+          .select("-metaData")
 
         if (!entry) {
           reject({
@@ -441,7 +441,7 @@ class TransactionService {
           .sort({ createdAt: "desc" })
           .lean();
 
-        transactions = await populate(transactions, 'enterprise');
+        transactions = await populateMultiple(transactions, 'enterprise');
 
         const total = await Transaction.countDocuments(filter);
 

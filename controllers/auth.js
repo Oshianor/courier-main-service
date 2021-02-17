@@ -364,71 +364,74 @@ exports.setPassword = async (req, res, next) => {
   }
 };
 
+// [moved > accounts-service]
 /**
  * Enterprise login
  * @param {*} req
  * @param {*} res
  */
-exports.enterpriseLogin = async (req, res, next) => {
-  try {
-    const { error } = validateUserLogin(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
+// exports.enterpriseLogin = async (req, res, next) => {
+//   try {
+//     const { error } = validateUserLogin(req.body);
+//     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const authInstance = new AuthService();
-    const {
-      token,
-      localUser,
-    } = await authInstance.enterpriseLogin(req.body);
+//     const authInstance = new AuthService();
+//     const {
+//       token,
+//       localUser,
+//     } = await authInstance.enterpriseLogin(req.body);
 
-    // localUser.enterprise = enterpriseUser;
-    res.header("x-auth-token", token);
-    return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, localUser);
-  } catch (error) {
-    next(error)
-    return
-  }
-};
+//     // localUser.enterprise = enterpriseUser;
+//     res.header("x-auth-token", token);
+//     return JsonResponse(res, 200, MSG_TYPES.LOGGED_IN, localUser);
+//   } catch (error) {
+//     next(error)
+//     return
+//   }
+// };
 
+
+// [moved > accounts-service]
 /**
- * Update user status
+ * Update enterprise status
  * @param {*} req
  * @param {*} res
  */
-exports.updateEnterpriseAccountStatus = async (req, res, next) => {
-  try {
-    const { error } = validateUserStatusUpdate(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
+// exports.updateEnterpriseAccountStatus = async (req, res, next) => {
+//   try {
+//     const { error } = validateUserStatusUpdate(req.body);
+//     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const authInstance = new AuthService();
-    await authInstance.updateEnterpriseAccountStatus(req.body, req.user);
+//     const authInstance = new AuthService();
+//     await authInstance.updateEnterpriseAccountStatus(req.body, req.user);
 
-    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
-  } catch (error) {
-    next(error);
-    return;
-  }
-};
+//     return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+//   } catch (error) {
+//     next(error);
+//     return;
+//   }
+// };
 
-
+// [moved > accounts-service]
 /**
  * Update user status by admin
  * @param {*} req
  * @param {*} res
  */
-exports.updateUserStatus = async (req, res, next) => {
-  try {
-    const { error } = validateUserStatusUpdate(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
+// exports.updateUserStatus = async (req, res, next) => {
+//   try {
+//     const { error } = validateUserStatusUpdate(req.body);
+//     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const authInstance = new AuthService();
-    await authInstance.updateUserStatus(req.body);
+//     const authInstance = new AuthService();
+//     await authInstance.updateUserStatus(req.body);
 
-    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
-  } catch (error) {
-    next(error)
-    return
-  }
-};
+//     return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+//   } catch (error) {
+//     next(error)
+//     return
+//   }
+// };
 
 
 /**

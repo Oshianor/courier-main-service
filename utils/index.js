@@ -10,7 +10,6 @@ const RandExp = require("randexp");
 const redis = require("redis");
 const axios = require("axios");
 
-
 const GenerateToken = (num) => {
   var text = "";
   const possible =
@@ -202,6 +201,35 @@ const convertToDailyDataArray = (dataArray, dataField) => {
   return dailyData.sort().map((data) => data[dataField]);
 }
 
+
+/**
+ *
+ * @param {*} dataArray
+ * @param {*} model - enum (['enterprise'])
+ */
+const populate = async (dataArray, model) => {
+  let modelIds = [...new Set(dataArray.map(data => data[model]).filter(Boolean))]
+
+  modelIds = modelIds.map((id) => id.toString());
+
+  console.log(modelIds)
+
+  let modelDataArray = [];
+  if(model === 'enterprise'){
+    const enterpriseInstance = new (require("../services/enterprise"))();
+    modelDataArray = await enterpriseInstance.getAll(modelIds);
+  }
+
+  console.log('Enterprises =', modelDataArray);
+  dataArray = dataArray.map((data) => ({
+    ...data,
+    [model]: modelDataArray.find((modelData) => modelData._id == data[model]) || null
+  }));
+
+  console.log('Data array => ', dataArray);
+  return dataArray;
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -215,5 +243,6 @@ module.exports = {
   convertToMonthlyDataArray,
   redisClient,
   sendOTPByTermii,
-  convertToDailyDataArray
+  convertToDailyDataArray,
+  populate
 };

@@ -59,13 +59,15 @@ router.patch("/setting", Auth, hasRole([ROLES.ADMIN]), controller.setting.update
 //user routes
 router.get("/user/all", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.allUsers);
 router.get("/user/:userId", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleUser);
+
+// [moved to accounts-service]
 // update user status by admin
-router.patch(
-  "/update-status",
-  Auth,
-  hasRole([ROLES.ADMIN]),
-  controller.auth.updateUserStatus
-);
+// router.patch(
+//   "/update-status",
+//   Auth,
+//   hasRole([ROLES.ADMIN]),
+//   controller.auth.updateUserStatus
+// );
 
 // Admin Updates
 router.put("/update", Auth, controller.admin.updateMe);
@@ -96,8 +98,9 @@ router.get("/company/:companyId/statistics", [Auth, hasRole([ROLES.ADMIN])], con
 router.get("/company/:companyId/transactions", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleCompanyTransactions);
 router.get("/company/approval/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getCompanyApprovalStatistics);
 
+// [moved to accounts-service]
 // Enterprise Updates
-router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);
+// router.patch("/:branchId/verify", [Auth, hasRole([ROLES.ADMIN])], controller.admin.verifyBranch);
 
 // Rider
 router.get("/rider/:riderId/statistics", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getSingleRiderStatistics);
@@ -152,8 +155,7 @@ router.get(
   controller.wallet.singleWalletHistory
 );
 
-
 // Enterprise accounts management
-router.get("/enterprise/accounts", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseAccounts);
+// router.get("/enterprise/accounts", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseAccounts);
 
 module.exports = router;

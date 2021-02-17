@@ -252,49 +252,46 @@ exports.enable = async (req, res, next) => {
   }
 };
 
+/* [moved > accounts-service] */
 /**
  * Verify an enterprise branch
  * @param {*} req
  * @param {*} res
  */
-exports.verifyBranch = async (req, res, next) => {
-  try {
-    await adminInstance.verifyBranch(req.params.branchId);
-    JsonResponse(res, 200, MSG_TYPES.UPDATED);
-    return
-  } catch (error) {
-    console.log(error);
-    next(error)
-    return
-  }
-};
+// exports.verifyBranch = async (req, res, next) => {
+//   try {
+//     await adminInstance.verifyBranch(req.params.branchId);
+//     JsonResponse(res, 200, MSG_TYPES.UPDATED);
+//     return
+//   } catch (error) {
+//     console.log(error);
+//     next(error)
+//     return
+//   }
+// };
 
 
+/* [moved > accounts-service] */
 /**
  * Get Enterprise Accounts
  * @param {*} req
  * @param {*} res
  * @param {*} next
  */
-exports.getEnterpriseAccounts = async (req, res, next) => {
-  try {
-    const { error } = validateGetEnterpriseAccounts({role: req.query.role});
-    if (error) return JsonResponse(res, 400, error.details[0].message);
+// exports.getEnterpriseAccounts = async (req, res, next) => {
+//   try {
+//     const { error } = validateGetEnterpriseAccounts({role: req.query.role});
+//     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const { page, pageSize, skip } = paginate(req);
+//     const { page, pageSize } = paginate(req);
 
-    const { enterpriseAccounts, total } = await enterpriseInstance.getEnterpriseAccounts(req.query.role, skip, pageSize);
+//     const { data, meta } = await enterpriseInstance.getEnterpriseAccounts(req.query.role, page, pageSize);
 
-    const meta = {
-      total,
-      pagination: { pageSize, page },
-    };
-
-    return JsonResponse(res, 200, MSG_TYPES.FETCHED, enterpriseAccounts, meta);
-  } catch (error) {
-    next(error);
-  }
-}
+//     return JsonResponse(res, 200, MSG_TYPES.FETCHED, data, meta);
+//   } catch (error) {
+//     next(error);
+//   }
+// }
 
 
 /**

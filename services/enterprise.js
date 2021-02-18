@@ -195,7 +195,6 @@ class EnterpriseService {
       try {
         const queryFilter = {
           enterprise: enterprise._id,
-          user: { $in: [...enterprise.users] },
         };
 
         const entries = await Entry.find(queryFilter)
@@ -376,7 +375,7 @@ class EnterpriseService {
     return new Promise(async(resolve, reject) => {
       try{
         const response = await axios.get(`
-        ${config.get("api.base")}${ACCOUNT_SERVICE.ENTERPRISE_FINDONE}`,
+        ${ACCOUNT_SERVICE.ENTERPRISE_FINDONE}`,
         {
           headers: {
           "api-key": config.get("api.key")
@@ -399,7 +398,7 @@ class EnterpriseService {
     return new Promise(async(resolve, reject) => {
       try{
         const response = await axios.get(`
-          ${config.get("api.base")}${ACCOUNT_SERVICE.ENTERPRISE_FIND}`,
+          ${ACCOUNT_SERVICE.ENTERPRISE_FIND}`,
           {
             headers: {
             "api-key": config.get("api.key")
@@ -422,7 +421,7 @@ class EnterpriseService {
     return new Promise(async(resolve, reject) => {
       try{
         const response = await axios.get(`
-          ${config.get("api.base")}${ACCOUNT_SERVICE.ENTERPRISE_COUNT}`,
+          ${ACCOUNT_SERVICE.ENTERPRISE_COUNT}`,
           {
             headers: {
             "api-key": config.get("api.key")

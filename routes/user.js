@@ -5,7 +5,7 @@ const { UserAuth, isExaltService } = require("../middlewares/auth");
 
 
 // [moved to accounts service]
-// router.patch("/fcmtoken", UserAuth, controller.user.FCMToken);
+//router.patch("/fcmtoken", UserAuth, controller.user.FCMToken);
 
 router.get("/order/pending", UserAuth, controller.user.pending);
 

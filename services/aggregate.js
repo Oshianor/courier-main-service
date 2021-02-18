@@ -1,8 +1,4 @@
-const EnterpriseService = require("../services/enterprise");
-const UserService = require("../services/user");
 
-const enterpriseInstance = new EnterpriseService();
-const userInstance = new UserService();
 
 /**
  *
@@ -37,7 +33,17 @@ const populateMultiple = async (dataArray, model, option) => {
   return dataArray;
 }
 
+
+
+/**
+ *
+ * @param {*} data
+ * @param {*} model
+ * @param {*} option
+ */
 const populateSingle = async (data, model, option) => {
+  const enterpriseInstance = new (require("../services/enterprise"))();
+  const userInstance = new (require("../services/user"))();
 
   let modelData = null;
 

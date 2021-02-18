@@ -5,8 +5,8 @@ const {
   UploadFileFromBinary,
   UploadFileFromBase64,
   convertToMonthlyDataArray,
-  populateMultiple,
 } = require("../utils");
+const { populateMultiple } = require("../services/aggregate");
 const UserService = require("./user");
 const Entry = require("../models/entry");
 const Transaction = require("../models/transaction");

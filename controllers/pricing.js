@@ -1,7 +1,10 @@
 const config = require("config");
 const Admin = require("../models/admin");
 const Pricing = require("../models/pricing");
-const { validatePricing } = require("../request/pricing");
+const {
+  validatePricing,
+  validateUpdatePricing,
+} = require("../request/pricing");
 const { MSG_TYPES } = require("../constant/types");
 const { JsonResponse } = require("../lib/apiResponse");
 

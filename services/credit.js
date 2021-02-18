@@ -109,11 +109,11 @@ class CreditService {
   getAllCredit(skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       let credit = await CreditHistory.find({ type: "loan" })
+      .lean()
       .skip(skip)
       .limit(pageSize)
       // .populate("enterprise", "name email countryCode phoneNumber")
       .sort({createdAt: "desc"})
-      .lean();
 
       credit = await populateMultiple(credit, "enterprise");
 

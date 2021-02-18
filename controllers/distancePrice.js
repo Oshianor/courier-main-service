@@ -226,11 +226,6 @@ exports.updateAdmin = async (req, res, next) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message, null, null);
 
-    // check if account exist
-    const admin = await Admin.findOne({ _id: req.user.id, status: "active" });
-    if (!admin)
-      return JsonResponse(res, 400, MSG_TYPES.ACCESS_DENIED, null, null);
-
     // create new account record
     const dp = await DistancePrice.findOne({
       _id: req.params.dp,

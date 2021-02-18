@@ -3,8 +3,7 @@ const CreditHistory = require("../models/creditHistory");
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");
-const { populateMultiple } = require("../utils");
-
+const { populateMultiple } = require("../services/aggregate");
 
 class CreditService {
   /**

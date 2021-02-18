@@ -4,9 +4,8 @@ const Company = require("../models/company");
 const RiderEntryRequest = require("../models/riderEntryRequest");
 const { SocketResponse } = require("../lib/apiResponse");
 const { SERVER_EVENTS, REDIS_CONFIG } = require("../constant/events");
-const { populateSingle, populateMultiple } = require("../utils");
+const { populateSingle, populateMultiple } = require("../services/aggregate");
 const socket = new io(REDIS_CONFIG, { key: "/sio" });
-
 
 class EntrySubscription {
   /**

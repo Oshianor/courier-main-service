@@ -5,24 +5,25 @@ const { validateRiderFCMToken } = require("../request/rider");
 const { paginate } = require("../utils");
 
 
+// [moved to accounts service]
 /**
  * Update user FCM Token
  * @param {*} req
  * @param {*} res
  */
-exports.FCMToken = async (req, res, next) => {
-  try {
-    const { error } = validateRiderFCMToken(req.body);
-    if (error) return JsonResponse(res, 400, error.details[0].message);
+// exports.FCMToken = async (req, res, next) => {
+//   try {
+//     const { error } = validateRiderFCMToken(req.body);
+//     if (error) return JsonResponse(res, 400, error.details[0].message);
 
-    const userInstance = new UserService();
-    await userInstance.updateFCMToken(req.body, req.user);
+//     const userInstance = new UserService();
+//     await userInstance.updateFCMToken(req.body, req.user);
 
-    JsonResponse(res, 200, MSG_TYPES.FCMToken);
-  } catch (error) {
-    next(error);
-  }
-};
+//     JsonResponse(res, 200, MSG_TYPES.FCMToken);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 /**
  * Get user pending/request orders

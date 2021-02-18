@@ -3,7 +3,7 @@ const Order = require("../models/order");
 const { MSG_TYPES } = require("../constant/types");
 const Rider = require("../models/rider");
 const Company = require("../models/company");
-const { populateMultiple } = require("../utils");
+const { populateMultiple } = require("../services/aggregate");
 
 class RatingService {
   /**

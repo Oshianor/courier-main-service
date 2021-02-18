@@ -45,14 +45,17 @@ class WalletService {
    */
   getAllWallet(skip, pageSize) {
     return new Promise(async (resolve, reject) => {
-      const wallet = await Wallet.find()
-        .populate(
-          "enterprise",
-          "name email address industry countryCode phoneNumber type"
-        )
+      let wallet = await Wallet.find()
+        // .populate(
+        //   "enterprise",
+        //   "name email address industry countryCode phoneNumber type"
+        // )
         .skip(skip)
         .limit(pageSize)
         .sort({ createdAt: -1 });
+
+        wallet = populate(wallet, "enterprise");
+
 
       const total = await Wallet.find().countDocuments();
 

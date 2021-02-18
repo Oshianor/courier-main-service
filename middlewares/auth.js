@@ -25,28 +25,32 @@ const E_ROLES = {
  */
 const hasRole = (roles = []) => {
   return async (req, res, next) => {
+    try{
+      const adminInstance = new AdminService();
+      const admin = await adminInstance.get({
+        _id: req.user.id,
+        status: "active",
+        verified: true,
+      });
 
-    const adminInstance = new AdminService();
-    const admin = await adminInstance.get({
-      _id: req.user.id,
-      status: "active",
-      verified: true,
-    });
+      // let admin = await Admin.findOne();
+      if (!admin) return JsonResponse(res, 401, "Unauthenticated");
 
-    // let admin = await Admin.findOne();
-    if (!admin) return JsonResponse(res, 401, "Unauthenticated");
-
-    if (admin.role === ROLES.SUPER_ADMIN) {
-      next();
-    } else {
-      if (roles.length < 1) {
+      if (admin.role === ROLES.SUPER_ADMIN) {
+        next();
+      } else {
+        if (roles.length < 1) {
+          return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+        }
+        if (roles.includes(admin.role)) {
+          return next();
+        }
         return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       }
-      if (roles.includes(admin.role)) {
-        return next();
-      }
-      return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+    } catch(error){
+      next(error);
     }
+
   };
 };
 

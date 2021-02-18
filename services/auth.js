@@ -221,119 +221,122 @@ class AuthSerivice {
     });
   }
 
+  // [moved > accounts-service]
   /**
    * Enterprise login
    * @param {Object} body
    */
-  enterpriseLogin(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const response = await axios.post(
-          `${ACCOUNT_SERVICE.LOGIN}`,
-          body
-        );
-        const token = response.headers["x-auth-token"];
-        const exaltUser = response.data.data;
-        const localUser = await User.findById(exaltUser._id).populate(
-          "enterprise",
-          "name type phoneNumber email address logo motto industry"
-        );
+  // enterpriseLogin(body) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const response = await axios.post(
+  //         `${config.get("api.base")}${ACCOUNT_SERVICE.LOGIN}`,
+  //         body
+  //       );
+  //       const token = response.headers["x-auth-token"];
+  //       const exaltUser = response.data.data;
+  //       const localUser = await User.findById(exaltUser._id).populate(
+  //         "enterprise",
+  //         "name type phoneNumber email address logo motto industry"
+  //       );
 
-        resolve({ token, exaltUser, localUser });
-      } catch (error) {
-        if (error.response) {
-          return reject({
-            code: error.response.status,
-            msg: error.response.data.msg,
-          });
-        }
-        return reject(error);
-      }
-    });
-  }
+  //       resolve({ token, exaltUser, localUser });
+  //     } catch (error) {
+  //       if (error.response) {
+  //         return reject({
+  //           code: error.response.status,
+  //           msg: error.response.data.msg,
+  //         });
+  //       }
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
+  // [moved > accounts-service]
   /**
    * Disable Branch/Maintainer
    * @param {Object} body req body
    * @param {Object} user auth user data
    * @param {Object} enterprise
    */
-  updateEnterpriseAccountStatus(body, user, enterprise) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const account = await User.findOne({
-          _id: body.account,
-        });
+  // updateEnterpriseAccountStatus(body, user, enterprise) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const account = await User.findOne({
+  //         _id: body.account,
+  //       });
 
-        if (!account) {
-          return reject({
-            code: 400,
-            msg: "You do not have permission to disable this account",
-          });
-        }
+  //       if (!account) {
+  //         return reject({
+  //           code: 400,
+  //           msg: "You do not have permission to disable this account",
+  //         });
+  //       }
 
-        if (user.role !== "owner" && user.role !== "branch") {
-          return reject({
-            code: 400,
-            msg: "You do not have permission to disable this account",
-          });
-        }
+  //       if (user.role !== "owner" && user.role !== "branch") {
+  //         return reject({
+  //           code: 400,
+  //           msg: "You do not have permission to disable this account",
+  //         });
+  //       }
 
-        if (account.role === "maintainer") {
-          if (String(account.enterprise) !== String(user.enterprise)) {
-            return reject({
-              code: 400,
-              msg: "You do not have permission to disable this account",
-            });
-          }
+  //       if (account.role === "maintainer") {
+  //         if (String(account.enterprise) !== String(user.enterprise)) {
+  //           return reject({
+  //             code: 400,
+  //             msg: "You do not have permission to disable this account",
+  //           });
+  //         }
 
-          const userInstance = new UserService();
-          const updatedUser = await userInstance.updateBranchAndMaintainers(
-            body
-          );
+  //         const userInstance = new UserService();
+  //         const updatedUser = await userInstance.updateBranchAndMaintainers(
+  //           body
+  //         );
 
-          resolve(updatedUser.data);
-        }
+  //         resolve(updatedUser.data);
+  //       }
 
-        // to disable branch, check if user has role of owner
-        if (user.role === "owner") {
-          if (account.role === "branch") {
-            const enterprise = await Enterprise.findOne({
-              _id: account.enterprise,
-            });
-            body.maintainers = enterprise.maintainers;
-            const userInstance = new UserService();
-            const updatedUser = await userInstance.updateBranchAndMaintainers(
-              body
-            );
+  //       // to disable branch, check if user has role of owner
+  //       if (user.role === "owner") {
+  //         if (account.role === "branch") {
+  //           const enterprise = await Enterprise.findOne({
+  //             _id: account.enterprise,
+  //           });
+  //           body.maintainers = enterprise.maintainers;
+  //           const userInstance = new UserService();
+  //           const updatedUser = await userInstance.updateBranchAndMaintainers(
+  //             body
+  //           );
 
-            resolve(updatedUser.data);
-          }
-        }
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  }
+  //           resolve(updatedUser.data);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
+  // [moved to accounts-service]
   /**
    * Disable user account
    * @param {Object} body req body
    */
-  updateUserStatus(body) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const userInstance = new UserService();
-        const updatedUser = await userInstance.updateBranchAndMaintainers(
-          body
-        );
+  // updateUserStatus(body) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+  //       const userInstance = new UserService();
+  //       const updatedUser = await userInstance.updateBranchAndMaintainers(
+  //         body
+  //       );
 
-        resolve(updatedUser.data);
-      } catch (error) {
-        return reject(error);
-      }
-    });
-  }
+  //       resolve(updatedUser.data);
+  //     } catch (error) {
+  //       return reject(error);
+  //     }
+  //   });
+  // }
 
   /**
    * Validate forgot password email and send OTP (FORGOT PASSWORD MODULE)

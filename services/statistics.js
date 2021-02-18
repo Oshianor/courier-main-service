@@ -5,13 +5,13 @@ const { convertToMonthlyDataArray, isObject } = require("../utils");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
-// const Enterprise = require("../models/enterprise");
 const CreditHistory = require("../models/creditHistory");
 const Company = require("../models/company");
-// const User = require("../models/users");
 const Vehicle = require("../models/vehicle");
+const EnterpriseService = require("./enterprise");
 const { ObjectId } = mongoose.Types;
 
+const enterpriseInstance = new EnterpriseService();
 
 class StatisticsService {
   constructor(){
@@ -73,11 +73,18 @@ class StatisticsService {
 
         if(filter.enterprise && ObjectId.isValid(filter.enterprise)){
 
-          // const enterpriseRecord = await Enterprise.findOne({_id: filter.enterprise});
-          // if(enterpriseRecord){
-          //   statisticsData.totalBranches = enterpriseRecord.branchUserIDS.length;
-          //   statisticsData.totalManagers = enterpriseRecord.maintainers.length;
-          // }
+          const enterpriseRecord = await enterpriseInstance.get(filter.enterprise.toString());
+
+          if(enterpriseRecord){
+            statisticsData.totalBranches = await enterpriseInstance.getCount({
+              role: "branch",
+              parentEnterprise: filter.enterprise.toString()
+            })
+            statisticsData.totalManagers = await enterpriseInstance.getCount({
+              role: "maintainer",
+              parentEnterprise: filter.enterprise.toString()
+            })
+          }
         }
 
         resolve(statisticsData);
@@ -105,12 +112,9 @@ class StatisticsService {
      try{
       const generalStatistics = await this.getGeneralStatistics();
 
-      // const totalAdmins = await Enterprise.countDocuments({type: "owner"});
-      // const totalMaintainers = await Enterprise.countDocuments({type: "maintainer"});
-      // const totalBranches = await Enterprise.countDocuments({type: "branch"});
-      const totalAdmins = 1;
-      const totalMaintainers = 1;
-      const totalBranches = 1;
+      const totalAdmins = await enterpriseInstance.getCount({role: "owner"});
+      const totalMaintainers = await enterpriseInstance.getCount({role: "maintainer"});
+      const totalBranches = await enterpriseInstance.getCount({role: "branch"});
 
       let totalCreditsDisbursed = await CreditHistory.aggregate([
         { $match: {type: "loan", status: "approved"} },

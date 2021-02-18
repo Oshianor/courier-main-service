@@ -54,7 +54,7 @@ class AdminService {
       const admin = await Admin.findOne(filter).select(select);
 
       if (!admin) {
-        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return reject({ code: 404, msg: "Admin not found" });
       }
       resolve(admin);
     });
@@ -131,13 +131,14 @@ class AdminService {
     });
   }
 
+  // [moved to accounts-service]
   /**
  * Verify branch
  * @param {Object} body
  */
-  verifyBranch(branchId) {
-    return new Promise(async (resolve, reject) => {
-      try {
+  // verifyBranch(branchId) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
         // const branch = await Enterprise.findOne({ _id: branchId, type: "Branch" });
         // if (!branch) {
         //   reject({ code: 400, msg: "Branch does not exist" });
@@ -154,11 +155,11 @@ class AdminService {
         //   }
         // );
         // resolve(updatedEnterprise);
-      } catch (error) {
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-      }
-    });
-  }
+  //     } catch (error) {
+  //       reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+  //     }
+  //   });
+  // }
 }
 
 

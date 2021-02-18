@@ -6,6 +6,7 @@ const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");
+const { populateMultiple } = require("../services/aggregate")
 
 
 class WalletService {
@@ -52,10 +53,10 @@ class WalletService {
         // )
         .skip(skip)
         .limit(pageSize)
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
 
-        wallet = populate(wallet, "enterprise");
-
+        wallet = await populateMultiple(wallet, "enterprise");
 
       const total = await Wallet.find().countDocuments();
 

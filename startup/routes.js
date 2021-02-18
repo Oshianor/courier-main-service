@@ -51,7 +51,7 @@ app.use("/api/v1/card", card);
 app.use("/api/v1/wallet", wallet);
 app.use("/api/v1/credit", credit);
 app.use("/api/v1/enterprise", enterprise);
-app.use(endpointNotFound);
 app.use(error);
+app.use(endpointNotFound);
 
 module.exports = app;

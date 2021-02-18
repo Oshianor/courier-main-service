@@ -9,7 +9,8 @@ const Company = require("../models/company");
 const Transaction = require("../models/transaction");
 const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray, populateMultiple } = require("../utils");
+const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray } = require("../utils");
+const { populateMultiple } = require("../services/aggregate");
 const { JsonResponse } = require("../lib/apiResponse");
 const mongoose = require("mongoose");
 

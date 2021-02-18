@@ -3,7 +3,9 @@ const Entry = require("../models/entry");
 const Company = require("../models/company");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { paginate, populateMultiple, populateSingle } = require("../utils");
+const { paginate } = require("../utils");
+const {populateMultiple, populateSingle} = require("../services/aggregate");
+
 const {
   validateTransaction,
   validateTransactionStatus,

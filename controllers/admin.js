@@ -79,7 +79,7 @@ exports.me = async (req, res, next) => {
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, admin, null);
   } catch (err) {
-    next(error);
+    next(err);
   }
 };
 

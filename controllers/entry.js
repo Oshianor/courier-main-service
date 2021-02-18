@@ -252,7 +252,7 @@ exports.companyAcceptEntry = async (req, res, next) => {
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     // dispatch accepted entry to companies
     const companySub = new CompanySubscription();
@@ -315,7 +315,7 @@ exports.riderAcceptEntry = async (req, res, next) => {
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     // dispatch action to riders for taken entry
     const riderSub = new RiderSubscription();
@@ -368,10 +368,18 @@ exports.riderStartPickup = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(req.body.entry);
 
+    const userInstance = new UserService();
+    const user = await userInstance.get(
+      { _id: entry.user },
+      {
+        FCMToken: 1,
+      }
+    );
+
     // send nofication to the user device
     const title = "Driver is on his way to the pickup location";
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
     return;
@@ -391,20 +399,20 @@ exports.riderArriveAtPickup = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const { entry } = await entryInstance.riderArriveAtPickup(
+    const { entry, user } = await entryInstance.riderArriveAtPickup(
       req.body,
       req.user
     );
 
     // send fcm notification
     // send nofication to the user device
-    const title = "Driver has arrived at the pickup location";
-    const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+     const title = "Driver has arrived at the pickup location";
+     const notifyInstance = new NotifyService();
+     await notifyInstance.textNotify(title, "", user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(req.body.entry);
+    await entrySub.updateEntryAdmin(entry);
 
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP);
     return;
@@ -424,7 +432,7 @@ exports.riderComfirmPickupOTPCode = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const { entry } = await entryInstance.riderComfirmPickupOTPCode(
+    const { entry, user } = await entryInstance.riderComfirmPickupOTPCode(
       req.body,
       req.user
     );
@@ -433,11 +441,11 @@ exports.riderComfirmPickupOTPCode = async (req, res, next) => {
     // send nofication to the user device
     const title = "Driver has confirmed Pickup.";
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
     return;

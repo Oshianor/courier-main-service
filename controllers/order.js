@@ -43,13 +43,20 @@ exports.riderInitiateOrderDelivery = async (req, res, next) => {
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
+    const userInstance = new UserService();
+    const user = await userInstance.get(
+      { _id: entry.user },
+      {
+        FCMToken: 1,
+      }
+    );
     // send nofication to the user device
     const title = `Delivery for order #${order.orderId}`;
-    const body = `Driver is on his way to ${order.deliveryAddress}.`;
+    const body = `Driver is on his way to this location: ${order.deliveryAddress}.`;
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_DELIVERY);
     return;
@@ -70,20 +77,20 @@ exports.riderArriveAtDelivery = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
-    const { order, entry } = await orderInstance.arriveAtLocation(
+    const { order, entry, user } = await orderInstance.arriveAtLocation(
       req.body,
       req.user
     );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     // send nofication to the user device
     const title = `Driver has arrived`;
     const body = `Driver has arrived at the delivery location ${order.deliveryAddress}.`;
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_DELIVERY);
     return;
@@ -104,7 +111,7 @@ exports.confirmDelivery = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
-    const { entry, msg } = await orderInstance.confirmDelivery(
+    const { entry, msg, user } = await orderInstance.confirmDelivery(
       req.body,
       req.user
     );
@@ -114,11 +121,11 @@ exports.confirmDelivery = async (req, res, next) => {
     const title = msg;
     const body = "";
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     JsonResponse(res, 200, msg);
     return;

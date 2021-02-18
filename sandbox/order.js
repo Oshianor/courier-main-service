@@ -10,9 +10,6 @@ const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
 const { OTPCode } = require("../templates");
 const TripLog = require("../models/tripLog");
 const moment = require("moment");
-const EntryService = require("./entry");
-const entryInstance = new EntryService();
-
 
 class OrderService {
   /**
@@ -94,23 +91,27 @@ class OrderService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        // start our transaction
-        session.startTransaction();
-
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the order has not been taken by another rider
         const order = await Order.findOne({
@@ -118,7 +119,7 @@ class OrderService {
           status: "pickedup",
           company: company._id,
           rider: rider._id,
-        });
+        }).populate("user");
 
         if (!order) {
           reject({ code: 404, msg: "This order doesn't exist." });
@@ -131,15 +132,26 @@ class OrderService {
           $or: [{ status: "pickedup" }, { status: "delivered" }],
           company: company._id,
           rider: rider._id,
-        }).lean();
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await entryInstance.instantEntries(rider._id);
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
 
         // check if the instant entries are more than one
         if (instantEntries >= 1) {
@@ -166,18 +178,17 @@ class OrderService {
         if (onTrip) {
           reject({
             code: 400,
-            msg: `You have to conclude this order #${onTrip.orderId} delivery before you can begin another`,
+            msg: `You have to conclude this # ${onTrip.orderId} delivery before you can begin another`,
           });
           return;
         }
 
+        // start our transaction
+        session.startTransaction();
+
         // update the order and entry status
         await order.updateOne({ status: "enrouteToDelivery" }, { session });
-        await Entry.updateOne(
-          { _id: order.entry },
-          { status: "enrouteToDelivery" },
-          { session }
-        );
+        await entry.updateOne({ status: "enrouteToDelivery" }, { session });
 
         // log the user last location
         const logs = {
@@ -198,7 +209,6 @@ class OrderService {
 
         resolve({ order, entry, rider, company });
       } catch (error) {
-        console.log("error", error);
         await session.abortTransaction();
         reject(error);
         return;
@@ -216,23 +226,27 @@ class OrderService {
       const session = await mongoose.startSession();
 
       try {
-        // start our transaction
-        session.startTransaction();
-
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the order has not been taken by another rider
         const order = await Order.findOne({
@@ -240,7 +254,7 @@ class OrderService {
           status: "enrouteToDelivery",
           company: company._id,
           rider: rider._id,
-        });
+        }).populate("user");
 
         if (!order) {
           reject({ code: 404, msg: "This order doesn't exist." });
@@ -253,15 +267,41 @@ class OrderService {
           status: "enrouteToDelivery",
           company: company._id,
           rider: rider._id,
-        }).lean();
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await entryInstance.instantEntries(rider._id);
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
+        // start our transaction
+        session.startTransaction();
 
         const token = GenerateOTP(4);
 
@@ -270,11 +310,7 @@ class OrderService {
           { status: "arrivedAtDelivery", OTPCode: token },
           { session }
         );
-        await Entry.updateOne(
-          { _id: order.entry },
-          { status: "arrivedAtDelivery" },
-          { session }
-        );
+        await entry.updateOne({ status: "arrivedAtDelivery" }, { session });
 
         // send OTP code to the receipant
         const subject = `Delivery OTP Code for ${order.orderId}`;
@@ -287,22 +323,11 @@ class OrderService {
         const to = order.countryCode + order.phoneNumber;
         await notifyInstance.sendOTPByTermii(msg, to);
 
-        // get the user details of the person that created the shipment
-        const userInstance = new UserService();
-        const entryUser = await userInstance.get(
-          { _id: entry.user },
-          {
-            FCMToken: 1,
-            email: 1,
-            countryCode: 1,
-            phoneNumber: 1,
-          }
-        );
         // if the email assigned to the entry isn't the same as the
         // user that created the post email then send to both parties
-        if (entryUser.email !== order.email) {
-          Mailer(entryUser.email, subject, html);
-          const toUser = entryUser.countryCode + entryUser.phoneNumber;
+        if (entry.user.email !== order.email) {
+          Mailer(entry.user.email, subject, html);
+          const toUser = entry.user.countryCode + entry.user.phoneNumber;
           await notifyInstance.sendOTPByTermii(msg, toUser);
         }
 
@@ -326,7 +351,7 @@ class OrderService {
         await session.commitTransaction();
         session.endSession();
 
-        resolve({ order, entry, rider, company, user });
+        resolve({ order, entry, rider, company });
       } catch (error) {
         await session.abortTransaction();
         reject(error);
@@ -344,23 +369,27 @@ class OrderService {
       const session = await mongoose.startSession();
 
       try {
-        // start our transaction
-        session.startTransaction();
-
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the order has not been taken by another rider
         const order = await Order.findOne({
@@ -368,7 +397,7 @@ class OrderService {
           status: "arrivedAtDelivery",
           company: company._id,
           rider: rider._id,
-        });
+        }).populate("user");
 
         if (!order) {
           reject({ code: 404, msg: "This order doesn't exist." });
@@ -381,15 +410,38 @@ class OrderService {
           status: "arrivedAtDelivery",
           company: company._id,
           rider: rider._id,
-        }).lean();
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await entryInstance.instantEntries(rider._id);
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
 
         // get the total tries
         // check if the rider has made more than 3 tries
@@ -446,8 +498,11 @@ class OrderService {
           return;
         }
 
-        // entry.status = "delivered";
-        // entry.OTPCode = null;
+        // start our transaction
+        session.startTransaction();
+
+        entry.status = "delivered";
+        entry.OTPCode = null;
         order.status = "delivered";
 
         console.log("Got Here");
@@ -464,12 +519,7 @@ class OrderService {
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createOrderLog(logs, session);
 
-        // await entry.save({ session });
-        await Entry.updateOne(
-          { _id: order.entry },
-          { status: "delivered", OTPCode: null },
-          { session }
-        );
+        await entry.save({ session });
         await order.save({ session });
 
         await session.commitTransaction();

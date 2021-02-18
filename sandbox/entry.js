@@ -2,17 +2,14 @@ const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
 const Entry = require("../models/entry");
-const User = require("../models/users");
 const Order = require("../models/order");
 const Company = require("../models/company");
 const Transaction = require("../models/transaction");
 const RiderEntryRequest = require("../models/riderEntryRequest");
+const Pricing = require("../models/pricing");
 const Rider = require("../models/rider");
-const UserService = require("./user");
-const CompanyService = require("./company");
 const TripLogService = require("./triplog");
 const NotificationService = require("./notification");
-const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const {
   AsyncForEach,
@@ -24,7 +21,6 @@ const { OTPCode } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
-
 
 class EntryService {
   /**
@@ -81,7 +77,7 @@ class EntryService {
       } catch (error) {
         console.log(error);
         await session.abortTransaction();
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }
@@ -93,14 +89,23 @@ class EntryService {
    * @param {Object} distance google distance api response data
    * @param {Object} setting setting configuration
    * @param {Object} distancePrice setting configuration
+   * @param {Object} vehicle vehicle configuration
    */
-  calculateLocalEntry(body, user, distance, setting, distancePrice) {
+  calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
     return new Promise(async (resolve, reject) => {
       try {
+        const pickup = await this.getGooglePlace(body.address);
+        // const devy = await this.getGooglePlace(
+        //   distance.destination_addresses
+        // );
+        body.pickupLatitude = pickup[0].geometry.location.lat;
+        body.pickupLongitude = pickup[0].geometry.location.lng;
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
         body.user = user.id;
+        body.instantPricing = setting.instantPricing;
+        body.deliveryAddresses = distance.destination_addresses;
         body.pickupAddress = distance.origin_addresses[0];
         body.metaData = {
           distance,
@@ -118,70 +123,94 @@ class EntryService {
         }
 
         await AsyncForEach(distance.rows, async (row, rowIndex, rowsArr) => {
-          await AsyncForEach(row.elements, (element, elemIndex, elemArr) => {
-            if (element.status === "OK") {
-              const time = parseFloat(element.duration.value / 60);
-              const singleDistance = parseFloat(element.distance.value / 1000);
-              // add user id
-              body.delivery[elemIndex].user = user.id;
+          await AsyncForEach(
+            row.elements,
+            async (element, elemIndex, elemArr) => {
+              if (element.status === "OK") {
+                const devy = await this.getGooglePlace(
+                  distance.destination_addresses[elemIndex]
+                );
+                // set the coordinates for each deverly address
+                body.delivery[elemIndex].deliveryLatitude =
+                  devy[0].geometry.location.lat;
+                body.delivery[elemIndex].deliveryLongitude =
+                  devy[0].geometry.location.lng;
 
-              // orderId
-              body.delivery[elemIndex].orderId = nanoid(8);
-              // add the pickup
-              // add delivery address in text
-              body.delivery[elemIndex].deliveryAddress =
-                distance.destination_addresses[elemIndex];
-              // add pickup details for each order
-              body.delivery[elemIndex].pickupLatitude = body.pickupLatitude;
-              body.delivery[elemIndex].pickupLongitude = body.pickupLongitude;
-              body.delivery[elemIndex].pickupAddress =
-                distance.origin_addresses[0];
-              // set duration of an order from the pick up point to the delivery point
-              body.delivery[elemIndex].estimatedTravelduration = time;
-              // set distance of an order from the pick up point to the delivery point
-              body.delivery[elemIndex].estimatedDistance = singleDistance;
+                // set the coordinates for pickup address
+                body.delivery[elemIndex].pickupLatitude =
+                  pickup[0].geometry.location.lat;
+                body.delivery[elemIndex].pickupLongitude =
+                  pickup[0].geometry.location.lng;
 
-              // total the distance travelled and time
-              body.TET = body.TET + time;
-              body.TED = body.TED + singleDistance;
+                const time = parseFloat(element.duration.value / 60);
+                const singleDistance = parseFloat(
+                  element.distance.value / 1000
+                );
+                // add user id
+                body.delivery[elemIndex].user = user.id;
+                body.delivery[elemIndex].instantPricing =
+                  setting.instantPricing;
+                body.delivery[elemIndex].vehicle = body.vehicle;
 
-              // estimated cost
-              // calculate the km travelled for each trip multiplied by our price per km
-              const km =
-                parseFloat(singleDistance) * parseFloat(distancePrice.price);
-              // calculate the weight of each order for each trip multiplied by our price per weight
-              const weight =
-                parseFloat(body.delivery[elemIndex].weight) *
-                parseFloat(setting.weightPrice);
-              const amount =
-                parseFloat(km) +
-                parseFloat(weight) +
-                parseFloat(itemTypePrice) +
-                parseFloat(setting.baseFare);
+                // orderId
+                body.delivery[elemIndex].orderId = nanoid(8);
+                // set company id on individual orders
+                body.delivery[elemIndex].company = body.company;
+                // set enterprise id on individual enterprise account
+                body.delivery[elemIndex].enterprise = body.enterprise;
+                // add the pickup
+                // add delivery address in text
+                body.delivery[elemIndex].deliveryAddress =
+                  distance.destination_addresses[elemIndex];
+                // add pickup details for each order
+                body.delivery[elemIndex].pickupAddress =
+                  distance.origin_addresses[0];
+                // set duration of an order from the pick up point to the delivery point
+                body.delivery[elemIndex].estimatedTravelduration = time;
+                // set distance of an order from the pick up point to the delivery point
+                body.delivery[elemIndex].estimatedDistance = singleDistance;
 
-              // set price for each order
-              body.delivery[elemIndex].estimatedCost = parseFloat(amount);
-              // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
+                // total the distance travelled and time
+                body.TET = body.TET + time;
+                body.TED = body.TED + singleDistance;
 
-              // set total price for the entry
-              body.TEC = body.TEC + parseFloat(amount);
-            } else {
-              // very questionable
-              // just for test only
-              // delete body.delivery[elemIndex];
-              reject({
-                code: 404,
-                msg:
-                  "We couldn't process your request. Please contact our support",
-              });
+                // estimated cost
+                // calculate the km travelled for each trip multiplied by our price per km
+                const km =
+                  parseFloat(singleDistance) * parseFloat(distancePrice.price);
+                // calculate the weight of each order for each trip multiplied by our price per weight
+                const weight =
+                  parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
+                const amount =
+                  parseFloat(km) +
+                  parseFloat(weight) +
+                  parseFloat(itemTypePrice) +
+                  parseFloat(setting.baseFare);
+
+                // set price for each order
+                body.delivery[elemIndex].estimatedCost = parseFloat(amount);
+                // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
+
+                // set total price for the entry
+                body.TEC = body.TEC + parseFloat(amount);
+              } else {
+                // very questionable
+                // just for test only
+                // delete body.delivery[elemIndex];
+                reject({
+                  code: 404,
+                  msg:
+                    "We couldn't process your request. Please contact our support",
+                });
+              }
             }
-          });
+          );
         });
 
         resolve(body);
       } catch (error) {
         console.log(error);
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
       }
     });
   }
@@ -192,15 +221,16 @@ class EntryService {
    */
   uploadArrayOfImages(images) {
     return new Promise(async (resolve, reject) => {
+      // console.log("images", images);
       const img = [];
       await AsyncForEach(images, async (row, rowIndex, arr) => {
         const ObjectId = mongoose.Types.ObjectId();
         const file = await UploadFileFromBase64(row, ObjectId);
-        img.push(file.Key)
-      })
+        img.push(file.Key);
+      });
 
-      resolve(img)
-    })
+      resolve(img);
+    });
   }
 
   /**
@@ -211,20 +241,15 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         // get all coords locations and sort them.
-        const origins = [
-          { lat: body.pickupLatitude, lng: body.pickupLongitude },
-        ];
+        const origins = [body.address];
         const destinations = [];
         // get all origin and destination
         await AsyncForEach(body.delivery, (data, index, arr) => {
-          destinations.push({
-            lat: data.deliveryLatitude,
-            lng: data.deliveryLongitude,
-          });
+          destinations.push(data.address);
         });
 
-        console.log("origins", origins);
-        console.log("destinations", destinations);
+        // console.log("origins", origins);
+        // console.log("destinations", destinations);
 
         // get distance and duration from google map distance matrix
         const N = 5000;
@@ -242,118 +267,47 @@ class EntryService {
           },
         });
 
+        if (distance.data.status !== "OK") {
+          reject({ code: 500, msg: "Address provided is invalid" });
+          return;
+        }
+
         resolve(distance);
       } catch (error) {
         console.log(error);
-        reject({ err: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject({ err: 400, msg: "Address provided couldn't be verified" });
       }
     });
   }
 
   /**
-   * Create transaction for entry
-   * @param {Object} body
-   * @param {Object} user
-   * @param {String} token
+   * Find the address on google maps
+   * @param {string} address
    */
-  createTransaction(body, user, token) {
+  getGooglePlace(address) {
     return new Promise(async (resolve, reject) => {
-      const session = await mongoose.startSession();
       try {
-        const entry = await Entry.findOne({
-          _id: body.entry,
-          status: "request",
-          user: user.id,
-        }).populate("vehicle");
+        const distance = await client.geocode({
+          params: {
+            address,
+            language: "en",
+            key: config.get("googleMap.key"),
+          },
+        });
 
-        if (!entry) {
-          reject({
-            code: 404,
-            msg: "Entry transaction already processed.",
-          });
+        // console.log("distance", JSON.stringify(distance.data));
+        // console.log("distance", distance.data);
+        // console.log("distance", distance.data.results);
+
+        if (distance.data.status !== "OK") {
+          reject({ code: 400, msg: "Your address couldn't be verified" });
           return;
         }
 
-        console.log("entry", entry);
-
-        let msgRES;
-        if (body.paymentMethod === "card") {
-          const userInstance = new UserService();
-          const card = await userInstance.getCard(token, body.card);
-
-          const trans = await paystack.transaction.charge({
-            reference: nanoid(20),
-            authorization_code: card.data.token,
-            email: user.email,
-            // email: "abundance@gmail.com",
-            amount: entry.TEC,
-          });
-          console.log("trans", trans);
-
-          if (!trans.status) {
-            reject({
-              code: 404,
-              msg: "Your Transaction could't be processed at the moment",
-            });
-            return;
-          }
-          if (trans.data.status !== "success") {
-            reject({
-              code: 404,
-              msg: "Your Transaction could't be processed at the moment",
-            });
-            return;
-          }
-
-          body.amount = entry.TEC;
-          body.user = user.id;
-          body.status = "approved";
-          body.approvedAt = new Date();
-          body.entry = entry;
-          body.txRef = trans.data.reference;
-
-          msgRES = "Payment Successfully Processed";
-        } else {
-          body.amount = entry.TEC;
-          body.user = user.id;
-          body.status = "pending";
-          body.entry = entry;
-          body.txRef = nanoid(10);
-
-          msgRES = "Cash Payment Method Confirmed";
-        }
-
-        // start our transaction
-        session.startTransaction();
-
-        const newTransaction = new Transaction(body);
-
-        entry.transaction = newTransaction;
-        entry.status = "pending";
-        entry.approvedAt = new Date();
-        entry.paymentMethod = body.paymentMethod;
-        await newTransaction.save({ session });
-        await entry.save({ session });
-        await Order.updateMany(
-          { entry: entry._id },
-          { transaction: newTransaction._id },
-          { session }
-        );
-
-        await session.commitTransaction();
-        session.endSession();
-
-        // console.log("entry", entry);
-
-        // send out new entry that has apporved payment method
-        entry.metaData = null;
-        resolve({ entry, msg: msgRES });
+        resolve(distance.data.results);
       } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 500,
-          msg: "Your Transaction could't be processed at the moment",
-        });
+        console.log("error distance", error);
+        reject({ code: 400, msg: "Your address couldn't be verified" });
       }
     });
   }
@@ -365,14 +319,18 @@ class EntryService {
    */
   companyAcceptEntry(params, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: user.id,
-          // $or: [{ status: "active" }, { status: "inactive" }],
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 400, msg: "No company account was found." });
+          return;
+        }
 
         const transaction = await Transaction.findOne({ entry: params.entry });
 
@@ -381,32 +339,127 @@ class EntryService {
           return;
         }
 
-        // const currentDate = new Date();
-        const entry = await this.get({
-          _id: params.entry,
-          status: "pending",
-          company: null,
+        // check if this company still has any unprocessed entry
+        const unprocessedEntry = await Entry.findOne({
+          company: user.id,
+          status: "companyAccepted",
         });
+        if (unprocessedEntry) {
+          reject({
+            code: 404,
+            msg:
+              "You have an order that has not been accpeted by a rider. Please process that order first before accepting another.",
+          });
+          return;
+        }
+
+        const pricing = await Pricing.findOne({ _id: company.tier });
+        if (!pricing) {
+          reject({
+            code: 400,
+            msg: "You're currently not on any plan at the moment",
+          });
+          return;
+        }
+
+        // const currentDate = new Date();
+        const entry = await Entry.findOne({
+          _id: params.entry,
+          // approvedAt: { $lt: lateTimerMap[pricing.priority] },
+        });
+
+        if (!entry) {
+          reject({
+            code: 404,
+            msg: "This order wasn't found.",
+          });
+          return;
+        }
+
+        // check the plan of the user
+        const lateTimerMap = [
+          moment(entry.approvedAt).add(20, "minutes"),
+          moment(entry.approvedAt).add(5, "minutes"),
+          moment(entry.approvedAt),
+        ];
+
+        console.log(
+          "lateTimerMap[pricing.priority]",
+          lateTimerMap[pricing.priority]
+        );
+
+        console.log("entry.approvedAt", moment(entry.approvedAt));
+
+        console.log(
+          "moment(entry.approvedAt) <= lateTimerMap[pricing.priority]",
+          moment(entry.approvedAt) >= lateTimerMap[pricing.priority]
+        );
+
+        if (moment(entry.approvedAt).isAfter(lateTimerMap[pricing.priority])) {
+          reject({
+            code: 404,
+            msg: "Upgrade your plan to accepts orders immediately",
+          });
+          return;
+        }
+
+        if (entry.company) {
+          reject({
+            code: 400,
+            msg: "This entry has already been taken. Better luck next time",
+          });
+          return;
+        }
+
+        if (entry.status !== "pending") {
+          reject({ code: 400, msg: "This entry doesn't exist" });
+          return;
+        }
 
         if (!company.vehicles.includes(entry.vehicle)) {
           reject({ code: 400, msg: MSG_TYPES.VEHICLE_NOT_SUPPORTED });
-          return
+          return;
         }
 
-        await entry.updateOne({
-          company: user.id,
-          companyAcceptedAt: new Date(),
-          status: "companyAccepted",
-        });
+        // start our transaction
+        session.startTransaction();
 
-        await Order.updateMany({ entry: params.entry }, { company: user.id });
+        await entry.updateOne(
+          {
+            company: user.id,
+            companyAcceptedAt: new Date(),
+            status: "companyAccepted",
+          },
+          { session }
+        );
 
-        await transaction.updateOne({ company: user.id });
-        
+        await Order.updateMany(
+          { entry: params.entry },
+          { company: user.id },
+          { session }
+        );
+
+        // calculate our commision from the company pricing plan
+        const commissionAmount =
+          (transaction.amount * pricing.transactionCost) / 100;
+
+        await transaction.updateOne(
+          {
+            company: user.id,
+            commissionPercent: pricing.transactionCost,
+            commissionAmount,
+            amountWOcommision: transaction.amount - commissionAmount,
+          },
+          { session }
+        );
+
+        await session.commitTransaction();
+        session.endSession();
+
         resolve(entry);
       } catch (error) {
-        console.log("error", error);
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
@@ -414,52 +467,16 @@ class EntryService {
   /**
    * Company send rider request
    * @param {Object} body
-   * @param {Auth user Object} user
+   * @param {MongoDB ObjectID} company
    */
-  riderAsignEntry(body, user) {
+  riderAsignEntry(body, company) {
     return new Promise(async (resolve, reject) => {
       try {
-        const rider = await Rider.findOne({
-          company: user.id,
-          status: "active",
-          onlineStatus: true,
-          verified: true,
-        });
-        if (!rider) {
-          reject({ code: 404, msg: "Rider Not Found" });
-          return;
-        }
-
-        const reqEntry = await RiderEntryRequest.findOne({
-          rider: body.rider,
-          status: "pending",
-        });
-
-        // if he has any pending at all
-        if (reqEntry) {
-          // if rider has already been sent this request and it's pending
-          if (String(reqEntry.entry) === body.entry) {
-            reject({ code: 400, msg: "Rider already assigned this entry." });
-            return;
-          }
-
-          reject({ code: 400, msg: "Rider already has a pending request" });
-          return;
-        }
-
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
-          _id: user.id,
-          // $or: [{ status: "active" }, { status: "inactive" }],
-          status: "active",
-          verified: true,
-        });
-
         // find the entry that has been accepted by a company
         const entry = await Entry.findOne({
           _id: body.entry,
           status: "companyAccepted",
-          company: company._id,
+          company,
           rider: null,
           transaction: { $ne: null },
         })
@@ -472,19 +489,143 @@ class EntryService {
           return;
         }
 
-        // send the request to the driver
-        const newRiderReq = new RiderEntryRequest({
-          entry: entry._id,
-          company: company._id,
-          rider: body.rider,
+        console.log("entry.vehicle", entry.vehicle);
+
+        // find all the online riders for the company with the specific vehicle type
+        const riders = await Rider.find({
+          company,
+          deleted: false,
+          onlineStatus: true,
+          status: "active",
+          verified: true,
+          vehicle: entry.vehicle,
         });
 
-        await newRiderReq.save();
+        // console.log("riders", riders);
 
-        resolve(entry);
+        if (typeof riders[0] == "undefined") {
+          reject({
+            code: 404,
+            msg:
+              "No online Rider was found for this order. Please contact your riders",
+          });
+          return;
+        }
+
+        const riderIDS = [];
+        const riderEntries = [];
+        await AsyncForEach(riders, async (row, index, arr) => {
+          // find all orders for ech rider that has not yet been concluded or cancelled
+          const orders = await Order.findOne({
+            rider: row._id,
+            $or: [
+              { status: { $ne: "delivered" } },
+              { status: { $ne: "cancelled" } },
+            ],
+          }).countDocuments();
+
+          // check how many orders a driver is currently on
+          // if the driver is in less than 10 riders then send him to those orders
+          if (orders < 10) {
+            riderIDS.push(row._id);
+            riderEntries.push({
+              entry: entry._id,
+              company,
+              rider: row._id,
+            });
+          }
+
+          // const reqEntry = await RiderEntryRequest.findOne({
+          //   rider: body.rider,
+          //   status: "pending",
+          // });
+
+          // // if he has any pending at all
+          // if (reqEntry) {
+          //   // if rider has already been sent this request and it's pending
+          //   if (String(reqEntry.entry) === body.entry) {
+          //     reject({ code: 400, msg: "Rider already assigned this entry." });
+          //     return;
+          //   }
+
+          //   reject({ code: 400, msg: "Rider already has a pending request" });
+          //   return;
+          // }
+        });
+
+        console.log("riderEntries", riderEntries);
+
+        if (typeof riderEntries[0] === "undefined") {
+          reject({
+            code: 404,
+            msg:
+              "No free Rider was found for this order. Please contact your riders",
+          });
+          return;
+        }
+
+        const newRiderReq = await RiderEntryRequest.create(riderEntries);
+
+        resolve({ entry, riders, newRiderReq, riderIDS });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * dispatch entry to exalt riders silent for
+   * enterprise shipment that goes to exalt logistics
+   * @param {Object} entry
+   */
+  silentlyAsignRiderToEntry(entry) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // find all the online riders for the company with the specific vehicle type
+        const riders = await Rider.find({
+          company: entry.company,
+          deleted: false,
+          onlineStatus: true,
+          status: "active",
+          verified: true,
+          vehicle: entry.vehicle,
+        });
+
+        console.log("riders", riders);
+
+        if (typeof riders[0] === "undefined") {
+          resolve({ riderIDS: null });
+          return;
+        }
+
+        // if (typeof riders[0] == "undefined") {
+        //   reject({
+        //     code: 200,
+        //     msg:
+        //       "Your Transaction has been processed. We currently don't have any online Rider for this order. This would be resolved shortly",
+        //   });
+        //   return;
+        // }
+
+        const riderIDS = [];
+        const riderEntries = [];
+        await AsyncForEach(riders, async (row, index, arr) => {
+          riderIDS.push(row._id);
+          riderEntries.push({
+            entry: entry._id,
+            company: entry.company,
+            rider: row._id,
+          });
+        });
+
+        console.log("riderIDS", riderIDS);
+
+        const newRiderReq = await RiderEntryRequest.create(riderEntries);
+
+        resolve({ riders, newRiderReq, riderIDS });
       } catch (error) {
         console.log("error", error);
-        reject(error);
+        resolve(error);
       }
     });
   }
@@ -496,6 +637,7 @@ class EntryService {
    */
   riderAcceptEntry(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const currentDate = new Date();
 
@@ -534,7 +676,6 @@ class EntryService {
           return;
         }
 
-
         const transaction = await Transaction.findOne({ entry: body.entry });
 
         if (!transaction) {
@@ -548,27 +689,51 @@ class EntryService {
           entry: body.entry,
           status: "pending",
         });
-
         if (!reqEntry) {
           reject({ code: 404, msg: "No request was assign to you." });
           return;
         }
 
-        await entry.updateOne({
-          rider: user.id,
-          riderAcceptedAt: currentDate,
-          status: "driverAccepted",
-        });
+        session.startTransaction();
 
-        await Order.updateMany({ entry: body.entry }, { rider: user.id });
+        await entry.updateOne(
+          {
+            rider: user.id,
+            riderAcceptedAt: currentDate,
+            status: "driverAccepted",
+          },
+          { session }
+        );
 
-        await reqEntry.updateOne({ status: "accepted" });
+        await Order.updateMany(
+          { entry: body.entry },
+          { rider: user.id },
+          { session }
+        );
 
-        await transaction.updateOne({ rider: user.id });
+        await reqEntry.updateOne({ status: "accepted" }, { session });
+
+        await transaction.updateOne({ rider: user.id }, { session });
+
+        const logs = {
+          type: "driverAccepted",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {}
+        };
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createOrderLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({ entry, reqEntry });
       } catch (error) {
-        console.log("error", error);
+        await session.abortTransaction();
         reject(error);
       }
     });
@@ -621,6 +786,7 @@ class EntryService {
    */
   riderStartEntryPickup(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -629,7 +795,7 @@ class EntryService {
           verified: true,
         });
         if (!rider) {
-          reject({ code: 404, msg: "You can't accept this order" });
+          reject({ code: 404, msg: "The account provided is not valid" });
           return;
         }
 
@@ -657,33 +823,65 @@ class EntryService {
           return;
         }
 
-        await entry.updateOne({ status: "enrouteToPickup" });
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
+        // start our transaction
+        session.startTransaction();
+
+        await entry.updateOne({ status: "enrouteToPickup" }, { session });
         // update all order status
         await Order.updateMany(
           { entry: entry._id },
-          { status: "enrouteToPickup" }
+          { status: "enrouteToPickup" },
+          { session }
         );
 
+        const logs = {
+          type: "enrouteToPickup",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
         // log trip status
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createLog(
-          "enrouteToPickup",
-          entry.orders,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude
-        );
+        await tripLogInstance.createLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         // resolve(entry);
         resolve({ entry, rider, company });
       } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 400,
-          msg: "Something went wrong. You can't proceed to pickup",
-        });
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
@@ -695,6 +893,7 @@ class EntryService {
    */
   riderArriveAtPickup(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -731,14 +930,49 @@ class EntryService {
           return;
         }
 
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
         const token = GenerateOTP(4);
 
+        // start our transaction
+        session.startTransaction();
+
         // update the status to delivery updated
-        await entry.updateOne({ status: "arrivedAtPickup", OTPCode: token });
+        await entry.updateOne(
+          { status: "arrivedAtPickup", OTPCode: token },
+          { session }
+        );
         // update all order status
         await Order.updateMany(
           { entry: entry._id },
-          { status: "arrivedAtPickup" }
+          { status: "arrivedAtPickup" },
+          {
+            session,
+          }
         );
 
         // send OTP code to the receipant
@@ -760,29 +994,28 @@ class EntryService {
           await notifyInstance.sendOTPByTermii(msg, toUser);
         }
 
-        // log trip status
-        const metaData = {
-          OTPCode: token,
+        const logs = {
+          type: "arrivedAtPickup",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {
+            OTPCode: token,
+          },
         };
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createLog(
-          "arrivedAtPickup",
-          entry.orders,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude,
-          metaData
-        );
+        await tripLogInstance.createLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({ entry, rider, company });
       } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 400,
-          msg: "Something went wrong. You can't proceed to pickup",
-        });
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
@@ -794,6 +1027,7 @@ class EntryService {
    */
   riderConfirmCashPayment(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -832,14 +1066,17 @@ class EntryService {
 
         // check if the payment method is cash
         if (entry.paymentMethod === "card") {
-          reject({ code: 400, msg: "You can't approve a entry that isn't a cash payment" });
+          reject({
+            code: 400,
+            msg: "You can't approve a entry that isn't a cash payment",
+          });
           return;
         }
 
         const transaction = await Transaction.findOne({
           entry: body.entry,
           paymentMethod: "cash",
-          status: "pending"
+          status: "pending",
         });
 
         if (!transaction) {
@@ -850,51 +1087,69 @@ class EntryService {
           return;
         }
 
+        // start our transaction
+        session.startTransaction();
+
+        const logs = {
+          type: "confirmPayment",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
+
         // when rider select declined on payment status
         if (body.status === "declined") {
-          await transaction.updateOne({ status: "declined" });
-          await entry.updateOne({ status: "cancelled", cancelledAt: new Date() });
+          await transaction.updateOne({ status: "declined" }, { session });
+          await entry.updateOne(
+            {
+              status: "cancelled",
+              cancelledAt: new Date(),
+            },
+            { session }
+          );
           await Order.updateMany(
             { entry: entry._id },
-            { status: "cancelled", cancelledAt: new Date() }
+            { status: "cancelled", cancelledAt: new Date() },
+            { session }
           );
 
+          logs.type = "cancelled";
           const tripLogInstance = new TripLogService();
-          await tripLogInstance.createLog(
-            "cancelled",
-            entry.orders,
-            rider._id,
-            entry.user,
-            entry._id,
-            rider.latitude,
-            rider.longitude
-          );
+          await tripLogInstance.createLog(logs, session);
+
+          await session.commitTransaction();
+          session.endSession();
 
           resolve({
-            entry, 
-            rider, company, transaction,
+            entry,
+            rider,
+            company,
+            transaction,
             code: 200,
-            msg: "You've successfully declined this payment and the order has been cancelled for this trip.",
+            msg:
+              "You've successfully declined this payment and the order has been cancelled for this trip.",
           });
           return;
         }
 
         const currentDate = new Date();
-        await transaction.updateOne({
-          status: "approved",
-          approvedAt: currentDate,
-        });
+        await transaction.updateOne(
+          {
+            status: "approved",
+            approvedAt: currentDate,
+          },
+          { session }
+        );
 
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createLog(
-          "confirmPayment",
-          entry.orders,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude
-        );
+        await tripLogInstance.createLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({
           entry,
@@ -905,11 +1160,8 @@ class EntryService {
           msg: "Payment has been approved successfully.",
         });
       } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 400,
-          msg: "Something went wrong. You can't confirm the payment for this order",
-        });
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
@@ -921,6 +1173,7 @@ class EntryService {
    */
   riderComfirmPickupOTPCode(body, user) {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
         const rider = await Rider.findOne({
           _id: user.id,
@@ -957,6 +1210,33 @@ class EntryService {
           return;
         }
 
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
+        
         // check if the payment method is cash
         if (entry.paymentMethod === "cash") {
           const transaction = await Transaction.findOne({ entry: body.entry });
@@ -971,7 +1251,7 @@ class EntryService {
           if (transaction.status !== "approved") {
             reject({
               code: 400,
-              msg: `You need confirm payment before confirming pickup.`,
+              msg: `You need to confirm payment before confirming pickup.`,
             });
 
             return;
@@ -1033,35 +1313,53 @@ class EntryService {
           return;
         }
 
-        // update the status to delivery updated
-        await entry.updateOne({ status: "pickedup", OTPCode: null });
-        // update all order status
-        await Order.updateMany({ entry: entry._id }, { status: "pickedup" });
+        // start our transaction
+        session.startTransaction();
 
-        const tripLogInstance = new TripLogService();
-        await tripLogInstance.createLog(
-          "pickedup",
-          entry.orders,
-          rider._id,
-          entry.user,
-          entry._id,
-          rider.latitude,
-          rider.longitude
+        // update the status to delivery updated
+        await entry.updateOne(
+          { status: "pickedup", OTPCode: null },
+          { session }
         );
+        // update all order status
+        await Order.updateMany(
+          { entry: entry._id },
+          { status: "pickedup" },
+          { session }
+        );
+
+        const logs = {
+          type: "pickedup",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
 
         resolve({ entry, rider, company });
       } catch (error) {
-        console.log("error", error);
-        reject({
-          code: 400,
-          msg: "Something went wrong. You can't proceed to pickup",
-        });
+        await session.abortTransaction();
+        reject(error);
       }
     });
   }
 }
 
-
-
-
 module.exports = EntryService;
+
+// send the request to the driver
+// const newRiderReq = new RiderEntryRequest({
+//   entry: entry._id,
+//   company: company._id,
+//   rider: body.rider,
+// });
+
+// await newRiderReq.save();

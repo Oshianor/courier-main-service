@@ -8,7 +8,8 @@ const Transaction = require("../models/transaction");
 const template = require("../templates");
 const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer,
-  GenerateToken, isObject, convertToMonthlyDataArray, populateMultiple } = require("../utils");
+  GenerateToken, isObject, convertToMonthlyDataArray } = require("../utils");
+const { populateMultiple } = require("../services/aggregate");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");

@@ -365,7 +365,16 @@ class CompanyService {
             $nin: ["pending","delivered","cancelled","declined"]
         }}).countDocuments();
         // @TODO: Get the correct values for this field
-        const totalRevenue = 0;
+        const revenue = await Transaction.aggregate([
+          {
+            $match: {
+              company: ObjectId(companyId),
+              rider: ObjectId(filter.rider),
+            },
+          },
+          { $group: { _id: null, sum: { $sum: "$amountWOcommision" } } },
+        ]);
+        const totalRevenue = typeof revenue[0] !== "undefined" ? revenue[0].sum : 0;
 
         const isSingleRider = baseFilter.hasOwnProperty('rider');
 
@@ -378,7 +387,7 @@ class CompanyService {
           activeOrders,
           failedOrders,
           totalRevenue,
-        }
+        } 
 
         if(!isSingleRider){
           statistics = { ...statistics, totalRiders, activeRiders };
@@ -386,7 +395,8 @@ class CompanyService {
 
         resolve(statistics);
       } catch (error) {
-        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        console.log("error", error);
+        reject(error)
         return
       }
     })

@@ -49,6 +49,7 @@ handleEntryManagement = async () => {
       {
         status: "pending",
         companyAcceptedAt: null,
+        company: null
       }
     );
   } catch (error) {

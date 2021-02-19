@@ -14,6 +14,7 @@ const populateMultiple = async (dataArray, model, option) => {
   modelIds = modelIds.map((id) => id.toString());
 
   let modelDataArray = [];
+  console.log("modelIds", modelIds);
   try{
     if(model === 'enterprise'){
       modelDataArray = await enterpriseInstance.getAll(modelIds);
@@ -49,10 +50,10 @@ const populateSingle = async (data, model, option) => {
 
   try{
     if(model === "enterprise"){
-      modelData = await enterpriseInstance.get(data[model]);
+      modelData = await enterpriseInstance.get({ _id: data[model] });
     }
     if(model === "user"){
-      modelData = await userInstance.get(data[model], option);
+      modelData = await userInstance.get({ _id: data[model]}, option);
     }
   } catch(error){
     console.log('Failed to populate multiple model data => ',error);

@@ -55,10 +55,12 @@ router.get("/setting", Auth, hasRole([ROLES.ADMIN]), controller.setting.getAdmin
 router.patch("/setting", Auth, hasRole([ROLES.ADMIN]), controller.setting.updateAdmin);
 
 
-
+/**
+ * Moved to account service
+ */
 //user routes
-router.get("/user/all", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.allUsers);
-router.get("/user/:userId", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleUser);
+// router.get("/user/all", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.allUsers);
+// router.get("/user/:userId", Auth, hasRole([ROLES.ADMIN, ROLES.ACCOUNTANT]), controller.admin.singleUser);
 
 // [moved to accounts-service]
 // update user status by admin

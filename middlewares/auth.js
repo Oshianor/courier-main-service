@@ -124,7 +124,7 @@ const UserAuth = async (req, res, next) => {
     const userInstance = new UserService();
     const userParent = await userInstance.getByToken(token);
 
-    req.user = userParent.data;
+    req.user = userParent;
     req.user.id = req.user._id;
     req.token = token;
     delete req.user._id;

@@ -10,8 +10,8 @@ const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
 const { OTPCode } = require("../templates");
 const TripLog = require("../models/tripLog");
 const moment = require("moment");
-const EntryService = require("./entry");
-const entryInstance = new EntryService();
+const UserService = require("./user");
+const userInstance = new UserService();
 
 
 class OrderService {
@@ -97,20 +97,27 @@ class OrderService {
         // start our transaction
         session.startTransaction();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the order has not been taken by another rider
         const order = await Order.findOne({
@@ -136,21 +143,6 @@ class OrderService {
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
-        }
-
-        //check that there are no instant pickup that needs to be deliveried first
-        await entryInstance.instantEntries(rider._id);
-
-        // check if the instant entries are more than one
-        if (instantEntries >= 1) {
-          // check if the rider is triggering a instant pickup type
-          if (entry.pickupType !== "instant") {
-            reject({
-              code: 400,
-              msg: "You need to start an instant pickup first.",
-            });
-            return;
-          }
         }
 
         // find out if the rider is already on a delivery trip
@@ -219,20 +211,27 @@ class OrderService {
         // start our transaction
         session.startTransaction();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the order has not been taken by another rider
         const order = await Order.findOne({
@@ -260,8 +259,6 @@ class OrderService {
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await entryInstance.instantEntries(rider._id);
 
         const token = GenerateOTP(4);
 
@@ -288,7 +285,6 @@ class OrderService {
         await notifyInstance.sendOTPByTermii(msg, to);
 
         // get the user details of the person that created the shipment
-        const userInstance = new UserService();
         const entryUser = await userInstance.get(
           { _id: entry.user },
           {
@@ -347,20 +343,27 @@ class OrderService {
         // start our transaction
         session.startTransaction();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the order has not been taken by another rider
         const order = await Order.findOne({
@@ -388,8 +391,6 @@ class OrderService {
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await entryInstance.instantEntries(rider._id);
 
         // get the total tries
         // check if the rider has made more than 3 tries

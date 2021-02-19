@@ -9,6 +9,7 @@ const RiderEntryRequest = require("../models/riderEntryRequest");
 const Pricing = require("../models/pricing");
 const Rider = require("../models/rider");
 const TripLogService = require("./triplog");
+const UserService = require("./user");
 const NotificationService = require("./notification");
 const { nanoid } = require("nanoid");
 const {
@@ -21,6 +22,7 @@ const { OTPCode } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
+const userInstance = new UserService();
 
 class EntryService {
   /**
@@ -483,11 +485,19 @@ class EntryService {
           .lean()
           .populate(
             "orders",
-            "-OTPCode, -OTPRecord, -metaData, -riderRated, -riderRating, -userRating, -userRated, -deleted, -deletedAt, -deletedBy"
+            "-OTPCode -OTPRecord -metaData -riderRated -riderRating -userRating -userRated -deleted -deletedAt -deletedBy"
           )
           .select("-metaData");
 
-        const userInstance = new UserService();
+          
+
+        if (!entry) {
+          reject({ code: 404, msg: "No Entry was found" });
+          return;
+        }
+
+        console.log("entry.user", entry);
+
         const user = await userInstance.get(
           { _id: entry.user },
           {
@@ -501,21 +511,15 @@ class EntryService {
         );
         entry.user = user;
 
-        if (!entry) {
-          reject({ code: 404, msg: "No Entry was found" });
-          return;
-        }
-
         // find all the online riders for the company with the specific vehicle type
-        const riderInstance = new RiderService();
-        const riders = await riderInstance.getAll({
-          company: entry.company,
-          deleted: false,
-          onlineStatus: true,
-          status: "active",
-          verified: true,
-          vehicle: entry.vehicle,
-        });
+       const riders = await Rider.find({
+         company,
+         deleted: false,
+         onlineStatus: true,
+         status: "active",
+         verified: true,
+         vehicle: entry.vehicle,
+       });
 
         // console.log("riders", riders);
 
@@ -598,8 +602,7 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         // find all the online riders for the company with the specific vehicle type
-        const riderInstance = new RiderService();
-        const riders = await riderInstance.getAll({
+        const riders = await Rider.find({
           company: entry.company,
           deleted: false,
           onlineStatus: true,
@@ -647,22 +650,31 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
+        session.startTransaction();
+
         const currentDate = new Date();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
-        });
+        }).lean();
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
-        });
+        }).lean();
+
+        if (!company) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
         // check if the entry has not been taken by another rider
         const entry = await Entry.findOne({
@@ -695,7 +707,6 @@ class EntryService {
           return;
         }
 
-        session.startTransaction();
 
         await entry.updateOne(
           {
@@ -732,12 +743,9 @@ class EntryService {
         await session.commitTransaction();
         session.endSession();
 
-        resolve({ entry, reqEntry });
+        resolve({ entry, reqEntry, rider });
       } catch (error) {
         await session.abortTransaction();
-        if (error.response) {
-          return reject(error.response.data);
-        }
         reject(error);
       }
     });
@@ -751,13 +759,16 @@ class EntryService {
   riderRejectEntry(body, user) {
     return new Promise(async (resolve, reject) => {
       try {
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
         // check if the rider was assigned any request for the entry
         const reqEntry = await RiderEntryRequest.findOne({
@@ -789,20 +800,30 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        // start our transaction
+        session.startTransaction();
+
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "The account provided is not valid" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the entry has not been taken by another rider
         const entry = await Entry.findOne({
@@ -820,10 +841,7 @@ class EntryService {
         }
 
         //check that there are no instant pickup that needs to be deliveried first
-        await this.instantEntries(rider._id);
-
-        // start our transaction
-        session.startTransaction();
+        await this.instantEntries(rider._id, entry);
 
         await Entry.updateOne(
           { _id: body.entry },
@@ -875,20 +893,27 @@ class EntryService {
         // start our transaction
         session.startTransaction();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the entry has not been taken by another rider
         const entry = await Entry.findOne({
@@ -906,7 +931,7 @@ class EntryService {
         }
 
         //check that there are no instant pickup that needs to be deliveried first
-        await this.instantEntries(rider._id);
+        await this.instantEntries(rider._id, entry);
 
         const token = GenerateOTP(4);
 
@@ -937,7 +962,6 @@ class EntryService {
         await notifyInstance.sendOTPByTermii(msg, to);
 
         // get the user details of the person that created the shipment
-        const userInstance = new UserService();
         const entryUser = await userInstance.get(
           { _id: entry.user },
           {
@@ -995,20 +1019,27 @@ class EntryService {
         // start our transaction
         session.startTransaction();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the entry has not been taken by another rider
         const entry = await Entry.findOne({
@@ -1137,20 +1168,27 @@ class EntryService {
         // start our transaction
         session.startTransaction();
 
-        const riderInstance = new RiderService();
-        const rider = await riderInstance.get({
+        const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
           onlineStatus: true,
           verified: true,
         });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
 
-        const companyInstance = new CompanyService();
-        const company = await companyInstance.get({
+        const company = await Company.findOne({
           _id: rider.company,
           status: "active",
           verified: true,
         });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
 
         // check if the entry has not been taken by another rider
         const entry = await Entry.findOne({
@@ -1168,7 +1206,7 @@ class EntryService {
         }
 
         //check that there are no instant pickup that needs to be deliveried first
-        await this.instantEntries(rider._id);
+        await this.instantEntries(rider._id, entry);
 
         // check if the payment method is cash
         if (entry.paymentMethod === "cash") {
@@ -1287,7 +1325,7 @@ class EntryService {
    * Check instant pickup
    * @param {ObjectId} rider
    */
-  instantEntries(rider) {
+  instantEntries(rider, entry) {
     return new Promise(async (resolve, reject) => {
       try {
         // find instant entry

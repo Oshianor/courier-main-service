@@ -489,14 +489,10 @@ class EntryService {
           )
           .select("-metaData");
 
-          
-
         if (!entry) {
           reject({ code: 404, msg: "No Entry was found" });
           return;
         }
-
-        console.log("entry.user", entry);
 
         const user = await userInstance.get(
           { _id: entry.user },
@@ -507,19 +503,20 @@ class EntryService {
             countryCode: 1,
             phoneNumber: 1,
             role: 1,
+            img: 1,
           }
         );
         entry.user = user;
 
         // find all the online riders for the company with the specific vehicle type
-       const riders = await Rider.find({
-         company,
-         deleted: false,
-         onlineStatus: true,
-         status: "active",
-         verified: true,
-         vehicle: entry.vehicle,
-       });
+        const riders = await Rider.find({
+          company,
+          deleted: false,
+          onlineStatus: true,
+          status: "active",
+          verified: true,
+          vehicle: entry.vehicle,
+        });
 
         // console.log("riders", riders);
 
@@ -707,7 +704,6 @@ class EntryService {
           return;
         }
 
-
         await entry.updateOne(
           {
             rider: user.id,
@@ -742,6 +738,16 @@ class EntryService {
 
         await session.commitTransaction();
         session.endSession();
+
+        await RiderEntryRequest.updateMany(
+          {
+            status: "pending",
+            entry: body.entry,
+          },
+          {
+            status: "declined",
+          }
+        );
 
         resolve({ entry, reqEntry, rider });
       } catch (error) {

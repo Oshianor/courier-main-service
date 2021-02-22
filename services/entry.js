@@ -18,7 +18,7 @@ const {
   Mailer,
   UploadFileFromBase64,
 } = require("../utils");
-const { OTPCode } = require("../templates");
+const OTPCode = require("../templates/otpCode");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});

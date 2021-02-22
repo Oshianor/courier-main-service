@@ -5,7 +5,7 @@ const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
-const template = require("../templates");
+const Verification = require("../templates/verification");
 const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer,
   GenerateToken, isObject, convertToMonthlyDataArray } = require("../utils");
@@ -95,7 +95,7 @@ class CompanyService {
         session.endSession();
 
         const subject = "Welcome to Exalt Logistics";
-        const html = template.Verification(token, body.email, "company");
+        const html = Verification(token, body.email, "company");
         Mailer(body.email, subject, html);
         resolve({ company, organization });
       } catch (error) {

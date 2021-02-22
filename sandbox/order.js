@@ -7,7 +7,7 @@ const TripLogService = require("./triplog");
 const NotificationService = require("./notification");
 const { MSG_TYPES } = require("../constant/types");
 const { AsyncForEach, GenerateOTP, Mailer } = require("../utils");
-const { OTPCode } = require("../templates");
+const OTPCode = require("../templates/otpCode");
 const TripLog = require("../models/tripLog");
 const moment = require("moment");
 

@@ -5,9 +5,6 @@ const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
 const { ACCOUNT_SERVICE } = require("../constant/api");
-const NotificationService = require("./notification");
-const { GenerateOTP, Mailer } = require("../utils");
-const { OTPCode } = require("../templates");
 
 /**
  * User service class

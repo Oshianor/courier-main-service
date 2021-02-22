@@ -35,11 +35,6 @@ handleEntryManagement = async () => {
 
     console.log("entry", entry);
 
-    await AsyncForEach(entry, async (arr, index) => {
-      const companySub = new CompanySubscription();
-      await companySub.dispatchToStateRoom(arr);
-    });
-
     await Entry.updateMany(
       {
         entryprise: null,
@@ -49,9 +44,16 @@ handleEntryManagement = async () => {
       {
         status: "pending",
         companyAcceptedAt: null,
-        company: null
+        company: null,
       }
     );
+
+    await AsyncForEach(entry, async (arr, index) => {
+      const companySub = new CompanySubscription();
+      await companySub.dispatchToStateRoom(arr);
+    });
+
+    
   } catch (error) {
     console.log("error", error);
   }

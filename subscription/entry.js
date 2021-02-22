@@ -180,7 +180,7 @@ class EntrySubscription {
       });
 
       if (!riderER) {
-        resolve(SocketResponse(true, "No New request"));
+        reject(SocketResponse(true, "No New request"));
         return;
       }
 

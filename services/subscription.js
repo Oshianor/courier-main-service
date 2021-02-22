@@ -23,18 +23,18 @@ class SubscriptionService {
         const validCompany = await Company.findOne({ _id: body.company })
 
         if (!validCompany) {
-          reject({ statusCode: 404, msg: "Company does not exist" })
+          reject({ code: 404, msg: "Company does not exist" })
           return
         }
         const existingSubscriptions = await Subscription.find({ company: body.company })
         if (existingSubscriptions.length > 0) {
-          reject({ statusCode: 400, msg: "Subscription Exists" })
+          reject({ code: 400, msg: "Subscription Exists" })
           return
         }
         const createSubscription = await Subscription.create(body)
         resolve(createSubscription)
       } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg });
+        reject({ code: error.code, msg: error.msg });
         return
       }
     })
@@ -50,12 +50,12 @@ class SubscriptionService {
         const subscription = await Subscription.findOne(company)
           .populate('company', 'name email phoneNumber contactName contactPhoneNumber address')
           .populate('pricing');
-        if (!subscription) return reject({ statusCode: 400, msg: MSG_TYPES.NOT_FOUND })
+        if (!subscription) return reject({ code: 400, msg: "No subscription was found for your account" })
         resolve(subscription)
       } catch (error) {
         console.log(error);
-        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR });
-        return
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+        returncode
       }
     })
   }
@@ -71,7 +71,7 @@ class SubscriptionService {
         const pricing = await Pricing.findById(body.pricing)
         if (!pricing) return reject({ code: 400, msg: "Pricing plan not available" });
         const card = await Card.findOne({ _id: body.card, company: body.company })
-        if (!card) return reject({ statusCode: 400, msg: "Card not found" })
+        if (!card) return reject({ code: 400, msg: "Card not found" })
 
         const paymentObject = {
           reference: nanoid(20),
@@ -82,12 +82,12 @@ class SubscriptionService {
         // check if already on the current plan and subscription active
         if (!body.startEndOfCurrentPlan) {
           const activeSub = await Subscription.findOne({ company: body.company, pricing: body.pricing, status: "active" })
-          if (activeSub) return reject({ statusCode: 400, msg: "Already an active subscription on this plan" })
+          if (activeSub) return reject({ code: 400, msg: "Already an active subscription on this plan" })
         }
 
         if (body.startEndOfCurrentPlan) {
           const activeSub = await Subscription.findOne({ company: body.company, status: "active" })
-          if (activeSub.nextPaidPlan != null || activeSub.nextPaidPlan != undefined) return reject({ statusCode: 400, msg: "Already paid for a subscription plan starting end of current plan" })
+          if (activeSub.nextPaidPlan != null || activeSub.nextPaidPlan != undefined) return reject({ code: 400, msg: "Already paid for a subscription plan starting end of current plan" })
         }
 
         // charge company
@@ -102,7 +102,7 @@ class SubscriptionService {
         }
         resolve(subscription)
       } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg });
+        reject({ code: error.code, msg: error.msg });
         return
       }
     })
@@ -127,7 +127,7 @@ class SubscriptionService {
         }
         resolve()
       } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg })
+        reject({ code: error.code, msg: error.msg })
         return
       }
     })
@@ -153,12 +153,12 @@ class SubscriptionService {
             $set: updateObject,
           }
         );
-        if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        if (!updatedSubscription) return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
 
         resolve(updatedSubscription)
 
       } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg })
+        reject({ code: error.code, msg: error.msg })
         return
       }
     })
@@ -199,7 +199,7 @@ class SubscriptionService {
         companyInstance.updateCompany(body.company, { teir: pricing._id });
         resolve(updatedSubscription)
       } catch (error) {
-        reject({ statusCode: error.code, msg: error.msg })
+        reject({ code: error.code, msg: error.msg })
         return
       }
     })
@@ -214,7 +214,7 @@ class SubscriptionService {
     return new Promise(async (resolve, reject) => {
       // try {
       //   const validSubscription = await Subscription.findOne(company)
-      //   if (!validSubscription) return reject({ statusCode: 400, msg: MSG_TYPES.NOT_FOUND })
+      //   if (!validSubscription) return reject({ code: 400, msg: MSG_TYPES.NOT_FOUND })
 
       //   const updatedSubscription = await Subscription.updateOne(
       //     company,
@@ -223,10 +223,10 @@ class SubscriptionService {
       //     }
       //   );
 
-      //   if (!updatedSubscription) return reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+      //   if (!updatedSubscription) return reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR })
       //   resolve(updatedSubscription)
       // } catch (error) {
-      //   reject({ statusCode: error.code, msg: error.msg })
+      //   reject({ code: error.code, msg: error.msg })
       //   return
       // }
     })

@@ -30,11 +30,6 @@ class StatisticsService {
   getGeneralStatistics(filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
-
-        const deliveryStatistics = await this.getDeliveryStatistics(filter);
-        const totalRevenue = await this.getTotalRevenue(filter);
-        const totalRiders = await this.getRiderCount(filter);
-
         // Coercing to ObjectIds because the $match stage of the aggregation needs it that way
         if(filter.enterprise && typeof(filter.enterprise) === 'string'){
           filter.enterprise = ObjectId(filter.enterprise);
@@ -42,6 +37,10 @@ class StatisticsService {
         if(filter.company && typeof(filter.company) === 'string'){
           filter.company = ObjectId(filter.company);
         }
+
+        const deliveryStatistics = await this.getDeliveryStatistics(filter);
+        const totalRevenue = await this.getTotalRevenue(filter);
+        const totalRiders = await this.getRiderCount(filter);
 
         // Total deliveries by months
         let monthlySuccessfulDeliveries = await Order.aggregate(
@@ -54,6 +53,7 @@ class StatisticsService {
         monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
 
 
+        console.log(filter);
         let monthlyRevenues = await Transaction.aggregate([
           { $match: {...filter, status: "approved"} },
           { $group:{ _id: {$month: "$approvedAt"}, revenue: {$sum: "$amount"}} },

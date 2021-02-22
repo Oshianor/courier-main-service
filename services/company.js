@@ -348,7 +348,7 @@ class CompanyService {
   * @param {ObjectId} companyId
   * @param {Object} filter
   */
-  getRiderStatistics(companyId, filter) {
+  getRiderStatistics(companyId, filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
         let baseFilter = { company: companyId };
@@ -365,16 +365,25 @@ class CompanyService {
             $nin: ["pending","delivered","cancelled","declined"]
         }}).countDocuments();
         // @TODO: Get the correct values for this field
+
+        const totalRevenueMatch = {
+          company: ObjectId(companyId),
+          status: "approved",
+          approvedAt: {$ne:null}
+        };
+
+        if(baseFilter.rider){
+          totalRevenueMatch.rider = ObjectId(baseFilter.rider)
+        }
+
         const revenue = await Transaction.aggregate([
           {
-            $match: {
-              company: ObjectId(companyId),
-              rider: ObjectId(filter.rider),
-            },
+            $match: totalRevenueMatch
           },
           { $group: { _id: null, sum: { $sum: "$amountWOcommision" } } },
         ]);
-        const totalRevenue = typeof revenue[0] !== "undefined" ? revenue[0].sum : 0;
+
+        const totalRevenue = revenue[0] ? revenue[0].sum : 0;
 
         const isSingleRider = baseFilter.hasOwnProperty('rider');
 
@@ -387,7 +396,7 @@ class CompanyService {
           activeOrders,
           failedOrders,
           totalRevenue,
-        } 
+        }
 
         if(!isSingleRider){
           statistics = { ...statistics, totalRiders, activeRiders };
@@ -414,7 +423,11 @@ class CompanyService {
       const totalRiders = await Rider.find({company: companyId}).countDocuments();
 
       let totalRevenue = await Transaction.aggregate([
-        { $match: {company: ObjectId(companyId),status: "approved",approvedAt: {$ne:null}} },
+        { $match: {
+          company: ObjectId(companyId),
+          status: "approved",
+          approvedAt: {$ne:null}
+        } },
         { $group: { _id: companyId, "total": {$sum: "$amount"} }},
       ]);
 

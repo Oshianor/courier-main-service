@@ -32,10 +32,8 @@ mongoose
 const handleSubscriptionManagement = async () => {
   try {
 
-    const basicPlan = await Pricing.findOne({type: "freemium"});
     const activeSubscriptions = await Subscription.find({
       status: "active",
-      pricing: { $ne : basicPlan._id }
     });
 
     for await (let subscription of activeSubscriptions){
@@ -52,7 +50,12 @@ const handleSubscriptionManagement = async () => {
           }, nextPlan);
 
         } else {
-          await renewSubscription(subscription);
+          const basicPlan = await Pricing.findOne({type: "freemium"});
+          if(subscription.pricing === basicPlan._id){
+            downgradeSubscription(subscription);
+          } else {
+            await renewSubscription(subscription);
+          }
         }
       } else {
         console.log('Plan has not expired');

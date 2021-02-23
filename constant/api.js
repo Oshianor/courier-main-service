@@ -1,5 +1,8 @@
-const account = "http://localhost:6000/api/v1";
-const card = "http://localhost:6002/api/v1";
+const config = require("config");
+
+const account = `${config.get("application.accountService")}/api/v1`;
+const card = `${config.get("application.cardService")}/api/v1`;
+
 
 const ACCOUNT_SERVICE = Object.freeze({
   // create/delete/get single user on the account service for commercial account

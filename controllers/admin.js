@@ -129,33 +129,33 @@ exports.singleRider = async (req, res, next) => {
  * @param {*} req
  * @param {*} res
  */
-exports.allUsers = async (req, res, next) => {
-  try {
-    const { page, pageSize, skip } = paginate(req);
+// exports.allUsers = async (req, res, next) => {
+//   try {
+//     const { page, pageSize, skip } = paginate(req);
 
-    const data = await userInstance.getAllUsers({ page, pageSize });
+//     const data = await userInstance.getAllUsers({ page, pageSize });
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, data.meta);
-  } catch (error) {
-    next(error);
-  }
-};
+//     JsonResponse(res, 200, MSG_TYPES.FETCHED, data.data, data.meta);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 /**
  * Get single user
  * @param {*} req
  * @param {*} res
  */
-exports.singleUser = async (req, res, next) => {
-  try {
-    const data = await userInstance.get(req.params.userId);
+// exports.singleUser = async (req, res, next) => {
+//   try {
+//     const data = await userInstance.get(req.params.userId);
 
-    JsonResponse(res, 200, MSG_TYPES.FETCHED, data, null);
-    return
-  } catch (error) {
-    next(error);
-  }
-};
+//     JsonResponse(res, 200, MSG_TYPES.FETCHED, data, null);
+//     return
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 /**
  * Delete One AdminModel

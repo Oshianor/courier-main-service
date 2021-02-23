@@ -24,6 +24,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const { validateRiderID } = require("../request/rating");
 const moment = require("moment");
 const CompanyService = require("../services/company");
+const userInstance = new UserService();
 
 /**
  * Start Delivery trigger by rider
@@ -45,7 +46,6 @@ exports.riderInitiateOrderDelivery = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry);
 
-    const userInstance = new UserService();
     const user = await userInstance.get(
       { _id: entry.user },
       {
@@ -111,11 +111,17 @@ exports.confirmDelivery = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
-    const { entry, msg, user } = await orderInstance.confirmDelivery(
+    const { entry, msg } = await orderInstance.confirmDelivery(
       req.body,
       req.user
     );
 
+    const user = await userInstance.get(
+      { _id: entry.user },
+      {
+        FCMToken: 1,
+      }
+    );
     // send fcm notification
     // send nofication to the user device
     const title = msg;

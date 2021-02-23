@@ -5,7 +5,7 @@ const Transaction = require("../models/transaction");
 const moment = require("moment")
 const Rider = require("../models/rider");
 const { Mailer, GenerateToken, convertToMonthlyDataArray } = require("../utils");
-const { Verification } = require("../templates");
+const Verification = require("../templates/verification");
 const { MSG_TYPES } = require("../constant/types");
 
 

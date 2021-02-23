@@ -292,6 +292,7 @@ exports.riderAssignToEntry = async (req, res, next) => {
     // send entries to all the rider
     const riderSub = new RiderSubscription();
     await riderSub.sendRidersEntries(riderIDS, entry);
+    
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;
@@ -311,7 +312,10 @@ exports.riderAcceptEntry = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const { entry } = await entryInstance.riderAcceptEntry(req.body, req.user);
+    const { entry, rider } = await entryInstance.riderAcceptEntry(
+      req.body,
+      req.user
+    );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
@@ -320,6 +324,11 @@ exports.riderAcceptEntry = async (req, res, next) => {
     // dispatch action to riders for taken entry
     const riderSub = new RiderSubscription();
     await riderSub.takenEntryForRiders(entry._id);
+
+    // send nofication to the rider device
+    const title = "New Order Alert!!!!";
+    const notifyInstance = new NotifyService();
+    await notifyInstance.textNotify(title, "", rider.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
     return;

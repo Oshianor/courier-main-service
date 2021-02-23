@@ -17,7 +17,6 @@ const {
 const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { Verification } = require("../templates");
 
 /**
  * Create Rider

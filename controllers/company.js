@@ -13,7 +13,7 @@ const StatisticsService = require("../services/statistics");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { nanoid } = require("nanoid");
-const template = require("../templates");
+const Verification = require("../templates/verification");
 const {
   validateUpdateCompany,
   validateStatusUpdate,
@@ -375,7 +375,7 @@ exports.verification = async (req, res, next) => {
     }
 
     const subject = "Welcome! Account Approved.";
-    const html = template.Verification("111", company.email, "company");
+    const html = Verification("111", company.email, "company");
     Mailer(company.email, subject, html);
 
     const newSetting = new Setting({

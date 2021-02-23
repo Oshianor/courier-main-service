@@ -5,9 +5,6 @@ const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
 const { ACCOUNT_SERVICE } = require("../constant/api");
-const NotificationService = require("./notification");
-const { GenerateOTP, Mailer } = require("../utils");
-const { OTPCode } = require("../templates");
 
 /**
  * User service class
@@ -54,14 +51,11 @@ class UserService {
   deleteUser(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        await axios.delete(
-          `${ACCOUNT_SERVICE.USER}/${userId}`,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
+        await axios.delete(`${ACCOUNT_SERVICE.USER}/${userId}`, {
+          headers: {
+            "api-key": config.get("api.key"),
+          },
+        });
 
         resolve();
       } catch (error) {
@@ -81,19 +75,18 @@ class UserService {
   getByToken(token) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.get(
-          `${ACCOUNT_SERVICE.USER}`,
-          {
-            headers: {
-              "x-auth-token": token,
-            },
-          }
-        );
+        const response = await axios.get(`${ACCOUNT_SERVICE.USER}`, {
+          headers: {
+            "x-auth-token": token,
+          },
+        });
         // console.log("response", response);
-        resolve(response.data);
+        resolve(response.data.data);
       } catch (error) {
-        console.log("User not found", error);
-        reject(error.response.data);
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
       }
     });
   }
@@ -109,7 +102,7 @@ class UserService {
           `${ACCOUNT_SERVICE.GET_ALL_USER}`,
           {
             filter,
-            option: option ? option : null
+            option: option ? option : null,
           },
           {
             headers: {
@@ -117,25 +110,28 @@ class UserService {
             },
           }
         );
-        resolve(response.data);
+        resolve(response.data.data);
       } catch (error) {
-        reject(error.response.data);
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
       }
     });
   }
 
   /**
    * Get a single user by it's ID
-   * @param {ObjectId} filter
+   * @param {Object} filter
    */
-  get(id, option) {
+  get(filter, option) {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
           `${ACCOUNT_SERVICE.GET_USER}`,
           {
-            filter: { _id: id},
-            option
+            filter,
+            option,
           },
           {
             headers: {
@@ -143,35 +139,38 @@ class UserService {
             },
           }
         );
-        resolve(response.data);
+        resolve(response.data.data);
       } catch (error) {
-        reject(error.response.data);
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
       }
     });
   }
 
-
-  getAll(users, select){
-    return new Promise(async(resolve, reject) => {
-      try{
-        const response = await axios.get(`
+  getAll(users, select) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.get(
+          `
           ${ACCOUNT_SERVICE.GET_USERS}`,
           {
             headers: {
-            "api-key": config.get("api.key")
-          },
-          params: {
-            users,
-            select: select ? select : null
+              "api-key": config.get("api.key"),
+            },
+            params: {
+              users,
+              select: select ? select : null,
+            },
           }
-        });
+        );
 
-        if(response && response.data){
-          resolve(response.data.data);
-        } else {
-          reject({code: 404, msg: "users not found"});
+        resolve(response.data.data);
+      } catch (error) {
+        if (error.response) {
+          reject(error.response.data);
         }
-      } catch(error){
         reject(error);
       }
     });
@@ -208,7 +207,6 @@ class UserService {
   //     }
   //   });
   // }
-
 
   // [moved to accounts-service]
   /**
@@ -355,7 +353,6 @@ class UserService {
         // if (!user) {
         //   return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
         // }
-
         // const updatedUser = await User.updateOne(
         //   { _id: userId },
         //   { $set: data }
@@ -369,7 +366,6 @@ class UserService {
       }
     });
   }
-
 }
 
 module.exports = UserService;

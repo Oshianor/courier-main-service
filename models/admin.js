@@ -1,48 +1,134 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const JWT = require("jsonwebtoken");
+const Jwt = require("jsonwebtoken");
+const Joi = require("joi");
 const config = require("config");
+const ObjectId = mongoose.Schema.Types.ObjectId;
+const passwordComplexity = require("joi-password-complexity");
 
-const adminSchema = new mongoose.Schema({
-  name: {
-    type: String,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  password: {
-    type: String,
-  },
-  role: {
-    type: String,
-    enum: ["super_admin", "admin"],
-  },
-});
-
-// hash passwords for new records before saving
-adminSchema.pre("save", async function (next) {
-  if (this.isNew) {
-    this.password = await bcrypt.hash(this.password, 13);
-  }
-  next();
-});
-
-//validate admin's password
-adminSchema.methods.isValidPassword = async function (inputedPassword) {
-  let validPassword = await bcrypt.compare(inputedPassword, this.password);
-  return validPassword;
+const complexityOptions = {
+  min: 6,
+  max: 20,
+  lowerCase: 1,
+  upperCase: 1,
+  numeric: 1,
+  symbol: 1,
+  requirementCount: 2,
 };
+
+const adminSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      maxlength: 30,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      unique: true,
+      index: true,
+      maxlength: 50,
+    },
+    phoneNumber: {
+      type: String,
+      unique: true,
+      index: true,
+      required: true,
+      maxlength: 10,
+    },
+    password: {
+      type: String,
+      maxlength: 225,
+    },
+    country: {
+      type: String,
+      required: true,
+    },
+    countryCode: {
+      type: String,
+      required: true,
+    },
+    state: {
+      type: String,
+      required: true,
+    },
+    address: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "inactive",
+    },
+    verified: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    phoneNumberVerified: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    rememberToken: {
+      token: {
+        type: String,
+        default: null,
+      },
+      expiredDate: {
+        type: Date,
+        default: null,
+      },
+    },
+    role: {
+      type: String,
+      required: true,
+      enum: ["superAdmin", "admin", "accountant"],
+    },
+    createdBy: {
+      type: ObjectId,
+      ref: "Admin",
+      default: null,
+    },
+    deleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedBy: {
+      type: ObjectId,
+      default: null,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 //sign token for this admin
 adminSchema.methods.generateToken = function () {
-  return JWT.sign(
+  return Jwt.sign(
     {
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-      adminId: this._id,
+      id: this._id,
+      email: this.email,
+      type: "admin",
     },
-    config.get("application.jwt.key")
+    config.get("application.jwt.key"),
+    { expiresIn: "3d" }
   );
 };
 
-module.exports = mongoose.model("Admin", adminSchema);
+
+const Admin = mongoose.model("Admin", adminSchema);
+
+module.exports = Admin;

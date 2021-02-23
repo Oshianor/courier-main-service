@@ -25,11 +25,11 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .lean();
 
-      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode");
+      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       socket
         .to("admin")
@@ -61,7 +61,7 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .sort({ updatedAt: -1 })
         .lean();
@@ -104,7 +104,7 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .sort({ updatedAt: -1 })
         .lean();
@@ -185,7 +185,7 @@ class EntrySubscription {
         return;
       }
 
-      let entries = await Entry.findOne({
+      let entry = await Entry.findOne({
         status: "companyAccepted",
         _id: riderER.entry,
       })
@@ -194,9 +194,9 @@ class EntrySubscription {
         .select("-metaData")
         .lean();
 
-      entries = await populateSingle(entries, "user", "name email phoneNumber countryCode");
+      entry = await populateSingle(entry, "user", "name email phoneNumber img");
 
-      resolve(SocketResponse(false, "ok", entries));
+      resolve(SocketResponse(false, "ok", entry));
     });
   }
 
@@ -213,11 +213,11 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .lean();
 
-      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode");
+      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       socket.to("admin").emit( SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN, SocketResponse(false, "ok", entry));
 

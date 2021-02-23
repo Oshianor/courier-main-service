@@ -12,7 +12,7 @@ function validateSubscription(body) {
   return schema.validate(body);
 }
 
-function validateUpdateubscription(body) {
+function validateUpdateSubscription(body) {
   const schema = Joi.object({
     company: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
     card: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
@@ -25,5 +25,5 @@ function validateUpdateubscription(body) {
 
 module.exports = {
   validateSubscription,
-  validateUpdateubscription
+  validateUpdateSubscription
 };

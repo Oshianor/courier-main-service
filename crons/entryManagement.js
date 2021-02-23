@@ -20,7 +20,7 @@ mongoose
   .catch((err) => console.error("Could not connect to MongoDB..."));
 
 /**
- * Check for post that have been accepted and not passed to riders 
+ * Check for post that have been accepted and not passed to riders
  * removed from their list and back into the pool.
  */
 handleEntryManagement = async () => {
@@ -53,7 +53,6 @@ handleEntryManagement = async () => {
       await companySub.dispatchToStateRoom(arr);
     });
 
-    
   } catch (error) {
     console.log("error", error);
   }

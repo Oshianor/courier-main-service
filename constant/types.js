@@ -47,6 +47,7 @@ const MSG_TYPES = Object.freeze({
   WALLET_FUNDED: "Your wallet has been funded",
   CREDIT_FUNDED: "Enterprise credit account funded successfully",
   NOT_ALLOWED: "This operation is allowed",
+  PAYMENT_ERROR: "Payment error - card charging failed"
 });
 
 const ACCOUNT_TYPES = Object.freeze({

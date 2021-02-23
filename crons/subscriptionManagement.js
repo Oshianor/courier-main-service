@@ -11,6 +11,7 @@ const Card = require("../models/card");
 const { nanoid } = require("nanoid");
 const { MSG_TYPES } = require("../constant/types");
 const subscriptionService = new SubscriptionService();
+const winston = require("winston");
 
 mongoose
   .connect(config.get("database.url"), {
@@ -51,8 +52,8 @@ const handleSubscriptionManagement = async () => {
 
         } else {
           const basicPlan = await Pricing.findOne({type: "freemium"});
-          if(subscription.pricing === basicPlan._id){
-            downgradeSubscription(subscription);
+          if(subscription.pricing.toString() == basicPlan._id.toString()){
+            await downgradeSubscription(subscription);
           } else {
             await renewSubscription(subscription);
           }
@@ -86,6 +87,7 @@ async function renewSubscription(subscription){
       email: company.email,
       amount: Number(currentPlan.price) * 100,
     }
+    console.log(subscriptionChargeData);
     await subscriptionService.subscriptionCharge(subscriptionChargeData);
 
     await subscriptionService.updateNow({

@@ -10,8 +10,8 @@ class CardService {
 
   /**
    * Get card details from card service
-   * @param {*} filter 
-   * @param {*} option 
+   * @param {*} filter
+   * @param {*} option
    */
   get(filter, option = null) {
     return new Promise(async (resolve, reject) => {
@@ -50,7 +50,7 @@ class CardService {
           reject({ code: 400, msg: "Error processing payment" });
           return;
         }
-        
+
         if (transaction.data.status !== "success") {
           reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
           return;
@@ -82,6 +82,12 @@ class CardService {
           return
         }
 
+        const isDefaultCard = true;
+        const companiesCards = await Card.find({company: body.company});
+        if(companiesCards.length){
+          isDefaultCard = false;
+        }
+
         const newCard = new Card({
           token: trans.authorization_code,
           last4: trans.last4,
@@ -94,6 +100,7 @@ class CardService {
           txRef: body.txRef,
           accountName: trans.account_name ? trans.account_name : company.name,
           email: transaction.data.customer.email,
+          default: isDefaultCard
         });
 
         await newCard.save();

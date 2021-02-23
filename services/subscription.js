@@ -107,7 +107,13 @@ class SubscriptionService {
         } else {
           subscription = await this.updateLater(body, pricing)
         }
-        resolve(subscription)
+        resolve(subscription);
+
+        // set used card as default
+        console.log('Setting card as default')
+        if(!card.default){
+          card.updateOne({ default: true });
+        }
       } catch (error) {
         return reject({ code: error.code, msg: error.msg });
       }
@@ -124,12 +130,12 @@ class SubscriptionService {
         const transaction = await paystack.transaction.charge(chargeObject);
 
         if (!transaction.status) {
-          return reject({ code: 400, msg: "Payment Error" });
+          return reject({ code: 400, msg: MSG_TYPES.PAYMENT_ERROR });
         }
         if (transaction.data.status !== "success") {
-          return reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+          return reject({ code: 400, msg: MSG_TYPES.PAYMENT_ERROR });
         }
-        resolve()
+        resolve();
       } catch (error) {
         reject({ code: error.code || 500, msg: error.msg || MSG_TYPES.SERVER_ERROR})
       }
@@ -180,6 +186,7 @@ class SubscriptionService {
         const updateObject = {
           duration: body.duration,
           pricing: pricing._id,
+          nextPaidPlan: null,
           startDate,
           endDate,
         }

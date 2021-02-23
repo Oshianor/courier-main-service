@@ -25,7 +25,7 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .lean();
 
@@ -61,7 +61,7 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .sort({ updatedAt: -1 });
 
@@ -103,7 +103,7 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .sort({ updatedAt: -1 })
         .lean();
@@ -184,7 +184,7 @@ class EntrySubscription {
         return;
       }
 
-      let entries = await Entry.findOne({
+      let entry = await Entry.findOne({
         status: "companyAccepted",
         _id: riderER.entry,
       })
@@ -192,9 +192,9 @@ class EntrySubscription {
         .populate("orders")
         .select("-metaData");
 
-      entries = await populateSingle(entries, "user", "name email phoneNumber countryCode img");
+      entry = await populateSingle(entry, "user", "name email phoneNumber img");
 
-      resolve(SocketResponse(false, "ok", entries));
+      resolve(SocketResponse(false, "ok", entry));
     });
   }
 
@@ -210,7 +210,7 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .lean();
 

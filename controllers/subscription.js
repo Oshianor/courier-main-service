@@ -1,5 +1,5 @@
 const SubscriptionService = require("../services/subscription");
-const { validateSubscription, validateUpdateubscription } = require("../request/subscription");
+const { validateSubscription, validateUpdateSubscription } = require("../request/subscription");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
@@ -7,8 +7,8 @@ const subscriptionInstance = new SubscriptionService();
 
 /**
  * Create subscription
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.createSubscription = async (req, res, next) => {
   try {
@@ -27,8 +27,8 @@ exports.createSubscription = async (req, res, next) => {
 
 /**
  * Get subscription
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.getSubscription = async (req, res, next) => {
   try {
@@ -44,20 +44,20 @@ exports.getSubscription = async (req, res, next) => {
 
 /**
  * Update subscription
- * @param {*} req 
- * @param {*} res 
+ * @param {*} req
+ * @param {*} res
  */
 exports.updateSubscription = async (req, res, next) => {
   try {
-    const { error } = validateUpdateubscription(req.body);
+    const { error } = validateUpdateSubscription(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
     req.body.duration = 30;
-    await subscriptionInstance.update(req.body)
-    JsonResponse(res, 200, "Successfully updated subscription");
-    return;
+
+    await subscriptionInstance.update(req.body);
+
+    return JsonResponse(res, 200, "Successfully updated subscription");
   } catch (error) {
     next(error)
-    return
   }
 };
 

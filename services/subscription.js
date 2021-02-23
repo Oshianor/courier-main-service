@@ -69,29 +69,36 @@ class SubscriptionService {
       try {
         const company = await Company.findById(body.company)
         const pricing = await Pricing.findById(body.pricing)
-        if (!pricing) return reject({ code: 400, msg: "Pricing plan not available" });
+        if (!pricing) return reject({ code: 404, msg: "Pricing plan not available" });
         const card = await Card.findOne({ _id: body.card, company: body.company })
-        if (!card) return reject({ code: 400, msg: "Card not found" })
+        if (!card) return reject({ code: 404, msg: "Card not found" })
+
+        // check if already on the current plan and subscription active
+        if (!body.startEndOfCurrentPlan) {
+          const chosenPlanActiveSub = await Subscription.findOne({
+            company: body.company,
+            pricing: body.pricing,
+            status: "active"
+          });
+
+          if (chosenPlanActiveSub) {
+            return reject({ code: 400, msg: "You already have an active subscription on this plan"});
+          }
+        }
+
+        const activeSub = await Subscription.findOne({ company: body.company, status: "active" })
+        if (activeSub.nextPaidPlan){
+          return reject({ code: 400, msg: "You already paid for a subscription plan starting at the end of your current plan"});
+        }
 
         const paymentObject = {
           reference: nanoid(20),
           authorization_code: card.token,
           email: company.email,
-          amount: pricing.transactionCost * 100,
+          amount: Number(pricing.price) * 100,
         };
-        // check if already on the current plan and subscription active
-        if (!body.startEndOfCurrentPlan) {
-          const activeSub = await Subscription.findOne({ company: body.company, pricing: body.pricing, status: "active" })
-          if (activeSub) return reject({ code: 400, msg: "Already an active subscription on this plan" })
-        }
-
-        if (body.startEndOfCurrentPlan) {
-          const activeSub = await Subscription.findOne({ company: body.company, status: "active" })
-          if (activeSub.nextPaidPlan != null || activeSub.nextPaidPlan != undefined) return reject({ code: 400, msg: "Already paid for a subscription plan starting end of current plan" })
-        }
-
         // charge company
-        await this.subscriptionCharge(paymentObject)
+        await this.subscriptionCharge(paymentObject);
 
         // update subscription
         let subscription;
@@ -102,8 +109,7 @@ class SubscriptionService {
         }
         resolve(subscription)
       } catch (error) {
-        reject({ code: error.code, msg: error.msg });
-        return
+        return reject({ code: error.code, msg: error.msg });
       }
     })
   }
@@ -118,17 +124,14 @@ class SubscriptionService {
         const transaction = await paystack.transaction.charge(chargeObject);
 
         if (!transaction.status) {
-          reject({ code: 400, msg: "Payment Error" });
-          return;
+          return reject({ code: 400, msg: "Payment Error" });
         }
         if (transaction.data.status !== "success") {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
+          return reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
         }
         resolve()
       } catch (error) {
-        reject({ code: error.code, msg: error.msg })
-        return
+        reject({ code: error.code || 500, msg: error.msg || MSG_TYPES.SERVER_ERROR})
       }
     })
   }
@@ -158,8 +161,7 @@ class SubscriptionService {
         resolve(updatedSubscription)
 
       } catch (error) {
-        reject({ code: error.code, msg: error.msg })
-        return
+        return reject({ statusCode: error.code, msg: error.msg })
       }
     })
   }
@@ -173,13 +175,13 @@ class SubscriptionService {
       try {
         const startDate = new Date();
         var endDate = new Date();
-        endDate.setDate(endDate.getDate() + body.duration);
+        endDate.setDate(startDate.getDate() + body.duration);
 
         const updateObject = {
-          startDate,
           duration: body.duration,
+          pricing: pricing._id,
+          startDate,
           endDate,
-          pricing: pricing._id
         }
 
         const updatedSubscription = await Subscription.updateOne(
@@ -192,21 +194,22 @@ class SubscriptionService {
         await SubscriptionHistory.create({
           company: body.company,
           pricing: pricing._id,
+          duration: body.duration,
           startDate,
           endDate,
-          duration,
-        })
-        companyInstance.updateCompany(body.company, { teir: pricing._id });
+        });
+
+        await companyInstance.updateCompany(body.company, { tier: pricing._id });
+
         resolve(updatedSubscription)
       } catch (error) {
-        reject({ code: error.code, msg: error.msg })
-        return
+        return reject({ statusCode: error.code, msg: error.msg })
       }
     })
   }
 
   /**
-   * update subscription 
+   * update subscription
    * @param {Object} company
    * @param {ObjectI} updateObject
   */

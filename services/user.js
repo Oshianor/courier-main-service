@@ -328,7 +328,7 @@ class UserService {
           .sort({ createdAt: -1 });
 
         const total = await Order.find({
-          rider: user.id,
+          user: user.id,
           status: "delivered",
         }).countDocuments();
 

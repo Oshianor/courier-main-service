@@ -5,6 +5,7 @@ const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
 const { ACCOUNT_SERVICE } = require("../constant/api");
+const { query } = require("winston");
 
 /**
  * User service class
@@ -81,8 +82,11 @@ class UserService {
           },
         });
         // console.log("response", response);
+        console.log('REsp => ', response);
         resolve(response.data.data);
+
       } catch (error) {
+        console.log('ERROR => ', error);
         if (error.response) {
           reject(error.response.data);
         }
@@ -260,9 +264,10 @@ class UserService {
   getUserPendingOrder(user, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const orders = await Order.find({
+        const queryFilter = {
           user: user.id,
           $or: [
+            { status: "request" },
             { status: "pending" },
             { status: "enrouteToPickup" },
             { status: "arrivedAtPickup" },
@@ -270,7 +275,9 @@ class UserService {
             { status: "enrouteToDelivery" },
             { status: "arrivedAtDelivery" },
           ],
-        })
+        }
+
+        const orders = await Order.find(queryFilter)
           .populate("rider", "name email phoneNumber countryCode img")
           .populate(
             "entry",
@@ -282,17 +289,7 @@ class UserService {
           .limit(pageSize)
           .sort({ createdAt: -1 });
 
-        const total = await Order.find({
-          user: user.id,
-          $or: [
-            { status: "pending" },
-            { status: "enrouteToPickup" },
-            { status: "arrivedAtPickup" },
-            { status: "pickedup" },
-            { status: "enrouteToDelivery" },
-            { status: "arrivedAtDelivery" },
-          ],
-        }).countDocuments();
+        const total = await Order.find(queryFilter).countDocuments();
 
         resolve({ orders, total });
       } catch (error) {

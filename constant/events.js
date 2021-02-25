@@ -1,8 +1,9 @@
-const REDIS_CONFIG = Object.freeze({
-  host: "127.0.0.1",
-  port: 6379,
-});
+const config = require("config");
 
+const REDIS_CONFIG = Object.freeze({
+  host: config.get("redis.host"),
+  port: config.get("redis.port"),
+});
 
 const SERVER_EVENTS = Object.freeze({
   // connect to socket

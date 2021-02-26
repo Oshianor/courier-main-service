@@ -2,7 +2,7 @@ const config = require("config");
 
 const REDIS_CONFIG = Object.freeze({
   host: config.get("redis.host"),
-  port: config.get("redis.port"),
+  port: config.get("redis.port")
 });
 
 const SERVER_EVENTS = Object.freeze({
@@ -34,7 +34,6 @@ const SERVER_EVENTS = Object.freeze({
   // we dispatch this to the app to hide that order
   TAKEN_ENTRY: "takenEntry"
 });
-
 
 const CLIENT_EVENTS = Object.freeze({
   // get pool details

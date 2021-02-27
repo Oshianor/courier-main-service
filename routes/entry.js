@@ -15,7 +15,7 @@ router.post(
 );
 // approve an entry for different payment method
 router.post("/confirm", UserAuth, controller.transaction.transaction);
-// approve an entry for enterprise 
+// approve an entry for enterprise
 router.post(
   "/enterprise/confirm",
   UserAuth,

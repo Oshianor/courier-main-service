@@ -292,7 +292,7 @@ exports.riderAssignToEntry = async (req, res, next) => {
     // send entries to all the rider
     const riderSub = new RiderSubscription();
     await riderSub.sendRidersEntries(riderIDS, entry);
-    
+
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;

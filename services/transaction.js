@@ -15,6 +15,7 @@ const CreditHistory = require("../models/creditHistory");
 const EnterpriseService = require("./enterprise");
 const cardInstance = new CardService();
 const { populateMultiple } = require("../services/aggregate");
+const { calculateInstantPrice } = require("../utils");
 
 
 class TransactionService {
@@ -48,7 +49,19 @@ class TransactionService {
         // get price of the trip based on the pickup type
         let amount = 0;
         if (body.pickupType === "instant") {
-          amount = parseFloat(entry.TEC) * parseFloat(entry.instantPricing);
+          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+
+          const orders = await Order.find({entry: entry._id }).lean();
+
+          for await(let order of orders){
+            let orderCost = calculateInstantPrice(order.estimatedCost, entry.instantPricing);
+            await Order.updateOne(
+              { _id: order._id },
+              { estimatedCost: orderCost },
+              { session }
+            );
+          }
+
         } else {
           amount = parseFloat(entry.TEC);
         }
@@ -151,7 +164,21 @@ class TransactionService {
         // get price of the trip based on the pickup type
         let amount = 0;
         if (body.pickupType === "instant") {
-          amount = parseFloat(entry.TEC) * parseFloat(entry.instantPricing);
+          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+
+          const orders = await Order.find({ entry: entry._id }).lean();
+
+          for await (let order of orders) {
+            let orderCost = calculateInstantPrice(
+              order.estimatedCost,
+              entry.instantPricing
+            );
+            await Order.updateOne(
+              { _id: order._id },
+              { estimatedCost: orderCost },
+              { session }
+            );
+          }
         } else {
           amount = parseFloat(entry.TEC);
         }

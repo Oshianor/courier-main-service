@@ -4,6 +4,7 @@ const moment = require("moment");
 const Entry = require("../models/entry");
 const { AsyncForEach } = require("../utils");
 const CompanySubscription = require("../subscription/company");
+const companySub = new CompanySubscription();
 
 
 mongoose
@@ -49,7 +50,6 @@ handleEntryManagement = async () => {
     );
 
     await AsyncForEach(entry, async (arr, index) => {
-      const companySub = new CompanySubscription();
       await companySub.dispatchToStateRoom(arr);
     });
 

@@ -190,11 +190,11 @@ class EntryService {
                   parseFloat(setting.baseFare);
 
                 // set price for each order
-                body.delivery[elemIndex].estimatedCost = parseFloat(amount);
+                body.delivery[elemIndex].estimatedCost = Math.ceil(parseFloat(amount) / 100) * 100;
                 // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
 
                 // set total price for the entry
-                body.TEC = body.TEC + parseFloat(amount);
+                body.TEC = body.TEC + Math.ceil(parseFloat(amount) / 100) * 100;
               } else {
                 // very questionable
                 // just for test only

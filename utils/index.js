@@ -201,6 +201,14 @@ const convertToDailyDataArray = (dataArray, dataField) => {
   return dailyData.sort().map((data) => data[dataField]);
 }
 
+const calculateInstantPrice = (cost, instantPricing) => {
+  const instantPriceFactor = parseFloat(instantPricing);
+  const subAmount = parseFloat(cost) * instantPriceFactor;
+  const amount = Math.ceil(subAmount/100)*100;
+
+  return amount;
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -215,4 +223,5 @@ module.exports = {
   redisClient,
   sendOTPByTermii,
   convertToDailyDataArray,
+  calculateInstantPrice
 };

@@ -18,7 +18,7 @@ module.exports = {
       instances: 0,
       exec_mode: "cluster",
       watch_delay: 3000,
-      ignore_watch: ["node_modules", "public"],
+      ignore_watch: ["node_modules", "public", ".git"],
       watch_options: {
         followSymlinks: false,
       },

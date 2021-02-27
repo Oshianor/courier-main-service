@@ -118,7 +118,7 @@ const SocketAuth = (socket, next) => {
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
-
+  console.log('Got here => ', token);
   try {
     // call user account service to get details
     const userInstance = new UserService();

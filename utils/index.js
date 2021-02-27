@@ -9,6 +9,7 @@ const sgMail = require("@sendgrid/mail");
 const RandExp = require("randexp");
 const redis = require("redis");
 const axios = require("axios");
+const { REDIS_CONFIG } = require("../constant/events")
 
 const GenerateToken = (num) => {
   var text = "";
@@ -148,7 +149,7 @@ const convertToMonthlyDataArray = (dataArray, dataField) => {
 
 
 const redisClient = () => {
-  const client = redis.createClient(config.get("application.redis"));
+  const client = redis.createClient(REDIS_CONFIG);
   client.on("error", (error) => {
     console.log('Redis Client Error: ', error);
   });
@@ -201,6 +202,14 @@ const convertToDailyDataArray = (dataArray, dataField) => {
   return dailyData.sort().map((data) => data[dataField]);
 }
 
+const calculateInstantPrice = (cost, instantPricing) => {
+  const instantPriceFactor = parseFloat(instantPricing);
+  const subAmount = parseFloat(cost) * instantPriceFactor;
+  const amount = Math.ceil(subAmount/100)*100;
+
+  return amount;
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -215,4 +224,5 @@ module.exports = {
   redisClient,
   sendOTPByTermii,
   convertToDailyDataArray,
+  calculateInstantPrice
 };

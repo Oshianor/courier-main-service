@@ -128,7 +128,7 @@ class SubscriptionService {
     return new Promise(async (resolve, reject) => {
       try {
         const transaction = await paystack.transaction.charge(chargeObject);
-
+        // console.log(transaction);
         if (!transaction.status) {
           return reject({ code: 400, msg: MSG_TYPES.PAYMENT_ERROR });
         }

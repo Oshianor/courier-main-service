@@ -177,7 +177,7 @@ const orderSchema = mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       index: true,
       maxLenght: 50,
     },

@@ -30,7 +30,7 @@ function validateLocalEntry(data) {
       .optional(),
     delivery: Joi.array()
       .items({
-        email: Joi.string().email().max(50).label("Email").required(),
+        email: Joi.string().email().max(50).label("Email").optional(),
         phoneNumber: Joi.string().max(10).required(),
         value: Joi.number().max(9999999999).required(),
         countryCode: Joi.string().max(5).required(),

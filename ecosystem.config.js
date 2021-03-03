@@ -14,14 +14,16 @@ module.exports = {
       env_production: {
         NODE_ENV: "production",
       },
-      watch: ".",
+      // watch: ".",
       instances: 0,
-      exec_mode: "cluster",
-      watch_delay: 3000,
-      ignore_watch: ["node_modules", "public", ".git"],
-      watch_options: {
-        followSymlinks: false,
-      },
+      exec_mode: "fork",
+      watch: false,
+      autorestart: false,
+      // watch_delay: 3000,
+      // ignore_watch: ["node_modules", "public", "logs", ".git"],
+      // watch_options: {
+      //   followSymlinks: false,
+      // },
       instance_var,
       log_date_format,
     },

@@ -3,7 +3,7 @@ const Joi = require("joi");
 
 function validateLocalEntry(data) {
   const Schema = Joi.object().keys({
-    email: Joi.string().email().max(50).label("Email").required(),
+    email: Joi.string().email().max(50).label("Email").optional(),
     itemType: Joi.string()
       .label("Item Type")
       .valid("Document", "Parcel", "Edible")

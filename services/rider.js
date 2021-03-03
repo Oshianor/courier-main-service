@@ -65,7 +65,7 @@ class RiderService {
         resolve(newRider);
       } catch (error) {
         console.log(error)
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
         return;
       }
     });

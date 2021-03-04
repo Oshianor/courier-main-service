@@ -1,4 +1,5 @@
 const Country = require("../models/countries");
+const { AsyncForEach } = require("../utils");
 
 
 class CountryService {
@@ -35,14 +36,22 @@ class CountryService {
     });
   }
 
-  // validateState(state, delivery, countryData) {
-  //   return new Promise(async (resolve, reject) => {
+  validateState(state, delivery) {
+    return new Promise(async (resolve, reject) => {
      
-  //     const stateCheck = countryData.states.filter((v, i) => v.name !== state);
+      console.log("delivery", delivery);
+      AsyncForEach(delivery, (data, index) => {
+        if (state !== data.state) {
+          return reject({
+            code: 404,
+            msg: "We handle only local delivery within the same state",
+          });
+        }
+      })
 
-  //     resolve(countryCheck);
-  //   });
-  // }
+      resolve();
+    });
+  }
 }
 
 module.exports = CountryService;

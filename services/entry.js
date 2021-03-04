@@ -734,7 +734,7 @@ class EntryService {
           metaData: {},
         };
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createOrderLog(logs, session);
+        await tripLogInstance.createLog(logs, session);
 
         await session.commitTransaction();
         session.endSession();

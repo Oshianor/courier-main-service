@@ -148,9 +148,9 @@ const EnterpriseAuth = (roles = []) => {
     if (req.user.role === E_ROLES.OWNER) {
       next();
     } else {
-      if (roles.length < 1) {
-        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-      }
+      // if (roles.length < 1) {
+      //   return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+      // }
       if (roles.includes(req.user.role)) {
         return next();
       }

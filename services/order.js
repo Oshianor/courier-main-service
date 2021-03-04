@@ -174,7 +174,7 @@ class OrderService {
         // log the user last location
         const logs = {
           type: "enrouteToDelivery",
-          order: entry.orders,
+          order: order._id,
           rider: rider._id,
           user: entry.user,
           entry: entry._id,
@@ -305,7 +305,7 @@ class OrderService {
         // log trip status
         const logs = {
           type: "arrivedAtDelivery",
-          order: entry.orders,
+          order: order._id,
           rider: rider._id,
           user: entry.user,
           entry: entry._id,
@@ -454,7 +454,7 @@ class OrderService {
         console.log("Got Here");
         const logs = {
           type: "delivered",
-          order: entry.orders,
+          order: order._id,
           rider: rider._id,
           user: entry.user,
           entry: entry._id,

@@ -223,7 +223,7 @@ class CompanyService {
           .select({ metaData: 0 })
           .skip(skip)
           .limit(pageSize)
-          .sort({createdAt: "desc"});
+          .sort({createdAt: -1 });
 
         const total = await Entry.find({
           company: user.id,

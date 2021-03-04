@@ -734,7 +734,7 @@ class EntryService {
         };
         console.log('Logs => ', logs);
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createOrderLog(logs, session);
+        await tripLogInstance.createLog(logs, session);
 
         console.log('Created logs');
 

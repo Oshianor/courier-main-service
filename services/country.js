@@ -2,7 +2,6 @@ const Country = require("../models/countries");
 
 
 class CountryService {
-
   getCountryAndState(country, state) {
     return new Promise(async (resolve, reject) => {
       // validate country
@@ -35,6 +34,15 @@ class CountryService {
       resolve(countryCheck);
     });
   }
+
+  // validateState(state, delivery, countryData) {
+  //   return new Promise(async (resolve, reject) => {
+     
+  //     const stateCheck = countryData.states.filter((v, i) => v.name !== state);
+
+  //     resolve(countryCheck);
+  //   });
+  // }
 }
 
 module.exports = CountryService;

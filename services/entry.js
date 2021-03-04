@@ -732,11 +732,9 @@ class EntryService {
           longitude: rider.longitude,
           metaData: {},
         };
-        console.log('Logs => ', logs);
+
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createLog(logs, session);
-
-        console.log('Created logs');
 
         await session.commitTransaction();
         session.endSession();

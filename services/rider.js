@@ -31,20 +31,15 @@ class RiderService {
           return;
         }
 
-        if (files && files.POI) {
-          const POI = await UploadFileFromBinary(
-            files.POI.data,
-            files.POI.name
-          );
-          body.POI = POI.Key;
-        }
-
-        if (files && files.img) {
-          const img = await UploadFileFromBinary(
-            files.img.data,
-            files.img.name
-          );
-          body.img = img.Key;
+        const fileFields = ["img","POI","POA","LASDRIID","POVO"];
+        for await (let fileField of fileFields){
+          if (files && files[fileField]) {
+            const field = await UploadFileFromBinary(
+              files[fileField].data,
+              files[fileField].name
+            );
+            body[fileField] = field.Key;
+          }
         }
 
         const token = GenerateToken(225);

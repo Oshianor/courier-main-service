@@ -47,7 +47,7 @@ class TripLogService {
         const add = await this.getGooglePlaceFromCoords(
           `${logs.latitude},${logs.longitude}`
         );
-        
+
         // logs.metaData.address = add;
         const newTripLog = new TripLog({
           ...logs,

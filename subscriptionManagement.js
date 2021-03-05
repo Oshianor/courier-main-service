@@ -1,15 +1,15 @@
 const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
-const Entry = require("../models/entry");
-const { AsyncForEach } = require("../utils");
-const Subscription = require("../models/subscription");
-const SubscriptionService = require("../services/subscription");
-const Pricing = require("../models/pricing");
-const Company = require("../models/company");
-const Card = require("../models/card");
+const Entry = require("./models/entry");
+const { AsyncForEach } = require("./utils");
+const Subscription = require("./models/subscription");
+const SubscriptionService = require("./services/subscription");
+const Pricing = require("./models/pricing");
+const Company = require("./models/company");
+const Card = require("./models/card");
 const { nanoid } = require("nanoid");
-const { MSG_TYPES } = require("../constant/types");
+const { MSG_TYPES } = require("./constant/types");
 const subscriptionService = new SubscriptionService();
 const winston = require("winston");
 

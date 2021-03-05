@@ -519,7 +519,6 @@ class EntryService {
         });
 
         // console.log("riders", riders);
-
         if (typeof riders[0] == "undefined") {
           reject({
             code: 404,
@@ -536,7 +535,7 @@ class EntryService {
           const orders = await Order.countDocuments({
             rider: row._id,
             $or: [
-              { status: "driverAccepted" },
+              { status: "pending" },
               { status: "enrouteToPickup" },
               { status: "arrivedAtPickup" },
               { status: "pickedup" },

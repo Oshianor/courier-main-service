@@ -8,7 +8,6 @@ const config = require("config");
 const port = process.env.PORT || config.get("application.port");
 const mongoose = require('mongoose');
 
-
 mongoose
   .connect(config.get("database.url"), {
     useNewUrlParser: true,

@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
-const Entry = require("../models/entry");
-const Order = require("../models/order");
-const { AsyncForEach } = require("../utils");
+const Entry = require("./models/entry");
+const Order = require("./models/order");
+const { AsyncForEach } = require("./utils");
 
 
 mongoose

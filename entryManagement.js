@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
-const Entry = require("../models/entry");
-const { AsyncForEach } = require("../utils");
-const CompanySubscription = require("../subscription/company");
+const Entry = require("./models/entry");
+const { AsyncForEach } = require("./utils");
+const CompanySubscription = require("./subscription/company");
 const companySub = new CompanySubscription();
-
 
 mongoose
   .connect(config.get("database.url"), {
@@ -31,7 +30,7 @@ handleEntryManagement = async () => {
     const entry = await Entry.find({
       entryprise: null,
       status: "companyAccepted",
-      companyAcceptedAt: { $lt: tenMins },
+      companyAcceptedAt: { $gte: tenMins },
     });
 
     console.log("entry", entry);
@@ -49,9 +48,9 @@ handleEntryManagement = async () => {
       }
     );
 
-    await AsyncForEach(entry, async (arr, index) => {
-      await companySub.dispatchToStateRoom(arr);
-    });
+    // await AsyncForEach(entry, async (arr, index) => {
+    //   await companySub.dispatchToStateRoom(arr);
+    // });
 
   } catch (error) {
     console.log("error", error);

@@ -57,6 +57,17 @@ function validateRiderSelf(body) {
     state: Joi.string().label("State").required(),
     // password: passwordComplexity(complexityOptions).required(),
     // confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+
+    BVN: Joi.string().optional(),
+    NIN: Joi.string().optional(),
+    postalCode: Joi.string().optional(),
+    designation: Joi.string().valid("exalt", "freelance").optional(),
+    guarantors: Joi.array().items({
+      name: Joi.string().required(),
+      phoneNumber: Joi.string().required(),
+      address: Joi.string().required(),
+      relationship: Joi.string().required(),
+    }).max(2).optional()
   });
 
   return schema.validate(body);

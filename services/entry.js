@@ -60,24 +60,25 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        session.startTransaction();
+        let newEntry = null;
+        await session.withTransaction(async() => {
+          // await session.startTransaction();
 
-        const newEntry = new Entry(body);
-        await AsyncForEach(body.delivery, async (row, index, arr) => {
-          body.delivery[index].entry = newEntry._id;
+          newEntry = new Entry(body);
+          await AsyncForEach(body.delivery, async (row, index, arr) => {
+            body.delivery[index].entry = newEntry._id;
+          });
+          const newOrder = await Order.create(body.delivery, { session });
+
+          newEntry.orders = newOrder;
+          body.orders = newEntry.orders;
+          await newEntry.save({ session: session });
         });
-        const newOrder = await Order.create(body.delivery, { session });
 
-        newEntry.orders = newOrder;
-        body.orders = newEntry.orders;
-        await newEntry.save({ session: session });
-
-        await session.commitTransaction();
         session.endSession();
-
         resolve(newEntry);
       } catch (error) {
-        console.log(error);
+        console.log('Session => ', error);
         await session.abortTransaction();
         reject(error);
       }
@@ -736,6 +737,7 @@ class EntryService {
           longitude: rider.longitude,
           metaData: {},
         };
+
         const tripLogInstance = new TripLogService();
         await tripLogInstance.createLog(logs, session);
 

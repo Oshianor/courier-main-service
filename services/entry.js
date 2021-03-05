@@ -533,13 +533,17 @@ class EntryService {
         const riderEntries = [];
         await AsyncForEach(riders, async (row, index, arr) => {
           // find all orders for ech rider that has not yet been concluded or cancelled
-          const orders = await Order.findOne({
+          const orders = await Order.countDocuments({
             rider: row._id,
             $or: [
-              { status: { $ne: "delivered" } },
-              { status: { $ne: "cancelled" } },
+              { status: "driverAccepted" },
+              { status: "enrouteToPickup" },
+              { status: "arrivedAtPickup" },
+              { status: "pickedup" },
+              { status: "enrouteToDelivery" },
+              { status: "arrivedAtDelivery" },
             ],
-          }).countDocuments();
+          });
 
           // check how many orders a driver is currently on
           // if the driver is in less than 10 riders then send him to those orders

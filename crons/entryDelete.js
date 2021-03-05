@@ -2,9 +2,8 @@ const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
 const Entry = require("../models/entry");
+const Order = require("../models/order");
 const { AsyncForEach } = require("../utils");
-const CompanySubscription = require("../subscription/company");
-const companySub = new CompanySubscription();
 
 
 mongoose
@@ -26,15 +25,16 @@ mongoose
  */
 handleEntryDelete = async () => {
   try {
-    const tenMins = moment().add(48, "hours");
+    const tenMins = moment().add(24, "hours");
 
     const entry = await Entry.find({
       status: "request",
-      createdAt: { $lt: tenMins },
+      createdAt: { $gte: tenMins },
     }).lean();
 
     await AsyncForEach(entry, async (data, index) => {
       await Entry.deleteOne({ _id: data._id });
+      await Order.deleteMany({ entry: data._id });
     });
 
   } catch (error) {

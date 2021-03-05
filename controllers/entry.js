@@ -56,6 +56,8 @@ exports.localEntry = async (req, res, next) => {
     const settingInstance = new SettingService();
     const DPInstance = new DPService();
     const VehicleInstance = new VehicleService();
+
+    // validate state
     await countryInstance.getCountryAndState(
       req.body.country,
       req.body.state

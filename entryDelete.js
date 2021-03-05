@@ -25,7 +25,8 @@ mongoose
  */
 handleEntryDelete = async () => {
   try {
-    const tenMins = moment().add(24, "hours");
+    // const tenMins = moment().add(24, "hours");
+    const tenMins = moment().add(2, "minutes");
 
     console.log("tenMins", tenMins);
 

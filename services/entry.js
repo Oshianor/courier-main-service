@@ -1280,9 +1280,12 @@ class EntryService {
           };
 
           // a record to the entry details
-          await entry.updateOne({
-            $push: { OTPRecord: data },
-          });
+          await Entry.updateOne(
+            { _id: body.entry },
+            {
+              $push: { OTPRecord: data },
+            }
+          );
 
           // const leftTries = entry.OTPRecord.length - count;
           reject({

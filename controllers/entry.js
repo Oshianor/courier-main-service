@@ -61,8 +61,8 @@ exports.localEntry = async (req, res, next) => {
       req.body.state
     );
     
-    // validate the states
-    await countryInstance.validateState(req.body.state, req.body.delivery);
+    // // validate the states
+    // await countryInstance.validateState(req.body.state, req.body.delivery);
 
     // find a single vehicle to have access to the weight
     const vehicle = await VehicleInstance.get(req.body.vehicle);

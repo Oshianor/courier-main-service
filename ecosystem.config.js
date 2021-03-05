@@ -31,6 +31,12 @@ module.exports = {
       namespace: name,
       name: "orders-management",
       script: "entryManagement.js",
+      env: {
+        NODE_ENV: "development",
+      },
+      env_production: {
+        NODE_ENV: "production",
+      },
       instances: 1,
       exec_mode: "fork",
       cron_restart: "*/30 * * * *",
@@ -43,6 +49,12 @@ module.exports = {
       namespace: name,
       name: "subscription-management",
       script: "subscriptionManagement.js",
+      env: {
+        NODE_ENV: "development",
+      },
+      env_production: {
+        NODE_ENV: "production",
+      },
       instances: 1,
       exec_mode: "fork",
       cron_restart: "0 0 * * *",
@@ -51,17 +63,23 @@ module.exports = {
       instance_var: "PM2_APP_INSTANCE_ID_CRON",
       log_date_format,
     },
-    {
-      namespace: name,
-      name: "entry-management",
-      script: "entryDelete.js",
-      instances: 1,
-      exec_mode: "fork",
-      cron_restart: "0 0 * * *",
-      watch: false,
-      autorestart: false,
-      instance_var: "PM2_APP_INSTANCE_ID_CRON",
-      log_date_format,
-    },
+    // {
+    //   namespace: name,
+    //   name: "entry-management",
+    //   script: "entryDelete.js",
+    //   env: {
+    //     NODE_ENV: "development",
+    //   },
+    //   env_production: {
+    //     NODE_ENV: "production",
+    //   },
+    //   instances: 1,
+    //   exec_mode: "fork",
+    //   cron_restart: "0 0 * * *",
+    //   watch: false,
+    //   autorestart: false,
+    //   instance_var: "PM2_APP_INSTANCE_ID_CRON",
+    //   log_date_format,
+    // },
   ],
 };

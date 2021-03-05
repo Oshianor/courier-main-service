@@ -30,7 +30,7 @@ handleEntryManagement = async () => {
     const entry = await Entry.find({
       entryprise: null,
       status: "companyAccepted",
-      companyAcceptedAt: { $gte: tenMins },
+      companyAcceptedAt: { $lt: tenMins },
     });
 
     console.log("entry", entry);

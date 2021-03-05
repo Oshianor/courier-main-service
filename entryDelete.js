@@ -15,7 +15,7 @@ mongoose
   })
   .then(() => {
     console.log("Connected to MongoDB...");
-    handleEntryManagement();
+    handleEntryDelete();
   })
   .catch((err) => console.error("Could not connect to MongoDB..."));
 
@@ -27,14 +27,18 @@ handleEntryDelete = async () => {
   try {
     const tenMins = moment().add(24, "hours");
 
+    console.log("tenMins", tenMins);
+
     const entry = await Entry.find({
       status: "request",
-      createdAt: { $gte: tenMins },
+      createdAt: { $lte: tenMins },
     }).lean();
 
+    console.log("entry", entry);
+
     await AsyncForEach(entry, async (data, index) => {
-      await Entry.deleteOne({ _id: data._id });
-      await Order.deleteMany({ entry: data._id });
+      await Entry.deleteOne({ _id: data._id, status: "request" });
+      await Order.deleteMany({ entry: data._id, status: "request" });
     });
 
   } catch (error) {

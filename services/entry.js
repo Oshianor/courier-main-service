@@ -1377,6 +1377,23 @@ class EntryService {
       }
     });
   }
+
+  /**
+   * Update Mutiple Entries
+   * @param {Object} filter
+   * @param {Object} set
+   */
+  updateAll(filter = {}, set = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const updateResult = await Entry.updateMany(filter, set);
+
+        resolve(updateResult)
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
 }
 
 module.exports = EntryService;

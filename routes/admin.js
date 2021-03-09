@@ -157,6 +157,7 @@ router.get(
   controller.wallet.singleWalletHistory
 );
 
+router.patch("/order/:orderId/cancel", [Auth, hasRole([ROLES.ADMIN])], controller.order.adminCancelOrder);
 // Enterprise accounts management
 // router.get("/enterprise/accounts", [Auth, hasRole([ROLES.ADMIN])], controller.admin.getEnterpriseAccounts);
 

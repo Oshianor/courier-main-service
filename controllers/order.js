@@ -343,3 +343,18 @@ exports.assignOrderToRider = async (req, res, next) => {
     next(error);
   }
 };
+
+
+exports.adminCancelOrder = async (req, res, next) => {
+  try {
+    const orderInstance = new OrderService();
+    const { orderId } = req.params;
+
+    await orderInstance.adminCancelOrder(orderId);
+
+    JsonResponse(res, 200, "Order cancelled successfully");
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};

@@ -697,6 +697,17 @@ class OrderService {
       resolve();
     })
   }
+
+  removeOrderFromRiderBasket(rider, orderId){
+    return new Promise(async(resolve, reject) => {
+      try{
+
+        resolve()
+      } catch(error){
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
+      }
+    })
+  }
 }
 
 module.exports = OrderService;

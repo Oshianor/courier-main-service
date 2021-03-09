@@ -178,7 +178,7 @@ const RiderAuth = async(req, res, next) => {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
     const riderId = decoded.id.toString();
 
-    redisClient().hget('RIDER_AUTH_TOKENS', riderId, (err, riderToken) => {
+    redisClient.hget('RIDER_AUTH_TOKENS', riderId, (err, riderToken) => {
       if(err){
         return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
       }

@@ -19,6 +19,9 @@ router.get("/basket", RiderAuth, controller.rider.basket);
 //get all orders by a rider for the day
 router.get("/basket/completed", RiderAuth, controller.rider.completedOrder);
 
+// remove order from basket
+router.patch("/basket/:orderId/remove", RiderAuth, controller.rider.removeOrderFromBasket);
+
 //get all trips completed by a rider in the current month
 router.get("/trips", RiderAuth, controller.rider.trips);
 

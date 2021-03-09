@@ -10,6 +10,12 @@ const RandExp = require("randexp");
 const redis = require("redis");
 const axios = require("axios");
 const { REDIS_CONFIG } = require("../constant/events")
+const redisClient = redis.createClient(REDIS_CONFIG);
+
+redisClient.on("error", (error) => {
+  console.log('Redis Client Error: ', error);
+});
+
 
 const GenerateToken = (num) => {
   var text = "";
@@ -145,16 +151,6 @@ const convertToMonthlyDataArray = (dataArray, dataField) => {
   }
 
   return monthlyData.sort().map((data) => data[dataField]);
-}
-
-
-const redisClient = () => {
-  const client = redis.createClient(REDIS_CONFIG);
-  client.on("error", (error) => {
-    console.log('Redis Client Error: ', error);
-  });
-
-  return client;
 }
 
 

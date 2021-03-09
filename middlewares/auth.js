@@ -197,7 +197,6 @@ const RiderAuth = async(req, res, next) => {
     }
     return JsonResponse(res, 406, "Session Expired");
   }
-
 }
 
 module.exports = {

@@ -40,7 +40,7 @@ class EntryService {
           .populate(populate);
 
         if (!entry) {
-          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+          reject({ code: 404, msg: "Entry not found" });
         }
 
         resolve(entry);

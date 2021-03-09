@@ -645,9 +645,9 @@ exports.getEarningStatistics = async (req, res, next) => {
 exports.removeOrderFromBasket = async (req, res, next) => {
   try {
     const orderInstance = new OrderService();
-    await orderInstance.removeOrderFromRiderBasket(req.user, req.param.orderId);
+    await orderInstance.removeOrderFromRiderBasket(req.user.id, req.params.orderId);
 
-    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+    return JsonResponse(res, 200, "Order cancelled successfully");
   } catch (error) {
     next(error)
   }

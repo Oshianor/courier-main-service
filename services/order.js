@@ -25,16 +25,19 @@ class OrderService {
    */
   get(filter = {}, option = {}, populate = "") {
     return new Promise(async (resolve, reject) => {
-      // check if we have pricing for the location
-      const order = await Order.findOne(filter)
+      try{
+         // check if we have pricing for the location
+        const order = await Order.findOne(filter)
         .select(option)
         .populate(populate);
 
-      if (!order) {
-        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        if (!order) {
+          reject({ code: 404, msg: "Order not found" });
+        }
+        resolve(order);
+      } catch(error){
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
-
-      resolve(order);
     });
   }
 
@@ -673,7 +676,7 @@ class OrderService {
       const order = await this.get({_id: orderId});
 
       if(!["request","pending"].includes(order.status)){
-        reject({code: 400, msg: "You can't cancel an already accepted or cancelled order"});
+        return reject({code: 400, msg: "You can't cancel an already accepted or cancelled order"});
       }
 
       const updatedOrder = await this.updateAll(
@@ -698,13 +701,26 @@ class OrderService {
     })
   }
 
-  removeOrderFromRiderBasket(rider, orderId){
+  removeOrderFromRiderBasket(riderId, orderId){
     return new Promise(async(resolve, reject) => {
       try{
+        const entryService = new EntryService();
+        const transactionService = new TransactionService();
+
+        const order = await this.get({_id: orderId, rider: riderId});
+        const entry = await entryService.get({order: orderId, rider: riderId});
+
+        if(!["driverAccepted","enrouteToPickup"].includes(entry.status)){
+          return reject({code: 400, msg: "You can no longer cancel this order"});
+        }
+
+        await entry.updateOne({status: "companyAccepted", riderAcceptedAt: null, rider: null});
+        await this.updateAll({entry: entry._id, rider: riderId}, { status: "pending", rider: null});
+        await transactionService.updateAll({entry: entry._id, rider: riderId}, {rider: null});
 
         resolve()
       } catch(error){
-        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
+        return reject({code: error.code||500, msg: error.msg||MSG_TYPES.SERVER_ERROR});
       }
     })
   }

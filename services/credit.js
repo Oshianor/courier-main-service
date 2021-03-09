@@ -170,6 +170,7 @@ class CreditService {
           await creditHistory.updateOne({
             status: "approved",
             admin: user.id,
+            note: body.note || '',
             approvedAt: new Date(),
           });
           await Credit.updateOne(
@@ -181,7 +182,12 @@ class CreditService {
 
         }
 
-        await creditHistory.updateOne({ status: "declined" });
+        await creditHistory.updateOne({
+          status: "declined",
+          admin: user.id,
+          note: body.note,
+          declinedAt: new Date()
+        });
         return resolve({ creditHistory });
       } catch (error) {
         reject(error);

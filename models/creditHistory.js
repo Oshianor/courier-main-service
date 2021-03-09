@@ -57,8 +57,12 @@ const CreditHistorySchema = mongoose.Schema(
     approvedAt: {
       // this is used to loan request sent to the admin
       type: Date,
-      default: new Date(),
+      default: null,
     },
+    declinedAt: {
+      type: Date,
+      default: null
+    }
   },
   {
     timestamps: true,

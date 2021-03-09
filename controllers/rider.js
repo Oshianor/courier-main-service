@@ -17,6 +17,7 @@ const {
 const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
+const OrderService = require("../services/order");
 
 /**
  * Create Rider
@@ -637,6 +638,17 @@ exports.getEarningStatistics = async (req, res, next) => {
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
   } catch (error) {
     console.log(error)
+    next(error)
+  }
+}
+
+exports.removeOrderFromBasket = async (req, res, next) => {
+  try {
+    const orderInstance = new OrderService();
+    await orderInstance.removeOrderFromRiderBasket(req.user, req.param.orderId);
+
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED);
+  } catch (error) {
     next(error)
   }
 }

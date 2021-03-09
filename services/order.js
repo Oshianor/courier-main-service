@@ -11,6 +11,7 @@ const OTPCode = require("../templates/otpCode");
 const TripLog = require("../models/tripLog");
 const moment = require("moment");
 const UserService = require("./user");
+const EntryService = require("./entry");
 const userInstance = new UserService();
 
 
@@ -72,11 +73,6 @@ class OrderService {
       try {
         // check if we have pricing for the location
         const order = await Order.updateMany(filter, set);
-
-        if (order) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
 
         resolve(order);
       } catch (error) {
@@ -666,6 +662,37 @@ class OrderService {
         reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
+  }
+
+  /**
+   * @param {ObjectId} orderId
+   */
+  adminCancelOrder(orderId){
+    return new Promise(async(resolve, reject) => {
+      const order = await this.get({_id: orderId});
+
+      if(!["request","pending"].includes(order.status)){
+        reject({code: 400, msg: "You can't cancel an already accepted order"});
+      }
+
+      const updatedOrder = await this.updateAll(
+        { _id: orderId },
+        { status: "cancelled" }
+      );
+
+      // cancel whole entry if all orders in it are cancelled
+      const entryService = new EntryService();
+      const entry = await entryService.get({_id: order.entry},"","orders");
+
+      if(entry && entry.orders){
+        const allOrdersCancelled = entry.orders.every((order) => order.status === "cancelled");
+        if(allOrdersCancelled){
+          await entry.updateOne({status: "cancelled"});
+        }
+      }
+
+      resolve();
+    })
   }
 }
 

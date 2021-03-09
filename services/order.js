@@ -12,6 +12,7 @@ const TripLog = require("../models/tripLog");
 const moment = require("moment");
 const UserService = require("./user");
 const EntryService = require("./entry");
+const TransactionService = require("./transaction");
 const userInstance = new UserService();
 
 
@@ -672,7 +673,7 @@ class OrderService {
       const order = await this.get({_id: orderId});
 
       if(!["request","pending"].includes(order.status)){
-        reject({code: 400, msg: "You can't cancel an already accepted order"});
+        reject({code: 400, msg: "You can't cancel an already accepted or cancelled order"});
       }
 
       const updatedOrder = await this.updateAll(
@@ -680,14 +681,16 @@ class OrderService {
         { status: "cancelled" }
       );
 
-      // cancel whole entry if all orders in it are cancelled
+      // Cancel whole entry if all orders in it are cancelled
       const entryService = new EntryService();
+      const transactionService = new TransactionService();
       const entry = await entryService.get({_id: order.entry},"","orders");
 
       if(entry && entry.orders){
         const allOrdersCancelled = entry.orders.every((order) => order.status === "cancelled");
         if(allOrdersCancelled){
           await entry.updateOne({status: "cancelled"});
+          await transactionService.updateAll({entry: order.entry}, {status: "declined"});
         }
       }
 

@@ -33,6 +33,8 @@ router.get("/riders/:riderId/orders", Auth, controller.rider.getRiderOrders);
 router.get("/riders/:riderId/statistics", Auth, controller.rider.getRiderStatistics);
 router.get("/riders/:riderId/transactions", Auth, controller.rider.getRiderTransactions);
 
+router.patch("/riders/:riderId/orders/:orderId/cancel", Auth, controller.company.removeOrderFromRiderBasket);
+
 // Riders Request
 router.get("/request/riders", Auth, controller.rider.requests);
 router.post("/request/:requestId", Auth, controller.rider.respond);

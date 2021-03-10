@@ -180,6 +180,28 @@ class UserService {
     });
   }
 
+  getUserCount() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.get(`
+          ${ACCOUNT_SERVICE.GET_USERS_COUNT}`,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        resolve(response.data.data);
+      } catch (error) {
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
+      }
+    });
+  }
+
   // [moved to accounts service]
   /**
    * Get a list of users

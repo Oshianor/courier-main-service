@@ -350,9 +350,9 @@ exports.adminCancelOrder = async (req, res, next) => {
     const orderInstance = new OrderService();
     const { orderId } = req.params;
 
-    await orderInstance.adminCancelOrder(orderId);
+    const updatedEntry = await orderInstance.adminCancelOrder(orderId);
 
-    JsonResponse(res, 200, "Order cancelled successfully");
+    JsonResponse(res, 200, "Order cancelled successfully", updatedEntry);
   } catch (error) {
     console.log(error);
     next(error);

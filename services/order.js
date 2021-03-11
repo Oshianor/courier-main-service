@@ -36,6 +36,7 @@ class OrderService {
         }
         resolve(order);
       } catch(error){
+        console.log(error)
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
@@ -80,6 +81,7 @@ class OrderService {
 
         resolve(order);
       } catch (error) {
+        console.log(error);
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
@@ -697,7 +699,9 @@ class OrderService {
         }
       }
 
-      resolve();
+      const updatedEntry = await entryService.get({_id: order.entry}, "","orders");
+
+      resolve(updatedEntry);
     })
   }
 
@@ -707,19 +711,26 @@ class OrderService {
         const entryService = new EntryService();
         const transactionService = new TransactionService();
 
+        console.log('Before => ', );
+
         const order = await this.get({_id: orderId, rider: riderId});
+        console.log('after => ', order);
         const entry = await entryService.get({_id: order.entry, rider: riderId});
+
 
         if(!["driverAccepted","enrouteToPickup"].includes(entry.status)){
           return reject({code: 400, msg: "You can no longer cancel this order"});
         }
 
+        console.log('dsdsa 1')
         await entry.updateOne({status: "companyAccepted", riderAcceptedAt: null, rider: null});
         await this.updateAll({entry: entry._id, rider: riderId}, { status: "pending", rider: null});
         await transactionService.updateAll({entry: entry._id, rider: riderId}, {rider: null});
+        console.log('dsdsa 2')
 
         resolve()
       } catch(error){
+        console.log('Erroradadwq', error);
         return reject({code: error.code||500, msg: error.msg||MSG_TYPES.SERVER_ERROR});
       }
     })

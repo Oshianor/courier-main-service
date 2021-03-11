@@ -708,7 +708,7 @@ class OrderService {
         const transactionService = new TransactionService();
 
         const order = await this.get({_id: orderId, rider: riderId});
-        const entry = await entryService.get({order: orderId, rider: riderId});
+        const entry = await entryService.get({_id: order.entry, rider: riderId});
 
         if(!["driverAccepted","enrouteToPickup"].includes(entry.status)){
           return reject({code: 400, msg: "You can no longer cancel this order"});

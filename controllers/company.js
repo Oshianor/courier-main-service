@@ -10,6 +10,7 @@ const PricingService = require("../services/pricing");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
 const StatisticsService = require("../services/statistics");
+const OrderService = require("../services/order");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { nanoid } = require("nanoid");
@@ -31,6 +32,7 @@ const countryInstance = new CountryService();
 const vehicleInstance = new VehicleService();
 const companyInstance = new CompanyService();
 const statisticsInstance = new StatisticsService();
+const orderInstance = new OrderService();
 
 /**
  * Create Company
@@ -570,3 +572,16 @@ exports.getTransactionStatistics = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.removeOrderFromRiderBasket = async (req, res, next) => {
+  try {
+    const { orderId, riderId } = req.params;
+
+    await orderInstance.removeOrderFromRiderBasket(riderId, orderId);
+
+    return JsonResponse(res, 200, "Order cancelled successfully");
+  } catch (error) {
+    console.log('Error', error);
+    next(error)
+  }
+}

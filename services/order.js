@@ -11,7 +11,11 @@ const OTPCode = require("../templates/otpCode");
 const TripLog = require("../models/tripLog");
 const moment = require("moment");
 const UserService = require("./user");
+const EntryService = require("./entry");
+const TransactionService = require("./transaction");
+const EntrySubscription = require("../subscription/entry");
 const userInstance = new UserService();
+
 
 
 class OrderService {
@@ -23,16 +27,20 @@ class OrderService {
    */
   get(filter = {}, option = {}, populate = "") {
     return new Promise(async (resolve, reject) => {
-      // check if we have pricing for the location
-      const order = await Order.findOne(filter)
+      try{
+         // check if we have pricing for the location
+        const order = await Order.findOne(filter)
         .select(option)
         .populate(populate);
 
-      if (!order) {
-        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        if (!order) {
+          reject({ code: 404, msg: "Order not found" });
+        }
+        resolve(order);
+      } catch(error){
+        console.log(error)
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
-
-      resolve(order);
     });
   }
 
@@ -73,13 +81,9 @@ class OrderService {
         // check if we have pricing for the location
         const order = await Order.updateMany(filter, set);
 
-        if (order) {
-          reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
-          return;
-        }
-
         resolve(order);
       } catch (error) {
+        console.log(error);
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
@@ -666,6 +670,66 @@ class OrderService {
         reject({ code: 404, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
+  }
+
+  /**
+   * @param {ObjectId} orderId
+   */
+  adminCancelOrder(orderId){
+    return new Promise(async(resolve, reject) => {
+      const order = await this.get({_id: orderId});
+
+      if(!["request","pending"].includes(order.status)){
+        return reject({code: 400, msg: "You can't cancel an already accepted or cancelled order"});
+      }
+
+      const updatedOrder = await this.updateAll(
+        { _id: orderId },
+        { status: "cancelled" }
+      );
+
+      // Cancel whole entry if all orders in it are cancelled
+      const entryService = new EntryService();
+      const entrySub = new EntrySubscription();
+      const transactionService = new TransactionService();
+      const entry = await entryService.get({_id: order.entry},"","orders");
+
+      if(entry && entry.orders){
+        const allOrdersCancelled = entry.orders.every((order) => order.status === "cancelled");
+        if(allOrdersCancelled){
+          await entry.updateOne({status: "cancelled"});
+          await transactionService.updateAll({entry: order.entry}, {status: "declined"});
+        }
+      }
+
+      await entrySub.updateEntryAdmin(entry._id);
+      // const updatedEntry = await entryService.get({_id: order.entry}, "","orders");
+      resolve();
+    })
+  }
+
+  removeOrderFromRiderBasket(riderId, orderId){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const entryService = new EntryService();
+        const transactionService = new TransactionService();
+
+        const order = await this.get({_id: orderId, rider: riderId});
+        const entry = await entryService.get({_id: order.entry, rider: riderId});
+
+        if(!["driverAccepted","enrouteToPickup"].includes(entry.status)){
+          return reject({code: 400, msg: "You can no longer cancel this order"});
+        }
+
+        await entry.updateOne({status: "companyAccepted", riderAcceptedAt: null, rider: null});
+        await this.updateAll({entry: entry._id, rider: riderId}, { status: "pending", rider: null});
+        await transactionService.updateAll({entry: entry._id, rider: riderId}, {rider: null});
+
+        resolve()
+      } catch(error){
+        return reject({code: error.code||500, msg: error.msg||MSG_TYPES.SERVER_ERROR});
+      }
+    })
   }
 }
 

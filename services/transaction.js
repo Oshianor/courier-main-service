@@ -481,6 +481,25 @@ class TransactionService {
     });
   }
 
+  /**
+   * Update Mutiple Orders
+   * @param {Object} filter
+   * @param {Object} set
+   */
+  updateAll(filter = {}, set = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // check if we have pricing for the location
+        const transaction = await Transaction.updateMany(filter, set);
+
+        resolve(transaction);
+      } catch (error) {
+        console.log(error);
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    });
+  }
+
 }
 
 

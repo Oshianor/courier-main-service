@@ -164,12 +164,12 @@ class RiderService {
           // .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET"
+            "status type source paymentMethod transaction itemType TEC TED TET name email countryCode phoneNumber"
           )
-          .populate(
-            "company",
-            "name email phoneNumber type logo address countryCode"
-          )
+          // .populate(
+          //   "company",
+          //   "name email phoneNumber type logo address countryCode"
+          // )
           .populate("transaction")
           .sort({ pickupType: -1 })
           .lean();

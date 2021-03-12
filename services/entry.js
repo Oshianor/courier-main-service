@@ -40,7 +40,7 @@ class EntryService {
           .populate(populate);
 
         if (!entry) {
-          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+          reject({ code: 404, msg: "Entry not found" });
         }
 
         resolve(entry);
@@ -1374,6 +1374,23 @@ class EntryService {
           code: 400,
           msg: "You need to start an instant pickup first.",
         });
+      }
+    });
+  }
+
+  /**
+   * Update Mutiple Entries
+   * @param {Object} filter
+   * @param {Object} set
+   */
+  updateAll(filter = {}, set = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const updateResult = await Entry.updateMany(filter, set);
+
+        resolve(updateResult)
+      } catch (error) {
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

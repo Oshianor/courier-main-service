@@ -15,6 +15,11 @@ function validateAppproveLoan(data) {
     credit: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
+    note: Joi.string().when('status', {
+      is: "declined",
+      then: Joi.string().required(),
+      otherwise: Joi.string().optional()
+    }),
   });
 
   return Schema.validate(data);

@@ -230,6 +230,8 @@ class StatisticsService {
           { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
           { $group: { _id: 1, "total": {$sum: "$commissionAmount"} }},
         ]);
+
+        console.log(totalComission)
         totalComission = totalComission[0] ? totalComission[0].total : 0;
 
         resolve(totalComission);

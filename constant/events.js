@@ -32,7 +32,9 @@ const SERVER_EVENTS = Object.freeze({
 
   // When an order as been accepted by a rider.
   // we dispatch this to the app to hide that order
-  TAKEN_ENTRY: "takenEntry"
+  TAKEN_ENTRY: "takenEntry",
+
+  "UPDATE_ENTRY_ADMIN": "updateEntryAdmin"
 });
 
 const CLIENT_EVENTS = Object.freeze({
@@ -50,4 +52,4 @@ module.exports = {
   SERVER_EVENTS,
   CLIENT_EVENTS,
   REDIS_CONFIG,
-}; 
+};

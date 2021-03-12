@@ -12,29 +12,51 @@ class EntrySubscription {
    * Get All the admin
    * @param {String} entryId
    */
-  newEntry(entryId) {
-    return new Promise(async (resolve, reject) => {
+  getEntry(entryId){
+    return new Promise(async(resolve, reject) => {
       let entry = await Entry.findOne(entryId)
-        .populate("transaction")
-        .populate("orders")
-        .populate("vehicle")
-        // .populate("user", "name email phoneNumber countryCode")
-        .populate(
-          "company",
-          "name email phoneNumber type logo address countryCode"
-        )
-        .populate(
-          "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude img"
-        )
-        .lean();
+      .populate("transaction")
+      .populate("orders")
+      .populate("vehicle")
+      .populate(
+        "company",
+        "name email phoneNumber type logo address countryCode"
+      )
+      .populate(
+        "rider",
+        "name email phoneNumber countryCode onlineStatus latitude longitude img"
+      )
+      .lean();
 
       entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
+
+      resolve(entry);
+    })
+  }
+
+  newEntry(entryId) {
+    return new Promise(async (resolve, reject) => {
+      const entry = await this.getEntry(entryId);
 
       socket
         .to("admin")
         .emit(
           SERVER_EVENTS.NEW_ENTRY_ADMIN,
+          SocketResponse(false, "ok", entry)
+        );
+
+      resolve(SocketResponse(false, "ok", entry));
+    });
+  }
+
+  updateEntry(entryId) {
+    return new Promise(async (resolve, reject) => {
+      const entry = await this.getEntry(entryId);
+
+      socket
+        .to("admin")
+        .emit(
+          SERVER_EVENTS.UPDATE_ENTRY_ADMIN,
           SocketResponse(false, "ok", entry)
         );
 
@@ -201,20 +223,21 @@ class EntrySubscription {
 
   updateEntryAdmin(entryId) {
     return new Promise(async (resolve, reject) => {
-      let entry = await Entry.findById(entryId)
-        .populate("transaction")
-        .populate("orders")
-        .populate(
-          "company",
-          "name email phoneNumber type logo address countryCode"
-        )
-        .populate(
-          "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude img"
-        )
-        .lean();
+      const entry = await this.getEntry(entryId);
+      // let entry = await Entry.findById(entryId)
+      //   .populate("transaction")
+      //   .populate("orders")
+      //   .populate(
+      //     "company",
+      //     "name email phoneNumber type logo address countryCode"
+      //   )
+      //   .populate(
+      //     "rider",
+      //     "name email phoneNumber countryCode onlineStatus latitude longitude img"
+      //   )
+      //   .lean();
 
-      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
+      // entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       socket.to("admin").emit( SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN, SocketResponse(false, "ok", entry));
 

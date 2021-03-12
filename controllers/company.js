@@ -581,6 +581,7 @@ exports.removeOrderFromRiderBasket = async (req, res, next) => {
 
     return JsonResponse(res, 200, "Order cancelled successfully");
   } catch (error) {
+    console.log('Error', error);
     next(error)
   }
 }

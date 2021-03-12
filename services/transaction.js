@@ -494,6 +494,7 @@ class TransactionService {
 
         resolve(transaction);
       } catch (error) {
+        console.log(error);
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });

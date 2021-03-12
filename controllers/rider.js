@@ -370,6 +370,7 @@ exports.location = async (req, res, next) => {
     const { error } = validateRiderLocation(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    req.body.locationDate = new Date();
     await Rider.updateOne({ _id: req.user.id }, req.body)
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);

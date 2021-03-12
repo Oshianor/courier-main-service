@@ -364,8 +364,9 @@ class RiderService {
         const order = await Order.findOne({
           rider: riderId,
           $or: [
-            { status: { $ne: "delivered" } },
-            { status: { $ne: "cancelled" } },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
           ],
         });
 

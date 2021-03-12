@@ -9,6 +9,7 @@ const CreditHistory = require("../models/creditHistory");
 const Company = require("../models/company");
 const Vehicle = require("../models/vehicle");
 const EnterpriseService = require("./enterprise");
+const UserService = require("./user");
 const { ObjectId } = mongoose.Types;
 
 const enterpriseInstance = new EnterpriseService();
@@ -229,6 +230,8 @@ class StatisticsService {
           { $match: {...filter, status: "approved", approvedAt: {$ne:null}} },
           { $group: { _id: 1, "total": {$sum: "$commissionAmount"} }},
         ]);
+
+        console.log(totalComission)
         totalComission = totalComission[0] ? totalComission[0].total : 0;
 
         resolve(totalComission);
@@ -263,8 +266,9 @@ class StatisticsService {
   getAccountsStatistics(){
     return new Promise(async(resolve, reject) => {
       try{
-        // const totalUsers = await User.countDocuments();
-        const totalUsers = 1;
+        const userService = new UserService();
+
+        const totalUsers = await userService.getUserCount();
         const totalCompanies = await Company.countDocuments();
         const totalRiders = await Rider.countDocuments();
 

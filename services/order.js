@@ -13,7 +13,9 @@ const moment = require("moment");
 const UserService = require("./user");
 const EntryService = require("./entry");
 const TransactionService = require("./transaction");
+const EntrySubscription = require("../subscription/entry");
 const userInstance = new UserService();
+
 
 
 class OrderService {
@@ -36,6 +38,7 @@ class OrderService {
         }
         resolve(order);
       } catch(error){
+        console.log(error)
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
@@ -80,6 +83,7 @@ class OrderService {
 
         resolve(order);
       } catch (error) {
+        console.log(error);
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
@@ -686,6 +690,7 @@ class OrderService {
 
       // Cancel whole entry if all orders in it are cancelled
       const entryService = new EntryService();
+      const entrySub = new EntrySubscription();
       const transactionService = new TransactionService();
       const entry = await entryService.get({_id: order.entry},"","orders");
 
@@ -697,6 +702,8 @@ class OrderService {
         }
       }
 
+      await entrySub.updateEntryAdmin(entry._id);
+      // const updatedEntry = await entryService.get({_id: order.entry}, "","orders");
       resolve();
     })
   }
@@ -708,7 +715,7 @@ class OrderService {
         const transactionService = new TransactionService();
 
         const order = await this.get({_id: orderId, rider: riderId});
-        const entry = await entryService.get({order: orderId, rider: riderId});
+        const entry = await entryService.get({_id: order.entry, rider: riderId});
 
         if(!["driverAccepted","enrouteToPickup"].includes(entry.status)){
           return reject({code: 400, msg: "You can no longer cancel this order"});

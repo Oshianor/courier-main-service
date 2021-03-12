@@ -122,6 +122,10 @@ const riderSchema = new mongoose.Schema(
       type: Number,
       default: 0.0,
     },
+    locationDate: {
+      type: Date,
+      default: new Date()
+    },
     FCMToken: {
       type: String,
       default: null,

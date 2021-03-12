@@ -9,6 +9,7 @@ const ACCOUNT_SERVICE = Object.freeze({
   USER: `${account}/user`,
   GET_USER: `${account}/user/findOne`,
   GET_USERS: `${account}/user/find`,
+  GET_USERS_COUNT: `${account}/user/count`,
 
   // create enterprise user account
   E_USER: `${account}/user/enterpise`,

@@ -444,14 +444,15 @@ class EntryService {
 
         // calculate our commision from the company pricing plan
         const commissionAmount =
-          (transaction.amount * pricing.transactionCost) / 100;
+          parseFloat((transaction.amount * pricing.transactionCost) / 100);
 
         await transaction.updateOne(
           {
             company: user.id,
             commissionPercent: pricing.transactionCost,
             commissionAmount,
-            amountWOcommision: transaction.amount - commissionAmount,
+            amountWOcommision:
+              parseFloat(transaction.amount) - parseFloat(commissionAmount),
           },
           { session }
         );

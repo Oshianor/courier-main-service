@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const config = require("config");
 const Entry = require("../models/entry");
+const Company = require("../models/company");
+const Pricing = require("../models/pricing");
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const UserService = require("./user");
@@ -183,6 +185,28 @@ class TransactionService {
           amount = parseFloat(entry.TEC);
         }
 
+        // calculate our commision from the company pricing plan
+        const company = await Company.findOne({
+          _id: entry.company,
+          status: "active",
+          verified: true,
+          ownership: true,
+        }).lean();
+
+        if (!company) {
+          reject({ code: 400, msg: "No company account was found." });
+          return;
+        }
+
+        const pricing = await Pricing.findOne({ _id: company.tier }).lean();
+        if (!pricing) {
+          reject({
+            code: 400,
+            msg: "You're currently not on any plan at the moment",
+          });
+          return;
+        }
+
         let msg;
         if (body.paymentMethod === "card") {
           const card = await cardInstance.get({ _id: body.card, user: user.id });
@@ -237,10 +261,18 @@ class TransactionService {
           msg = "Cash Payment Method Confirmed";
         }
 
-        // start our transaction
-        // session.startTransaction();
+
+
+        const commissionAmount = parseFloat(
+          (amount * pricing.transactionCost) / 100
+        );
 
         const newTransaction = new Transaction(body);
+        newTransaction.company = entry.company;
+        newTransaction.commissionPercent = pricing.transactionCost;
+        newTransaction.commissionAmount = commissionAmount;
+        newTransaction.amountWOcommision = parseFloat(amount) - parseFloat(commissionAmount);
+
         await newTransaction.save({ session });
         await entry.updateOne(
           {
@@ -494,6 +526,7 @@ class TransactionService {
 
         resolve(transaction);
       } catch (error) {
+        console.log(error);
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });

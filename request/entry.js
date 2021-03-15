@@ -9,7 +9,9 @@ function validateLocalEntry(data) {
       .valid("Document", "Parcel", "Edible")
       .required(),
     name: Joi.string().label("Name").required(),
-    address: Joi.string().label("Pickup Address").required(),
+    // address: Joi.string().label("Pickup Address").required(),
+    pickupLatitude: Joi.number().label("Pickup Latitude").required(),
+    pickupLongitude: Joi.number().label("Pickup Longitude").required(),
     description: Joi.string().label("Description").allow("").required(),
     vehicle: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
@@ -36,7 +38,9 @@ function validateLocalEntry(data) {
         countryCode: Joi.string().max(5).required(),
         name: Joi.string().label("Name").required(),
         itemName: Joi.string().label("Item Name").required(),
-        address: Joi.string().label("Delivery Address").required(),
+        // address: Joi.string().label("Delivery Address").required(),
+        deliveryLatitude: Joi.number().label("Delivery Latitude").required(),
+        deliveryLongitude: Joi.number().label("Delivery Longitude").required(),
         country: Joi.string().label("Country").required(),
         state: Joi.string().label("State").required(),
         quantity: Joi.number().label("Quantity").required(),

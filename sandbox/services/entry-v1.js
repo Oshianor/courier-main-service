@@ -1,15 +1,14 @@
 const mongoose = require("mongoose");
 const config = require("config");
 const moment = require("moment");
-const Entry = require("../models/entry");
-const Order = require("../models/order");
-const Company = require("../models/company");
-const Transaction = require("../models/transaction");
-const RiderEntryRequest = require("../models/riderEntryRequest");
-const Pricing = require("../models/pricing");
-const Rider = require("../models/rider");
+const Entry = require("../../models/entry");
+const Order = require("../../models/order");
+const Company = require("../../models/company");
+const Transaction = require("../../models/transaction");
+const RiderEntryRequest = require("../../models/riderEntryRequest");
+const Pricing = require("../../models/pricing");
+const Rider = require("../../models/rider");
 const TripLogService = require("./triplog");
-const UserService = require("./user");
 const NotificationService = require("./notification");
 const { nanoid } = require("nanoid");
 const {
@@ -17,12 +16,11 @@ const {
   GenerateOTP,
   Mailer,
   UploadFileFromBase64,
-} = require("../utils");
-const OTPCode = require("../templates/otpCode");
-const { MSG_TYPES } = require("../constant/types");
+} = require("../../utils");
+const OTPCode = require("../../templates/otpCode");
+const { MSG_TYPES } = require("../../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
-const userInstance = new UserService();
 
 class EntryService {
   /**
@@ -40,7 +38,7 @@ class EntryService {
           .populate(populate);
 
         if (!entry) {
-          reject({ code: 404, msg: "Entry not found" });
+          reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
         }
 
         resolve(entry);
@@ -60,25 +58,24 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        let newEntry = null;
-        await session.withTransaction(async() => {
-          // await session.startTransaction();
+        session.startTransaction();
 
-          newEntry = new Entry(body);
-          await AsyncForEach(body.delivery, async (row, index, arr) => {
-            body.delivery[index].entry = newEntry._id;
-          });
-          const newOrder = await Order.create(body.delivery, { session });
-
-          newEntry.orders = newOrder;
-          body.orders = newEntry.orders;
-          await newEntry.save({ session: session });
+        const newEntry = new Entry(body);
+        await AsyncForEach(body.delivery, async (row, index, arr) => {
+          body.delivery[index].entry = newEntry._id;
         });
+        const newOrder = await Order.create(body.delivery, { session });
 
+        newEntry.orders = newOrder;
+        body.orders = newEntry.orders;
+        await newEntry.save({ session: session });
+
+        await session.commitTransaction();
         session.endSession();
+
         resolve(newEntry);
       } catch (error) {
-        console.log('Session => ', error);
+        console.log(error);
         await session.abortTransaction();
         reject(error);
       }
@@ -97,12 +94,12 @@ class EntryService {
   calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
     return new Promise(async (resolve, reject) => {
       try {
-        // const pickup = await this.getGooglePlace(body.address);
+        const pickup = await this.getGooglePlace(body.address);
         // const devy = await this.getGooglePlace(
         //   distance.destination_addresses
         // );
-        // body.pickupLatitude = pickup[0].geometry.location.lat;
-        // body.pickupLongitude = pickup[0].geometry.location.lng;
+        body.pickupLatitude = pickup[0].geometry.location.lat;
+        body.pickupLongitude = pickup[0].geometry.location.lng;
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
@@ -130,20 +127,20 @@ class EntryService {
             row.elements,
             async (element, elemIndex, elemArr) => {
               if (element.status === "OK") {
-                // const devy = await this.getGooglePlace(
-                //   distance.destination_addresses[elemIndex]
-                // );
+                const devy = await this.getGooglePlace(
+                  distance.destination_addresses[elemIndex]
+                );
                 // set the coordinates for each deverly address
-                // body.delivery[elemIndex].deliveryLatitude =
-                //   devy[0].geometry.location.lat;
-                // body.delivery[elemIndex].deliveryLongitude =
-                //   devy[0].geometry.location.lng;
+                body.delivery[elemIndex].deliveryLatitude =
+                  devy[0].geometry.location.lat;
+                body.delivery[elemIndex].deliveryLongitude =
+                  devy[0].geometry.location.lng;
 
                 // set the coordinates for pickup address
-                body.delivery[elemIndex].pickupLatitude = body.pickupLatitude;
-                  // pickup[0].geometry.location.lat;
-                body.delivery[elemIndex].pickupLongitude = body.pickupLongitude;
-                  // pickup[0].geometry.location.lng;
+                body.delivery[elemIndex].pickupLatitude =
+                  pickup[0].geometry.location.lat;
+                body.delivery[elemIndex].pickupLongitude =
+                  pickup[0].geometry.location.lng;
 
                 const time = parseFloat(element.duration.value / 60);
                 const singleDistance = parseFloat(
@@ -191,11 +188,11 @@ class EntryService {
                   parseFloat(setting.baseFare);
 
                 // set price for each order
-                body.delivery[elemIndex].estimatedCost = Math.ceil(parseFloat(amount) / 100) * 100;
+                body.delivery[elemIndex].estimatedCost = parseFloat(amount);
                 // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
 
                 // set total price for the entry
-                body.TEC = body.TEC + Math.ceil(parseFloat(amount) / 100) * 100;
+                body.TEC = body.TEC + parseFloat(amount);
               } else {
                 // very questionable
                 // just for test only
@@ -244,23 +241,11 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         // get all coords locations and sort them.
-        // const origins = [body.address];
-        // const destinations = [];
-        // // get all origin and destination
-        // await AsyncForEach(body.delivery, (data, index, arr) => {
-        //   destinations.push(data.address);
-        // });
-
-        const origins = [
-          { lat: body.pickupLatitude, lng: body.pickupLongitude },
-        ];
+        const origins = [body.address];
         const destinations = [];
         // get all origin and destination
         await AsyncForEach(body.delivery, (data, index, arr) => {
-          destinations.push({
-            lat: data.deliveryLatitude,
-            lng: data.deliveryLongitude,
-          });
+          destinations.push(data.address);
         });
 
         // console.log("origins", origins);
@@ -282,10 +267,8 @@ class EntryService {
           },
         });
 
-        console.log("distance", distance.data);
-
         if (distance.data.status !== "OK") {
-          reject({ code: 500, msg: "Location provided is invalid" });
+          reject({ code: 500, msg: "Address provided is invalid" });
           return;
         }
 
@@ -458,15 +441,14 @@ class EntryService {
 
         // calculate our commision from the company pricing plan
         const commissionAmount =
-          parseFloat((transaction.amount * pricing.transactionCost) / 100);
+          (transaction.amount * pricing.transactionCost) / 100;
 
         await transaction.updateOne(
           {
             company: user.id,
             commissionPercent: pricing.transactionCost,
             commissionAmount,
-            amountWOcommision:
-              parseFloat(transaction.amount) - parseFloat(commissionAmount),
+            amountWOcommision: transaction.amount - commissionAmount,
           },
           { session }
         );
@@ -498,11 +480,8 @@ class EntryService {
           rider: null,
           transaction: { $ne: null },
         })
-          .lean()
-          .populate(
-            "orders",
-            "-OTPCode -OTPRecord -metaData -riderRated -riderRating -userRating -userRated -deleted -deletedAt -deletedBy"
-          )
+          .populate("orders")
+          .populate("user", "name email phoneNumber countryCode")
           .select("-metaData");
 
         if (!entry) {
@@ -510,19 +489,7 @@ class EntryService {
           return;
         }
 
-        const user = await userInstance.get(
-          { _id: entry.user },
-          {
-            name: 1,
-            email: 1,
-            group: 1,
-            countryCode: 1,
-            phoneNumber: 1,
-            role: 1,
-            img: 1,
-          }
-        );
-        entry.user = user;
+        console.log("entry.vehicle", entry.vehicle);
 
         // find all the online riders for the company with the specific vehicle type
         const riders = await Rider.find({
@@ -535,6 +502,7 @@ class EntryService {
         });
 
         // console.log("riders", riders);
+
         if (typeof riders[0] == "undefined") {
           reject({
             code: 404,
@@ -548,17 +516,13 @@ class EntryService {
         const riderEntries = [];
         await AsyncForEach(riders, async (row, index, arr) => {
           // find all orders for ech rider that has not yet been concluded or cancelled
-          const orders = await Order.countDocuments({
+          const orders = await Order.findOne({
             rider: row._id,
             $or: [
-              { status: "pending" },
-              { status: "enrouteToPickup" },
-              { status: "arrivedAtPickup" },
-              { status: "pickedup" },
-              { status: "enrouteToDelivery" },
-              { status: "arrivedAtDelivery" },
+              { status: { $ne: "delivered" } },
+              { status: { $ne: "cancelled" } },
             ],
-          });
+          }).countDocuments();
 
           // check how many orders a driver is currently on
           // if the driver is in less than 10 riders then send him to those orders
@@ -634,6 +598,15 @@ class EntryService {
           return;
         }
 
+        // if (typeof riders[0] == "undefined") {
+        //   reject({
+        //     code: 200,
+        //     msg:
+        //       "Your Transaction has been processed. We currently don't have any online Rider for this order. This would be resolved shortly",
+        //   });
+        //   return;
+        // }
+
         const riderIDS = [];
         const riderEntries = [];
         await AsyncForEach(riders, async (row, index, arr) => {
@@ -651,8 +624,8 @@ class EntryService {
 
         resolve({ riders, newRiderReq, riderIDS });
       } catch (error) {
-        // console.log("error", error);
-        resolve({ riderIDS: null });
+        console.log("error", error);
+        resolve(error);
       }
     });
   }
@@ -666,8 +639,6 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-
         const currentDate = new Date();
 
         const rider = await Rider.findOne({
@@ -675,7 +646,7 @@ class EntryService {
           status: "active",
           onlineStatus: true,
           verified: true,
-        }).lean();
+        });
         if (!rider) {
           reject({ code: 404, msg: "You can't accept this order" });
           return;
@@ -685,7 +656,7 @@ class EntryService {
           _id: rider.company,
           status: "active",
           verified: true,
-        }).lean();
+        });
 
         if (!company) {
           reject({ code: 404, msg: "You can't accept this order" });
@@ -723,6 +694,8 @@ class EntryService {
           return;
         }
 
+        session.startTransaction();
+
         await entry.updateOne(
           {
             rider: user.id,
@@ -750,26 +723,15 @@ class EntryService {
           entry: entry._id,
           latitude: rider.latitude,
           longitude: rider.longitude,
-          metaData: {},
+          metaData: {}
         };
-
         const tripLogInstance = new TripLogService();
-        await tripLogInstance.createLog(logs, session);
+        await tripLogInstance.createOrderLog(logs, session);
 
         await session.commitTransaction();
         session.endSession();
 
-        await RiderEntryRequest.updateMany(
-          {
-            status: "pending",
-            entry: body.entry,
-          },
-          {
-            status: "declined",
-          }
-        );
-
-        resolve({ entry, reqEntry, rider });
+        resolve({ entry, reqEntry });
       } catch (error) {
         await session.abortTransaction();
         reject(error);
@@ -812,7 +774,7 @@ class EntryService {
 
         resolve(reqEntry);
       } catch (error) {
-        reject(error);
+        reject({ code: 400, msg: "You can't reject this order" });
       }
     });
   }
@@ -826,9 +788,6 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        // start our transaction
-        session.startTransaction();
-
         const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
@@ -857,23 +816,43 @@ class EntryService {
           status: "driverAccepted",
           company: company._id,
           rider: rider._id,
-        })
-          .lean()
-          .select("-metaData");
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await this.instantEntries(rider._id, entry);
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
 
-        await Entry.updateOne(
-          { _id: body.entry },
-          { status: "enrouteToPickup" },
-          { session }
-        );
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
+        // start our transaction
+        session.startTransaction();
+
+        await entry.updateOne({ status: "enrouteToPickup" }, { session });
         // update all order status
         await Order.updateMany(
           { entry: entry._id },
@@ -916,9 +895,6 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        // start our transaction
-        session.startTransaction();
-
         const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
@@ -947,23 +923,46 @@ class EntryService {
           status: "enrouteToPickup",
           company: company._id,
           rider: rider._id,
-        })
-          .lean()
-          .select("-metaData");
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await this.instantEntries(rider._id, entry);
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
+
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
 
         const token = GenerateOTP(4);
 
+        // start our transaction
+        session.startTransaction();
+
         // update the status to delivery updated
-        await Entry.updateOne(
-          { _id: body.entry },
+        await entry.updateOne(
           { status: "arrivedAtPickup", OTPCode: token },
           { session }
         );
@@ -987,22 +986,11 @@ class EntryService {
         const to = entry.countryCode + entry.phoneNumber;
         await notifyInstance.sendOTPByTermii(msg, to);
 
-        // get the user details of the person that created the shipment
-        const entryUser = await userInstance.get(
-          { _id: entry.user },
-          {
-            FCMToken: 1,
-            email: 1,
-            countryCode: 1,
-            phoneNumber: 1,
-          }
-        );
-
         // if the email assigned to the entry isn't the same as the
         // user that created the post email then send to both parties
-        if (entryUser.email !== entry.email) {
-          Mailer(entryUser.email, subject, html);
-          const toUser = entryUser.countryCode + entryUser.phoneNumber;
+        if (entry.user.email !== entry.email) {
+          Mailer(entry.user.email, subject, html);
+          const toUser = entry.user.countryCode + entry.user.phoneNumber;
           await notifyInstance.sendOTPByTermii(msg, toUser);
         }
 
@@ -1024,9 +1012,8 @@ class EntryService {
         await session.commitTransaction();
         session.endSession();
 
-        resolve({ entry, rider, company, user });
+        resolve({ entry, rider, company });
       } catch (error) {
-        console.log("error", error);
         await session.abortTransaction();
         reject(error);
       }
@@ -1042,9 +1029,6 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        // start our transaction
-        session.startTransaction();
-
         const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
@@ -1073,9 +1057,7 @@ class EntryService {
           status: "arrivedAtPickup",
           company: company._id,
           rider: rider._id,
-        })
-          .lean()
-          .select("-metaData");
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
@@ -1083,7 +1065,7 @@ class EntryService {
         }
 
         // check if the payment method is cash
-        if (entry.paymentMethod !== "cash") {
+        if (entry.paymentMethod === "card") {
           reject({
             code: 400,
             msg: "You can't approve a entry that isn't a cash payment",
@@ -1105,6 +1087,9 @@ class EntryService {
           return;
         }
 
+        // start our transaction
+        session.startTransaction();
+
         const logs = {
           type: "confirmPayment",
           order: entry.orders,
@@ -1119,8 +1104,7 @@ class EntryService {
         // when rider select declined on payment status
         if (body.status === "declined") {
           await transaction.updateOne({ status: "declined" }, { session });
-          await Entry.updateOne(
-            { _id: body.entry },
+          await entry.updateOne(
             {
               status: "cancelled",
               cancelledAt: new Date(),
@@ -1191,9 +1175,6 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
-        // start our transaction
-        session.startTransaction();
-
         const rider = await Rider.findOne({
           _id: user.id,
           status: "active",
@@ -1222,18 +1203,40 @@ class EntryService {
           status: "arrivedAtPickup",
           company: company._id,
           rider: rider._id,
-        })
-          .lean()
-          .select("-metaData");
+        }).populate("user");
 
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
         }
 
-        //check that there are no instant pickup that needs to be deliveried first
-        await this.instantEntries(rider._id, entry);
+        // find instant entry
+        const instantEntries = await Entry.countDocuments({
+          rider: rider._id,
+          pickupType: "instant",
+          $or: [
+            { status: "pending" },
+            { status: "enrouteToPickup" },
+            { status: "arrivedAtPickup" },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
+          ],
+        });
 
+        // check if the instant entries are more than one
+        if (instantEntries >= 1) {
+          // check if the rider is triggering a instant pickup type
+          if (entry.pickupType !== "instant") {
+            reject({
+              code: 400,
+              msg: "You need to start an instant pickup first.",
+            });
+            return;
+          }
+        }
+
+        
         // check if the payment method is cash
         if (entry.paymentMethod === "cash") {
           const transaction = await Transaction.findOne({ entry: body.entry });
@@ -1295,12 +1298,9 @@ class EntryService {
           };
 
           // a record to the entry details
-          await Entry.updateOne(
-            { _id: body.entry },
-            {
-              $push: { OTPRecord: data },
-            }
-          );
+          await entry.updateOne({
+            $push: { OTPRecord: data },
+          });
 
           // const leftTries = entry.OTPRecord.length - count;
           reject({
@@ -1313,9 +1313,11 @@ class EntryService {
           return;
         }
 
+        // start our transaction
+        session.startTransaction();
+
         // update the status to delivery updated
-        await Entry.updateOne(
-          { _id: body.entry },
+        await entry.updateOne(
           { status: "pickedup", OTPCode: null },
           { session }
         );
@@ -1342,70 +1344,10 @@ class EntryService {
         await session.commitTransaction();
         session.endSession();
 
-        resolve({ entry, rider, company, user });
+        resolve({ entry, rider, company });
       } catch (error) {
         await session.abortTransaction();
         reject(error);
-      }
-    });
-  }
-
-  /**
-   * Check instant pickup
-   * @param {ObjectId} rider
-   */
-  instantEntries(rider, entry) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // find instant entry
-        const instantEntries = await Entry.countDocuments({
-          rider,
-          pickupType: "instant",
-          $or: [
-            { status: "driverAccepted" },
-            { status: "enrouteToPickup" },
-            { status: "arrivedAtPickup" },
-            { status: "pickedup" },
-            { status: "enrouteToDelivery" },
-            { status: "arrivedAtDelivery" },
-          ],
-        });
-
-        // check if the instant entries are more than one
-        if (instantEntries >= 1) {
-          // check if the rider is triggering a instant pickup type
-          if (entry.pickupType !== "instant") {
-            reject({
-              code: 400,
-              msg: "You need to start an instant pickup first.",
-            });
-            return;
-          }
-        }
-
-        resolve();
-      } catch (error) {
-        reject({
-          code: 400,
-          msg: "You need to start an instant pickup first.",
-        });
-      }
-    });
-  }
-
-  /**
-   * Update Mutiple Entries
-   * @param {Object} filter
-   * @param {Object} set
-   */
-  updateAll(filter = {}, set = {}) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const updateResult = await Entry.updateMany(filter, set);
-
-        resolve(updateResult)
-      } catch (error) {
-        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }

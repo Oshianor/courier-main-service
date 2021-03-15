@@ -1,6 +1,6 @@
-const Company = require("./models/company");
-const Pricing = require("./models/pricing");
-const Transaction = require("./models/transaction");
+const Company = require("../models/company");
+const Pricing = require("../models/pricing");
+const Transaction = require("../models/transaction");
 
 
 async function updateTransactions(){

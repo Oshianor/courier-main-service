@@ -49,25 +49,9 @@ class TransactionService {
         }
 
         // get price of the trip based on the pickup type
-        let amount = 0;
-        if (body.pickupType === "instant") {
-          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+        const { amount, orders } = await this.pickupType(body, entry, session);
 
-          const orders = await Order.find({entry: entry._id }).lean();
-
-          for await(let order of orders){
-            let orderCost = calculateInstantPrice(order.estimatedCost, entry.instantPricing);
-            await Order.updateOne(
-              { _id: order._id },
-              { estimatedCost: orderCost },
-              { session }
-            );
-          }
-
-        } else {
-          amount = parseFloat(entry.TEC);
-        }
-
+        console.log("amount, orders", amount, orders);
         let msgRES;
         if (body.paymentMethod === "card") {
           const card = await cardInstance.get({ _id: body.card, user: user.id });
@@ -96,11 +80,35 @@ class TransactionService {
         // start our transaction
         // session.startTransaction();
 
-        const newTransaction = new Transaction(body);
-        await newTransaction.save({ session });
+        // const newTransaction = new Transaction(body);
+        // await newTransaction.save({ session });
+        console.log("orders", orders);
+        const transactions = [];
+        for await (let order of orders) {
+
+          const newTransaction = new Transaction(body);
+          newTransaction.order = order;
+          newTransaction.amount = order.estimatedCost;
+          await newTransaction.save({ session });
+          // await newTransaction.save({ session });
+
+          await Order.updateOne(
+            { _id: order._id },
+            {
+              status: "pending",
+              transaction: newTransaction._id,
+              pickupType: body.pickupType,
+            },
+            { session }
+          );
+
+          transactions.push(newTransaction._id);
+        }
+
+
         await entry.updateOne(
           {
-            transaction: newTransaction._id,
+            transaction: transactions,
             pickupType: body.pickupType,
             status: "pending",
             approvedAt: new Date(),
@@ -109,15 +117,15 @@ class TransactionService {
           },
           { session }
         );
-        await Order.updateMany(
-          { entry: body.entry },
-          {
-            status: "pending",
-            transaction: newTransaction._id,
-            pickupType: body.pickupType,
-          },
-          { session }
-        );
+        // await Order.updateMany(
+        //   { entry: body.entry },
+        //   {
+        //     status: "pending",
+        //     transaction: newTransaction._id,
+        //     pickupType: body.pickupType,
+        //   },
+        //   { session }
+        // );
 
         await session.commitTransaction();
         session.endSession();
@@ -131,6 +139,46 @@ class TransactionService {
         reject(error);
       }
     });
+  }
+
+  /**
+   * Calculate pickup time
+   * @param {Object} body 
+   * @param {Object} entry 
+   * @param {Object} order 
+   * @param {Object} session 
+   * @returns 
+   */
+  pickupType(body, entry, session) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let amount = 0;
+        const orders = await Order.find({ entry: entry._id }).lean();
+
+        if (body.pickupType === "instant") {
+          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+
+          for await (let order of orders) {
+            let orderCost = calculateInstantPrice(
+              order.estimatedCost,
+              entry.instantPricing
+            );
+
+            await Order.updateOne(
+              { _id: order._id },
+              { estimatedCost: orderCost },
+              { session }
+            );
+          }
+        } else {
+          amount = parseFloat(entry.TEC);
+        }
+
+        resolve({ amount, orders });
+      } catch (error) {
+        reject({ code: 400, msg: "Something went wrong" })
+      }
+    })
   }
 
   /**
@@ -163,27 +211,7 @@ class TransactionService {
           return;
         }
 
-        // get price of the trip based on the pickup type
-        let amount = 0;
-        if (body.pickupType === "instant") {
-          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
-
-          const orders = await Order.find({ entry: entry._id }).lean();
-
-          for await (let order of orders) {
-            let orderCost = calculateInstantPrice(
-              order.estimatedCost,
-              entry.instantPricing
-            );
-            await Order.updateOne(
-              { _id: order._id },
-              { estimatedCost: orderCost },
-              { session }
-            );
-          }
-        } else {
-          amount = parseFloat(entry.TEC);
-        }
+        const {amount} = this.pickupType(body, entry, session);
 
         // calculate our commision from the company pricing plan
         const company = await Company.findOne({

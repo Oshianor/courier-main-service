@@ -2,7 +2,7 @@ const config = require("config");
 const io = require("socket.io-emitter");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
-const Rider = require("../models/rider");
+const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const OrderService = require("../services/order");
 const TripLogService = require("../services/triplog");
@@ -201,6 +201,29 @@ exports.orderHistory = async (req, res, next) => {
     const orderDetails = await orderInstance.getOrderHistory(
       req.params.orderId
     );
+
+    JsonResponse(
+      res,
+      200,
+      "Order details retrieved successfully",
+      orderDetails
+    );
+    return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.history = async (req, res, next) => {
+  try {
+
+    const order = await Order.findOne({ orderId: req.params.orderId }).lean();
+    if (!order) {
+      return JsonResponse(res, 404, "No Order was found");
+    }
+
+    const orderInstance = new OrderService();
+    const orderDetails = await orderInstance.getOrderHistory(order._id);
 
     JsonResponse(
       res,

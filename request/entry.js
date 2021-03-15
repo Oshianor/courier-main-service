@@ -62,7 +62,8 @@ function validateCalculateShipment(data) {
       .label("Item Type")
       .valid("Document", "Parcel", "Edible")
       .required(),
-    address: Joi.string().label("Pickup Address").required(),
+    pickupLatitude: Joi.number().label("Pickup Latitude").required(),
+    pickupLongitude: Joi.number().label("Pickup Longitude").required(),
     vehicle: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .label("Vehicle")
@@ -75,7 +76,8 @@ function validateCalculateShipment(data) {
     state: Joi.string().label("State").required(),
     delivery: Joi.array()
       .items({
-        address: Joi.string().label("Delivery Address").required(),
+        deliveryLatitude: Joi.number().label("Delivery Latitude").required(),
+        deliveryLongitude: Joi.number().label("Delivery Longitude").required(),
         country: Joi.string().label("Country").required(),
         state: Joi.string().label("State").required(),
       })

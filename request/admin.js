@@ -19,7 +19,12 @@ function validateAdmin(body) {
     role: Joi.string().required().valid("superAdmin", "admin", "accountant"),
     country: Joi.string().max(30).required(),
     state: Joi.string().max(50).required(),
-    phoneNumber: Joi.string().min(10).max(10).required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
   });
 
   return schema.validate(body);

@@ -17,16 +17,28 @@ function validateCompany(body) {
     name: Joi.string().label("Company Name").required(),
     email: Joi.string().email().label("Email Address").max(50).required(),
     address: Joi.string().label("Address").max(225).required(),
-    phoneNumber: Joi.string().label("Phone Number").min(10).max(10).required(),
-    contactEmail: Joi.string().email().label("Contact Email Address").max(50).required(),
+    phoneNumber: Joi.string()
+      .label("Phone Number")
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
+    contactEmail: Joi.string()
+      .email()
+      .label("Contact Email Address")
+      .max(50)
+      .required(),
     description: Joi.string().label("Description").max(3000).required(),
     postcode: Joi.number().label("Postal Code").max(99999999).required(),
     contactName: Joi.string().label("Contact Name").max(30).required(),
     contactPhoneNumber: Joi.string()
       .label("Contact Phone Number")
-      .min(10)
-      .max(10)
-      .required(),
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     RCNumber: Joi.string().label("RC Number").required(),
     TIN: Joi.string().label("T.I.N").required(),
     country: Joi.string().label("Country").required(),
@@ -68,10 +80,18 @@ function validateUpdateCompany(body) {
     contactName: Joi.string().label("Contact Name").max(30).optional(),
     contactPhoneNumber: Joi.string()
       .label("Contact Phone Number")
-      .min(10)
-      .max(10)
-      .optional(),
-    phoneNumber: Joi.string().label("Phone Number").min(10).max(10).optional(),
+      .regex(/^[1-9][0-9]{9}$/)
+      .optional()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
+    phoneNumber: Joi.string()
+      .label("Phone Number")
+      .regex(/^[1-9][0-9]{9}$/)
+      .optional()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     RCNumber: Joi.string().label("RC Number").optional(),
     TIN: Joi.string().label("T.I.N").optional(),
     country: Joi.string().label("Country").optional(),

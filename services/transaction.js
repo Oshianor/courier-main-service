@@ -38,77 +38,99 @@ class TransactionService {
           _id: body.entry,
           status: "request",
           user: user.id,
-        });
+        })
+        .populate("orders");
 
         if (!entry) {
-          reject({
+          return reject({
             code: 404,
             msg: "Entry transaction already processed.",
           });
-          return;
         }
 
         // get price of the trip based on the pickup type
-        const { amount, orders } = await this.pickupType(body, entry, session);
+        // const { amount, orders } = await this.pickupType(body, entry, session);
 
-        console.log("amount, orders", amount, orders);
+        // console.log("amount, orders", amount, orders);
+
         let msgRES;
+        const transactionData = {
+          ...body,
+          user: user.id,
+          status: "approved",
+          approvedAt: new Date(),
+          entry: entry._id,
+          instantPricing: entry.instantPricing,
+          company: entry.company,
+          // commissionPercent: pricing.transactionCost,
+        }
         if (body.paymentMethod === "card") {
           const card = await cardInstance.get({ _id: body.card, user: user.id });
           const { trans } = await this.chargeCard(card, amount)
 
-          body.amount = amount;
-          body.user = user.id;
-          body.status = "approved";
-          body.approvedAt = new Date();
-          body.entry = entry;
-          body.txRef = trans.data.reference;
-          body.instantPricing = entry.instantPricing;
+          transactionData.txRef = trans.data.reference;
+          // body.amount = amount;
+          // body.user = user.id;
+          // body.status = "approved";
+          // body.approvedAt = new Date();
+          // body.entry = entry;
+          // body.txRef = trans.data.reference;
+          // body.instantPricing = entry.instantPricing;
 
           msgRES = "Payment Successfully Processed";
         } else {
-          body.amount = amount;
-          body.user = user.id;
-          body.status = "pending";
-          body.entry = entry;
-          body.txRef = nanoid(10);
-          body.instantPricing = entry.instantPricing;
+          transactionData.status = "pending";
+          // body.amount = amount;
+          // body.user = user.id;
+          // body.status = "pending";
+          // body.entry = entry;
+          // body.txRef = nanoid(10);
+          // body.instantPricing = entry.instantPricing;
 
           msgRES = "Cash Payment Method Confirmed";
         }
+
+        const createdTransactions = await this.createTransactionsForOrders(entry, transactionData, body.pickupType, session);
+
+        console.log('[createdTransactions] => ', createdTransactions);
 
         // start our transaction
         // session.startTransaction();
 
         // const newTransaction = new Transaction(body);
         // await newTransaction.save({ session });
-        console.log("orders", orders);
-        const transactions = [];
-        for await (let order of orders) {
+        // console.log("orders", orders);
+        // const transactions = [];
+        // for await (let order of orders) {
 
-          const newTransaction = new Transaction(body);
-          newTransaction.order = order;
-          newTransaction.amount = order.estimatedCost;
-          await newTransaction.save({ session });
+          // const newTransaction = new Transaction(body);
+          // newTransaction.order = order;
+          // newTransaction.amount = order.estimatedCost;
+          // await newTransaction.save({ session });
           // await newTransaction.save({ session });
 
-          await Order.updateOne(
-            { _id: order._id },
-            {
-              status: "pending",
-              transaction: newTransaction._id,
-              pickupType: body.pickupType,
-            },
-            { session }
-          );
+        //   await Order.updateOne(
+        //     { _id: order._id },
+        //     {
+        //       status: "pending",
+        //       // transaction: newTransaction._id,
+        //       pickupType: body.pickupType,
+        //     },
+        //     { session }
+        //   );
 
-          transactions.push(newTransaction._id);
+        //   transactions.push(newTransaction._id);
+        // }
+        let amount = parseFloat(entry.TEC);
+        if(body.pickupType === "instant"){
+          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
         }
 
+        const transactionIds = createdTransactions.map((trx) => trx._id);
 
         await entry.updateOne(
           {
-            transaction: transactions,
+            transaction: transactionIds,
             pickupType: body.pickupType,
             status: "pending",
             approvedAt: new Date(),
@@ -117,15 +139,15 @@ class TransactionService {
           },
           { session }
         );
-        // await Order.updateMany(
-        //   { entry: body.entry },
-        //   {
-        //     status: "pending",
-        //     transaction: newTransaction._id,
-        //     pickupType: body.pickupType,
-        //   },
-        //   { session }
-        // );
+        await Order.updateMany(
+          { entry: body.entry },
+          {
+            status: "pending",
+            // transaction: newTransaction._id,
+            pickupType: body.pickupType,
+          },
+          { session }
+        );
 
         await session.commitTransaction();
         session.endSession();
@@ -142,12 +164,194 @@ class TransactionService {
   }
 
   /**
+   * Create transaction for entry
+   * @param {Object} body
+   * @param {Object} user
+   * @param {Object} enterprise
+   */
+  createEnterpriseTransaction(body, user, enterprise) {
+    return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+      try {
+        // start our transaction
+        session.startTransaction();
+
+        const entry = await Entry.findOne({
+          _id: body.entry,
+          status: "request",
+          user: user.id,
+        })
+          .populate("orders")
+          .populate("user", "name email phoneNumber countryCode")
+          .select("-metaData")
+
+        if (!entry) {
+          reject({
+            code: 404,
+            msg: "Entry transaction already processed.",
+          });
+          return;
+        }
+
+        // const {amount} = await this.pickupType(body, entry, session);
+        // console.log('Amount from pickupType ', amount);
+
+        // calculate our commision from the company pricing plan
+        const company = await Company.findOne({
+          _id: entry.company,
+          status: "active",
+          verified: true,
+          ownership: true,
+        }).lean();
+
+        if (!company) {
+          reject({ code: 400, msg: "No company account was found." });
+          return;
+        }
+
+        const pricing = await Pricing.findOne({ _id: company.tier }).lean();
+        if (!pricing) {
+          reject({
+            code: 400,
+            msg: "You're currently not on any plan at the moment",
+          });
+          return;
+        }
+
+        let msg;
+        const transactionData = {
+          ...body,
+          enterprise: enterprise._id,
+          user: user.id,
+          status: "approved",
+          approvedAt: new Date(),
+          entry: entry._id,
+          instantPricing: entry.instantPricing,
+          company: entry.company,
+          commissionPercent: pricing.transactionCost,
+        }
+
+        if (body.paymentMethod === "card") {
+          const card = await cardInstance.get({ _id: body.card, user: user.id });
+
+          const { trans } = await this.chargeCard(card, amount);
+
+          // body.enterprise = enterprise._id;
+          // body.amount = amount;
+          // body.user = user.id;
+          // body.status = "approved";
+          // body.approvedAt = new Date();
+          // body.entry = entry;
+          // body.txRef = trans.data.reference;
+          // body.instantPricing = entry.instantPricing;
+          transactionData.txRef = trans.data.reference;
+
+          msg = "Card Payment Successfully Processed";
+        } else if (body.paymentMethod === "wallet") {
+          await this.chargeWallet(enterprise, amount, user, body.entry);
+
+          // body.enterprise = enterprise._id;
+          // body.amount = amount;
+          // body.user = user.id;
+          // body.status = "approved";
+          // body.approvedAt = new Date();
+          // body.entry = entry;
+          // body.txRef = nanoid(10);
+          // body.instantPricing = entry.instantPricing;
+
+          msg = "Wallet Payment Successfully Processed";
+        } else if (body.paymentMethod === "credit") {
+          await this.chargeCredit(enterprise, amount, user, body.entry);
+
+          // body.enterprise = enterprise._id;
+          // body.amount = amount;
+          // body.user = user.id;
+          // body.status = "approved";
+          // body.approvedAt = new Date();
+          // body.entry = entry;
+          // body.txRef = nanoid(10);
+          // body.instantPricing = entry.instantPricing;
+
+          msg = "Payment Successfully Processed with line of Credit";
+        } else {
+          // body.enterprise = enterprise._id;
+          // body.amount = amount;
+          // body.user = user.id;
+          // body.status = "pending";
+          // body.entry = entry;
+          // body.txRef = nanoid(10);
+          // body.instantPricing = entry.instantPricing;
+          transactionData.status = "pending";
+
+          msg = "Cash Payment Method Confirmed";
+        }
+
+        const createdTransactions = await this.createTransactionsForOrders(entry, transactionData, body.pickupType, session);
+
+        // const commissionAmount = parseFloat(
+        //   (amount * pricing.transactionCost) / 100
+        // );
+
+        // const newTransaction = new Transaction(body);
+        // newTransaction.company = entry.company;
+        // newTransaction.commissionPercent = pricing.transactionCost;
+        // newTransaction.commissionAmount = commissionAmount;
+        // newTransaction.amountWOcommision = parseFloat(amount) - parseFloat(commissionAmount);
+
+        // console.log('[newTransaction] => ', commissionAmount, newTransaction);
+        // await newTransaction.save({ session });
+        // console.log('[newTransaction]', 'after')
+        let amount = parseFloat(entry.TEC);
+        if(body.pickupType === "instant"){
+          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+        }
+
+        const transactionIds = createdTransactions.map((trx) => trx._id);
+
+        await entry.updateOne(
+          {
+            enterprise: enterprise._id,
+            transaction: transactionIds,
+            pickupType: body.pickupType,
+            status: "companyAccepted",
+            approvedAt: new Date(),
+            TEC: amount,
+            paymentMethod: body.paymentMethod,
+          },
+          { session }
+        );
+        await Order.updateMany(
+          { entry: body.entry },
+          {
+            status: "pending",
+            // transaction: newTransaction._id,
+            enterprise: enterprise._id,
+            pickupType: body.pickupType,
+          },
+          { session }
+        );
+
+        await session.commitTransaction();
+        session.endSession();
+
+        // send out new entry that has apporved payment method
+        entry.metaData = null;
+        resolve({ entry, msg });
+      } catch (error) {
+        await session.abortTransaction();
+        console.log("error", error);
+        reject(error);
+      }
+    });
+  }
+
+  /**
    * Calculate pickup time
-   * @param {Object} body 
-   * @param {Object} entry 
-   * @param {Object} order 
-   * @param {Object} session 
-   * @returns 
+   * @param {Object} body
+   * @param {Object} entry
+   * @param {Object} order
+   * @param {Object} session
+   * @returns
    */
   pickupType(body, entry, session) {
     return new Promise(async (resolve, reject) => {
@@ -182,161 +386,51 @@ class TransactionService {
   }
 
   /**
-   * Create transaction for entry
-   * @param {Object} body
-   * @param {Object} user
-   * @param {Object} enterprise
+   *
+   * @param {Object} entry
+   * @param {Object} transactionData
+   * @param {string} pickupType
+   * @param {Object} session
    */
-  createEnterpriseTransaction(body, user, enterprise) {
-    return new Promise(async (resolve, reject) => {
-      const session = await mongoose.startSession();
-      try {
-        // start our transaction
-        session.startTransaction();
+  createTransactionsForOrders(entry, transactionData, pickupType, session){
+    return new Promise(async(resolve, reject) => {
+      try{
+        const transactions = [];
+        for await (let order of entry.orders) {
 
-        const entry = await Entry.findOne({
-          _id: body.entry,
-          status: "request",
-          user: user.id,
-        })
-          .populate("orders")
-          .populate("user", "name email phoneNumber countryCode")
-          .select("-metaData")
+          let orderCost = order.estimatedCost;
+          if(pickupType === "instant"){
+            orderCost = calculateInstantPrice(order.estimatedCost, entry.instantPricing);
+          }
 
-        if (!entry) {
-          reject({
-            code: 404,
-            msg: "Entry transaction already processed.",
-          });
-          return;
+          transactionData = {
+            ...transactionData,
+            order: order._id,
+            amount: orderCost,
+            txRef: nanoid(10),
+          }
+
+          if(transactionData.commissionPercent){
+            const commissionAmount = parseFloat((orderCost * transactionData.commissionPercent) / 100);
+
+            transactionData.commissionAmount = commissionAmount;
+            transactionData.amountWOcommision = parseFloat(order.estimatedCost - commissionAmount)
+          }
+
+          const newTransaction = new Transaction(transactionData);
+
+          const createdTransaction = await newTransaction.save({ session });
+          await order.updateOne({ transaction: newTransaction._id }, { session });
+
+          transactions.push(createdTransaction);
         }
 
-        const {amount} = this.pickupType(body, entry, session);
-
-        // calculate our commision from the company pricing plan
-        const company = await Company.findOne({
-          _id: entry.company,
-          status: "active",
-          verified: true,
-          ownership: true,
-        }).lean();
-
-        if (!company) {
-          reject({ code: 400, msg: "No company account was found." });
-          return;
-        }
-
-        const pricing = await Pricing.findOne({ _id: company.tier }).lean();
-        if (!pricing) {
-          reject({
-            code: 400,
-            msg: "You're currently not on any plan at the moment",
-          });
-          return;
-        }
-
-        let msg;
-        if (body.paymentMethod === "card") {
-          const card = await cardInstance.get({ _id: body.card, user: user.id });
-
-          const { trans } = await this.chargeCard(card, amount);
-
-          body.enterprise = enterprise._id;
-          body.amount = amount;
-          body.user = user.id;
-          body.status = "approved";
-          body.approvedAt = new Date();
-          body.entry = entry;
-          body.txRef = trans.data.reference;
-          body.instantPricing = entry.instantPricing;
-
-          msg = "Card Payment Successfully Processed";
-        } else if (body.paymentMethod === "wallet") {
-          await this.chargeWallet(enterprise, amount, user, body.entry);
-
-          body.enterprise = enterprise._id;
-          body.amount = amount;
-          body.user = user.id;
-          body.status = "approved";
-          body.approvedAt = new Date();
-          body.entry = entry;
-          body.txRef = nanoid(10);
-          body.instantPricing = entry.instantPricing;
-
-          msg = "Wallet Payment Successfully Processed";
-        } else if (body.paymentMethod === "credit") {
-          await this.chargeCredit(enterprise, amount, user, body.entry);
-
-          body.enterprise = enterprise._id;
-          body.amount = amount;
-          body.user = user.id;
-          body.status = "approved";
-          body.approvedAt = new Date();
-          body.entry = entry;
-          body.txRef = nanoid(10);
-          body.instantPricing = entry.instantPricing;
-
-          msg = "Payment Successfully Processed with line of Credit";
-        } else {
-          body.enterprise = enterprise._id;
-          body.amount = amount;
-          body.user = user.id;
-          body.status = "pending";
-          body.entry = entry;
-          body.txRef = nanoid(10);
-          body.instantPricing = entry.instantPricing;
-
-          msg = "Cash Payment Method Confirmed";
-        }
-
-
-
-        const commissionAmount = parseFloat(
-          (amount * pricing.transactionCost) / 100
-        );
-
-        const newTransaction = new Transaction(body);
-        newTransaction.company = entry.company;
-        newTransaction.commissionPercent = pricing.transactionCost;
-        newTransaction.commissionAmount = commissionAmount;
-        newTransaction.amountWOcommision = parseFloat(amount) - parseFloat(commissionAmount);
-
-        await newTransaction.save({ session });
-        await entry.updateOne(
-          {
-            enterprise: enterprise._id,
-            transaction: newTransaction._id,
-            pickupType: body.pickupType,
-            status: "companyAccepted",
-            approvedAt: new Date(),
-            TEC: amount,
-            paymentMethod: body.paymentMethod,
-          },
-          { session }
-        );
-        await Order.updateMany(
-          { entry: body.entry },
-          {
-            status: "pending",
-            transaction: newTransaction._id,
-            enterprise: enterprise._id,
-            pickupType: body.pickupType,
-          },
-          { session }
-        );
-
-        await session.commitTransaction();
-        session.endSession();
-
-        // send out new entry that has apporved payment method
-        entry.metaData = null;
-        resolve({ entry, msg });
-      } catch (error) {
-        await session.abortTransaction();
-        console.log("error", error);
-        reject(error);
+        resolve(transactions);
+      } catch(error){
+        console.log(error);
+        reject({ code: 400, msg: "Something went wrong", service: 'createTransactionsForOrders'});
       }
-    });
+    })
   }
 
   /**

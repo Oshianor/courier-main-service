@@ -69,58 +69,16 @@ class TransactionService {
           const { trans } = await this.chargeCard(card, amount)
 
           transactionData.txRef = trans.data.reference;
-          // body.amount = amount;
-          // body.user = user.id;
-          // body.status = "approved";
-          // body.approvedAt = new Date();
-          // body.entry = entry;
-          // body.txRef = trans.data.reference;
-          // body.instantPricing = entry.instantPricing;
 
           msgRES = "Payment Successfully Processed";
         } else {
           transactionData.status = "pending";
-          // body.amount = amount;
-          // body.user = user.id;
-          // body.status = "pending";
-          // body.entry = entry;
-          // body.txRef = nanoid(10);
-          // body.instantPricing = entry.instantPricing;
 
           msgRES = "Cash Payment Method Confirmed";
         }
 
         const createdTransactions = await this.createTransactionsForOrders(entry, transactionData, body.pickupType, session);
 
-        console.log('[createdTransactions] => ', createdTransactions);
-
-        // start our transaction
-        // session.startTransaction();
-
-        // const newTransaction = new Transaction(body);
-        // await newTransaction.save({ session });
-        // console.log("orders", orders);
-        // const transactions = [];
-        // for await (let order of orders) {
-
-          // const newTransaction = new Transaction(body);
-          // newTransaction.order = order;
-          // newTransaction.amount = order.estimatedCost;
-          // await newTransaction.save({ session });
-          // await newTransaction.save({ session });
-
-        //   await Order.updateOne(
-        //     { _id: order._id },
-        //     {
-        //       status: "pending",
-        //       // transaction: newTransaction._id,
-        //       pickupType: body.pickupType,
-        //     },
-        //     { session }
-        //   );
-
-        //   transactions.push(newTransaction._id);
-        // }
         let amount = parseFloat(entry.TEC);
         if(body.pickupType === "instant"){
           amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
@@ -193,9 +151,6 @@ class TransactionService {
           return;
         }
 
-        // const {amount} = await this.pickupType(body, entry, session);
-        // console.log('Amount from pickupType ', amount);
-
         // calculate our commision from the company pricing plan
         const company = await Company.findOne({
           _id: entry.company,
@@ -236,51 +191,18 @@ class TransactionService {
 
           const { trans } = await this.chargeCard(card, amount);
 
-          // body.enterprise = enterprise._id;
-          // body.amount = amount;
-          // body.user = user.id;
-          // body.status = "approved";
-          // body.approvedAt = new Date();
-          // body.entry = entry;
-          // body.txRef = trans.data.reference;
-          // body.instantPricing = entry.instantPricing;
           transactionData.txRef = trans.data.reference;
 
           msg = "Card Payment Successfully Processed";
         } else if (body.paymentMethod === "wallet") {
           await this.chargeWallet(enterprise, amount, user, body.entry);
 
-          // body.enterprise = enterprise._id;
-          // body.amount = amount;
-          // body.user = user.id;
-          // body.status = "approved";
-          // body.approvedAt = new Date();
-          // body.entry = entry;
-          // body.txRef = nanoid(10);
-          // body.instantPricing = entry.instantPricing;
-
           msg = "Wallet Payment Successfully Processed";
         } else if (body.paymentMethod === "credit") {
           await this.chargeCredit(enterprise, amount, user, body.entry);
 
-          // body.enterprise = enterprise._id;
-          // body.amount = amount;
-          // body.user = user.id;
-          // body.status = "approved";
-          // body.approvedAt = new Date();
-          // body.entry = entry;
-          // body.txRef = nanoid(10);
-          // body.instantPricing = entry.instantPricing;
-
           msg = "Payment Successfully Processed with line of Credit";
         } else {
-          // body.enterprise = enterprise._id;
-          // body.amount = amount;
-          // body.user = user.id;
-          // body.status = "pending";
-          // body.entry = entry;
-          // body.txRef = nanoid(10);
-          // body.instantPricing = entry.instantPricing;
           transactionData.status = "pending";
 
           msg = "Cash Payment Method Confirmed";
@@ -288,19 +210,6 @@ class TransactionService {
 
         const createdTransactions = await this.createTransactionsForOrders(entry, transactionData, body.pickupType, session);
 
-        // const commissionAmount = parseFloat(
-        //   (amount * pricing.transactionCost) / 100
-        // );
-
-        // const newTransaction = new Transaction(body);
-        // newTransaction.company = entry.company;
-        // newTransaction.commissionPercent = pricing.transactionCost;
-        // newTransaction.commissionAmount = commissionAmount;
-        // newTransaction.amountWOcommision = parseFloat(amount) - parseFloat(commissionAmount);
-
-        // console.log('[newTransaction] => ', commissionAmount, newTransaction);
-        // await newTransaction.save({ session });
-        // console.log('[newTransaction]', 'after')
         let amount = parseFloat(entry.TEC);
         if(body.pickupType === "instant"){
           amount = calculateInstantPrice(entry.TEC, entry.instantPricing);

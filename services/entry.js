@@ -335,9 +335,9 @@ class EntryService {
           return;
         }
 
-        const transaction = await Transaction.findOne({ entry: params.entry });
+        const transactions = await Transaction.find({ entry: params.entry });
 
-        if (!transaction) {
+        if (!transactions.length) {
           reject({ code: 400, msg: "This entry cannot be processed." });
           return;
         }
@@ -351,7 +351,7 @@ class EntryService {
           reject({
             code: 404,
             msg:
-              "You have an order that has not been accpeted by a rider. Please process that order first before accepting another.",
+              "You have an order that has not been accepted by a rider. Please process that order first before accepting another.",
           });
           return;
         }
@@ -426,7 +426,7 @@ class EntryService {
 
         // start our transaction
         session.startTransaction();
-
+        // return reject({code: 400, msg: "Got here"})
         await entry.updateOne(
           {
             company: user.id,
@@ -443,19 +443,20 @@ class EntryService {
         );
 
         // calculate our commision from the company pricing plan
-        const commissionAmount =
+        for await(let transaction of transactions){
+          const commissionAmount =
           parseFloat((transaction.amount * pricing.transactionCost) / 100);
 
-        await transaction.updateOne(
-          {
-            company: user.id,
-            commissionPercent: pricing.transactionCost,
-            commissionAmount,
-            amountWOcommision:
-              parseFloat(transaction.amount) - parseFloat(commissionAmount),
-          },
-          { session }
-        );
+          await transaction.updateOne(
+            {
+              company: user.id,
+              commissionPercent: pricing.transactionCost,
+              commissionAmount,
+              amountWOcommision: parseFloat(transaction.amount) - parseFloat(commissionAmount),
+            },
+            { session }
+          );
+        }
 
         await session.commitTransaction();
         session.endSession();

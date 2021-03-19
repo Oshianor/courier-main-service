@@ -194,6 +194,7 @@ class TransactionService {
           transactionData.txRef = trans.data.reference;
 
           msg = "Card Payment Successfully Processed";
+
         } else if (body.paymentMethod === "wallet") {
           await this.chargeWallet(enterprise, amount, user, body.entry);
 

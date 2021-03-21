@@ -214,7 +214,10 @@ class EntrySubscription {
         .populate("orders")
         .select("-metaData");
 
-      entry = await populateSingle(entry, "user", "name email phoneNumber img");
+      if (entry) {
+        entry = await populateSingle(entry, "user", "name email phoneNumber img");
+      }
+        
 
       resolve(SocketResponse(false, "ok", entry));
     });

@@ -13,6 +13,12 @@ const transactionSchema = new mongoose.Schema(
       required: true,
       ref: "Entry",
     },
+    order: {
+      type: ObjectId,
+      index: true,
+      required: true,
+      ref: "Order",
+    },
     user: {
       type: ObjectId,
       required: true,

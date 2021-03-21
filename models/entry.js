@@ -98,12 +98,12 @@ const entrySchema = mongoose.Schema(
       ref: "Rider",
       default: null,
     },
-    transaction: {
+    transaction: [{
       type: ObjectId,
       index: true,
       ref: "Transaction",
       default: null,
-    },
+    }],
     paymentMethod: {
       type: String,
       default: "cash",

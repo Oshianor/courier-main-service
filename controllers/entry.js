@@ -62,7 +62,7 @@ exports.localEntry = async (req, res, next) => {
       req.body.country,
       req.body.state
     );
-    
+
     // // validate the states
     // await countryInstance.validateState(req.body.state, req.body.delivery);
 
@@ -257,7 +257,7 @@ exports.companyAcceptEntry = async (req, res, next) => {
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry);
+    await entrySub.updateEntryAdmin(entry._id);
 
     // dispatch accepted entry to companies
     const companySub = new CompanySubscription();

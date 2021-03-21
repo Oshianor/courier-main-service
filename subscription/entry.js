@@ -14,7 +14,7 @@ class EntrySubscription {
    */
   getEntry(entryId){
     return new Promise(async(resolve, reject) => {
-      let entry = await Entry.findOne(entryId)
+      let entry = await Entry.findById(entryId)
       .populate("transaction")
       .populate("orders")
       .populate("vehicle")

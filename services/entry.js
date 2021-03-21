@@ -835,6 +835,7 @@ class EntryService {
           onlineStatus: true,
           verified: true,
         });
+
         if (!rider) {
           reject({ code: 404, msg: "The account provided is not valid" });
           return;
@@ -901,6 +902,7 @@ class EntryService {
         // resolve(entry);
         resolve({ entry, rider, company });
       } catch (error) {
+        console.log("error service", error);
         await session.abortTransaction();
         reject(error);
       }

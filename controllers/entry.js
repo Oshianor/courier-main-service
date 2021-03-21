@@ -398,6 +398,7 @@ exports.riderStartPickup = async (req, res, next) => {
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
     return;
   } catch (error) {
+    console.log("error controller", error);
     next(error);
   }
 };

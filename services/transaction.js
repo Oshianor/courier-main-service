@@ -94,6 +94,7 @@ class TransactionService {
             approvedAt: new Date(),
             TEC: amount,
             paymentMethod: body.paymentMethod,
+            cashPaymentType: body.cashPaymentType
           },
           { session }
         );
@@ -101,8 +102,9 @@ class TransactionService {
           { entry: body.entry },
           {
             status: "pending",
-            // transaction: newTransaction._id,
             pickupType: body.pickupType,
+            paymentMethod: body.paymentMethod,
+            cashPaymentType: body.cashPaymentType
           },
           { session }
         );
@@ -228,6 +230,7 @@ class TransactionService {
             approvedAt: new Date(),
             TEC: amount,
             paymentMethod: body.paymentMethod,
+            cashPaymentType: body.cashPaymentType
           },
           { session }
         );
@@ -235,9 +238,10 @@ class TransactionService {
           { entry: body.entry },
           {
             status: "pending",
-            // transaction: newTransaction._id,
             enterprise: enterprise._id,
             pickupType: body.pickupType,
+            paymentMethod: body.paymentMethod,
+            cashPaymentType: body.cashPaymentType
           },
           { session }
         );
@@ -325,7 +329,7 @@ class TransactionService {
             const commissionAmount = parseFloat((orderCost * transactionData.commissionPercent) / 100);
 
             transactionData.commissionAmount = commissionAmount;
-            transactionData.amountWOcommision = parseFloat(order.estimatedCost - commissionAmount)
+            transactionData.amountWOcommision = parseFloat(orderCost - commissionAmount)
           }
 
           const newTransaction = new Transaction(transactionData);

@@ -109,6 +109,10 @@ const entrySchema = mongoose.Schema(
       default: "cash",
       enum: ["card", "cash", "credit", "wallet"],
     },
+    cashPaymentType: {
+      type: String,
+      enum: ["pickup","delivery"],
+    },
     pickupType: {
       type: String,
       default: "anytime",

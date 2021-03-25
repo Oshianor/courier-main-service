@@ -3,9 +3,6 @@ const moment = require("moment");
 const bcrypt = require("bcrypt");
 const axios = require("axios");
 const Rider = require("../models/rider");
-// const User = require("../models/users");
-// const Enterprise = require("../models/enterprise");
-const { Verification } = require("../templates");
 const { MSG_TYPES } = require("../constant/types");
 const { Mailer, GenerateToken, GenerateOTP, sendOTPByTermii } = require("../utils");
 const OTPCode = require("../templates/otpCode");
@@ -140,7 +137,7 @@ class AuthSerivice {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
-          `${config.get("api.base")}${ACCOUNT_SERVICE.VERIFY_ACCOUNT}`,
+          `${ACCOUNT_SERVICE.VERIFY_ACCOUNT}`,
           body,
           {
             headers: {

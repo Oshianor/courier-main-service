@@ -6,6 +6,7 @@ function validateSettings(data) {
     documentPrice: Joi.number().label("Document Price").required(),
     parcelPrice: Joi.number().label("Parcel Price").required(),
     ediblePrice: Joi.number().label("Edible Price").required(),
+    instantPricing: Joi.number().label("Edible Price").required(),
     baseFare: Joi.number().required(),
     recruitment: Joi.boolean().required(),
   });
@@ -20,6 +21,7 @@ function validateUpdateSettings(data) {
     documentPrice: Joi.number().label("Document Price").optional(),
     parcelPrice: Joi.number().label("Parcel Price").optional(),
     ediblePrice: Joi.number().label("Edible Price").optional(),
+    instantPricing: Joi.number().label("Instant Price").optional(),
     baseFare: Joi.number().optional(),
     recruitment: Joi.boolean().optional(),
   });

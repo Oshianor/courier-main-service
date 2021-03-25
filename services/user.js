@@ -5,9 +5,7 @@ const Order = require("../models/order");
 const moment = require("moment");
 const { MSG_TYPES } = require("../constant/types");
 const { ACCOUNT_SERVICE } = require("../constant/api");
-const NotificationService = require("./notification");
-const { GenerateOTP, Mailer } = require("../utils");
-const { OTPCode } = require("../templates");
+const { query } = require("winston");
 
 /**
  * User service class
@@ -54,14 +52,11 @@ class UserService {
   deleteUser(userId) {
     return new Promise(async (resolve, reject) => {
       try {
-        await axios.delete(
-          `${ACCOUNT_SERVICE.USER}/${userId}`,
-          {
-            headers: {
-              "api-key": config.get("api.key"),
-            },
-          }
-        );
+        await axios.delete(`${ACCOUNT_SERVICE.USER}/${userId}`, {
+          headers: {
+            "api-key": config.get("api.key"),
+          },
+        });
 
         resolve();
       } catch (error) {
@@ -81,19 +76,21 @@ class UserService {
   getByToken(token) {
     return new Promise(async (resolve, reject) => {
       try {
-        const response = await axios.get(
-          `${ACCOUNT_SERVICE.USER}`,
-          {
-            headers: {
-              "x-auth-token": token,
-            },
-          }
-        );
+        const response = await axios.get(`${ACCOUNT_SERVICE.USER}`, {
+          headers: {
+            "x-auth-token": token,
+          },
+        });
         // console.log("response", response);
-        resolve(response.data);
+        console.log('REsp => ', response);
+        resolve(response.data.data);
+
       } catch (error) {
-        console.log("User not found", error);
-        reject(error.response.data);
+        console.log('ERROR => ', error);
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
       }
     });
   }
@@ -109,7 +106,7 @@ class UserService {
           `${ACCOUNT_SERVICE.GET_ALL_USER}`,
           {
             filter,
-            option: option ? option : null
+            option: option ? option : null,
           },
           {
             headers: {
@@ -117,25 +114,28 @@ class UserService {
             },
           }
         );
-        resolve(response.data);
+        resolve(response.data.data);
       } catch (error) {
-        reject(error.response.data);
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
       }
     });
   }
 
   /**
    * Get a single user by it's ID
-   * @param {ObjectId} filter
+   * @param {Object} filter
    */
-  get(id, option) {
+  get(filter, option) {
     return new Promise(async (resolve, reject) => {
       try {
         const response = await axios.post(
           `${ACCOUNT_SERVICE.GET_USER}`,
           {
-            filter: { _id: id},
-            option
+            filter,
+            option,
           },
           {
             headers: {
@@ -143,35 +143,60 @@ class UserService {
             },
           }
         );
-        resolve(response.data);
+        resolve(response.data.data);
       } catch (error) {
-        reject(error.response.data);
+        if (error.response) {
+          reject(error.response.data);
+        }
+        reject(error);
       }
     });
   }
 
-
-  getAll(users, select){
-    return new Promise(async(resolve, reject) => {
-      try{
-        const response = await axios.get(`
+  getAll(users, select) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.get(
+          `
           ${ACCOUNT_SERVICE.GET_USERS}`,
           {
             headers: {
-            "api-key": config.get("api.key")
-          },
-          params: {
-            users,
-            select: select ? select : null
+              "api-key": config.get("api.key"),
+            },
+            params: {
+              users,
+              select: select ? select : null,
+            },
           }
-        });
+        );
 
-        if(response && response.data){
-          resolve(response.data.data);
-        } else {
-          reject({code: 404, msg: "users not found"});
+        resolve(response.data.data);
+      } catch (error) {
+        if (error.response) {
+          reject(error.response.data);
         }
-      } catch(error){
+        reject(error);
+      }
+    });
+  }
+
+  getUserCount() {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const response = await axios.get(`
+          ${ACCOUNT_SERVICE.GET_USERS_COUNT}`,
+          {
+            headers: {
+              "api-key": config.get("api.key"),
+            },
+          }
+        );
+
+        resolve(response.data.data);
+      } catch (error) {
+        if (error.response) {
+          reject(error.response.data);
+        }
         reject(error);
       }
     });
@@ -208,7 +233,6 @@ class UserService {
   //     }
   //   });
   // }
-
 
   // [moved to accounts-service]
   /**
@@ -262,9 +286,10 @@ class UserService {
   getUserPendingOrder(user, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const orders = await Order.find({
+        const queryFilter = {
           user: user.id,
           $or: [
+            { status: "request" },
             { status: "pending" },
             { status: "enrouteToPickup" },
             { status: "arrivedAtPickup" },
@@ -272,7 +297,9 @@ class UserService {
             { status: "enrouteToDelivery" },
             { status: "arrivedAtDelivery" },
           ],
-        })
+        }
+
+        const orders = await Order.find(queryFilter)
           .populate("rider", "name email phoneNumber countryCode img")
           .populate(
             "entry",
@@ -284,17 +311,7 @@ class UserService {
           .limit(pageSize)
           .sort({ createdAt: -1 });
 
-        const total = await Order.find({
-          user: user.id,
-          $or: [
-            { status: "pending" },
-            { status: "enrouteToPickup" },
-            { status: "arrivedAtPickup" },
-            { status: "pickedup" },
-            { status: "enrouteToDelivery" },
-            { status: "arrivedAtDelivery" },
-          ],
-        }).countDocuments();
+        const total = await Order.find(queryFilter).countDocuments();
 
         resolve({ orders, total });
       } catch (error) {
@@ -330,7 +347,7 @@ class UserService {
           .sort({ createdAt: -1 });
 
         const total = await Order.find({
-          rider: user.id,
+          user: user.id,
           status: "delivered",
         }).countDocuments();
 
@@ -355,7 +372,6 @@ class UserService {
         // if (!user) {
         //   return reject({ statusCode: 404, msg: MSG_TYPES.NOT_FOUND });
         // }
-
         // const updatedUser = await User.updateOne(
         //   { _id: userId },
         //   { $set: data }
@@ -369,7 +385,6 @@ class UserService {
       }
     });
   }
-
 }
 
 module.exports = UserService;

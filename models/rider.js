@@ -3,6 +3,30 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 const Jwt = require("jsonwebtoken");
 const config = require("config");
 
+const GuarantorSchema = mongoose.Schema(
+  {
+    name: {
+      type: String,
+      trim: true,
+      required: true
+    },
+    phoneNumber: {
+      type: String,
+      maxlength: 11,
+      required: true
+    },
+    address: {
+      type: String,
+    },
+    relationship: {
+      type: String
+    }
+  },
+  {
+    timestamps: true,
+  }
+);
+
 
 const riderSchema = new mongoose.Schema(
   {
@@ -98,6 +122,10 @@ const riderSchema = new mongoose.Schema(
       type: Number,
       default: 0.0,
     },
+    locationDate: {
+      type: Date,
+      default: new Date()
+    },
     FCMToken: {
       type: String,
       default: null,
@@ -138,6 +166,21 @@ const riderSchema = new mongoose.Schema(
         default: null,
       },
     },
+     // new fields
+    BVN: String,
+    NIN: String,
+    POA: String, // Prooof of Address
+    LASDRIID: String, // LASDRI ID
+    POVO: String, // Proof of Vehicle Ownership
+    designation: {
+      type: String,
+      enum: ["exalt","freelance"],
+      default: "exalt"
+    },
+    guarantors: [GuarantorSchema],
+    postalCode: String,
+    address: String
+
   },
   {
     timestamps: true,

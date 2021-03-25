@@ -1,11 +1,15 @@
-const account = "http://localhost:6000/api/v1";
-const card = "http://localhost:6002/api/v1";
+const config = require("config");
+
+const account = `${config.get("application.accountService")}/api/v1`;
+const card = `${config.get("application.cardService")}/api/v1`;
+
 
 const ACCOUNT_SERVICE = Object.freeze({
   // create/delete/get single user on the account service for commercial account
   USER: `${account}/user`,
   GET_USER: `${account}/user/findOne`,
   GET_USERS: `${account}/user/find`,
+  GET_USERS_COUNT: `${account}/user/count`,
 
   // create enterprise user account
   E_USER: `${account}/user/enterpise`,
@@ -20,14 +24,14 @@ const ACCOUNT_SERVICE = Object.freeze({
   GET_MAINTAINERS: `${account}/user/maintainers`,
 
   // update maintainers and branch account by enterprise owner
-  TOGGLE_STATUS: "/auth/toggle-status",
+  TOGGLE_STATUS: `${account}/auth/toggle-status`,
 
   // Get enterprise accounts - (ADMIN)
-  GET_ENTERPRISE_ACCOUNTS: "/enterprise/accounts",
+  GET_ENTERPRISE_ACCOUNTS: `${account}/enterprise/accounts`,
 
-  ENTERPRISE_FINDONE: "/enterprise/findone",
-  ENTERPRISE_FIND: "/enterprise/find",
-  ENTERPRISE_COUNT: "/enterprise/count"
+  ENTERPRISE_FINDONE: `${account}/enterprise/findone`,
+  ENTERPRISE_FIND: `${account}/enterprise/find`,
+  ENTERPRISE_COUNT: `${account}/enterprise/count`
 });
 
 const CARD_SERVICE = Object.freeze({

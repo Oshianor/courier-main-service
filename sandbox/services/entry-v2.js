@@ -97,12 +97,12 @@ class EntryService {
   calculateLocalEntry(body, user, distance, setting, distancePrice, vehicle) {
     return new Promise(async (resolve, reject) => {
       try {
-        // const pickup = await this.getGooglePlace(body.address);
+        const pickup = await this.getGooglePlace(body.address);
         // const devy = await this.getGooglePlace(
         //   distance.destination_addresses
         // );
-        // body.pickupLatitude = pickup[0].geometry.location.lat;
-        // body.pickupLongitude = pickup[0].geometry.location.lng;
+        body.pickupLatitude = pickup[0].geometry.location.lat;
+        body.pickupLongitude = pickup[0].geometry.location.lng;
         body.TED = 0;
         body.TET = 0;
         body.TEC = 0;
@@ -130,20 +130,20 @@ class EntryService {
             row.elements,
             async (element, elemIndex, elemArr) => {
               if (element.status === "OK") {
-                // const devy = await this.getGooglePlace(
-                //   distance.destination_addresses[elemIndex]
-                // );
+                const devy = await this.getGooglePlace(
+                  distance.destination_addresses[elemIndex]
+                );
                 // set the coordinates for each deverly address
-                // body.delivery[elemIndex].deliveryLatitude =
-                //   devy[0].geometry.location.lat;
-                // body.delivery[elemIndex].deliveryLongitude =
-                //   devy[0].geometry.location.lng;
+                body.delivery[elemIndex].deliveryLatitude =
+                  devy[0].geometry.location.lat;
+                body.delivery[elemIndex].deliveryLongitude =
+                  devy[0].geometry.location.lng;
 
                 // set the coordinates for pickup address
-                body.delivery[elemIndex].pickupLatitude = body.pickupLatitude;
-                  // pickup[0].geometry.location.lat;
-                body.delivery[elemIndex].pickupLongitude = body.pickupLongitude;
-                  // pickup[0].geometry.location.lng;
+                body.delivery[elemIndex].pickupLatitude =
+                  pickup[0].geometry.location.lat;
+                body.delivery[elemIndex].pickupLongitude =
+                  pickup[0].geometry.location.lng;
 
                 const time = parseFloat(element.duration.value / 60);
                 const singleDistance = parseFloat(
@@ -244,23 +244,11 @@ class EntryService {
     return new Promise(async (resolve, reject) => {
       try {
         // get all coords locations and sort them.
-        // const origins = [body.address];
-        // const destinations = [];
-        // // get all origin and destination
-        // await AsyncForEach(body.delivery, (data, index, arr) => {
-        //   destinations.push(data.address);
-        // });
-
-        const origins = [
-          { lat: body.pickupLatitude, lng: body.pickupLongitude },
-        ];
+        const origins = [body.address];
         const destinations = [];
         // get all origin and destination
         await AsyncForEach(body.delivery, (data, index, arr) => {
-          destinations.push({
-            lat: data.deliveryLatitude,
-            lng: data.deliveryLongitude,
-          });
+          destinations.push(data.address);
         });
 
         // console.log("origins", origins);
@@ -282,10 +270,8 @@ class EntryService {
           },
         });
 
-        console.log("distance", distance.data);
-
         if (distance.data.status !== "OK") {
-          reject({ code: 500, msg: "Location provided is invalid" });
+          reject({ code: 500, msg: "Address provided is invalid" });
           return;
         }
 
@@ -349,9 +335,9 @@ class EntryService {
           return;
         }
 
-        const transactions = await Transaction.find({ entry: params.entry });
+        const transaction = await Transaction.findOne({ entry: params.entry });
 
-        if (!transactions.length) {
+        if (!transaction) {
           reject({ code: 400, msg: "This entry cannot be processed." });
           return;
         }
@@ -365,7 +351,7 @@ class EntryService {
           reject({
             code: 404,
             msg:
-              "You have an order that has not been accepted by a rider. Please process that order first before accepting another.",
+              "You have an order that has not been accpeted by a rider. Please process that order first before accepting another.",
           });
           return;
         }
@@ -440,7 +426,7 @@ class EntryService {
 
         // start our transaction
         session.startTransaction();
-        // return reject({code: 400, msg: "Got here"})
+
         await entry.updateOne(
           {
             company: user.id,
@@ -457,20 +443,19 @@ class EntryService {
         );
 
         // calculate our commision from the company pricing plan
-        for await(let transaction of transactions){
-          const commissionAmount =
+        const commissionAmount =
           parseFloat((transaction.amount * pricing.transactionCost) / 100);
 
-          await transaction.updateOne(
-            {
-              company: user.id,
-              commissionPercent: pricing.transactionCost,
-              commissionAmount,
-              amountWOcommision: parseFloat(transaction.amount) - parseFloat(commissionAmount),
-            },
-            { session }
-          );
-        }
+        await transaction.updateOne(
+          {
+            company: user.id,
+            commissionPercent: pricing.transactionCost,
+            commissionAmount,
+            amountWOcommision:
+              parseFloat(transaction.amount) - parseFloat(commissionAmount),
+          },
+          { session }
+        );
 
         await session.commitTransaction();
         session.endSession();
@@ -836,7 +821,6 @@ class EntryService {
           onlineStatus: true,
           verified: true,
         });
-
         if (!rider) {
           reject({ code: 404, msg: "The account provided is not valid" });
           return;
@@ -903,7 +887,6 @@ class EntryService {
         // resolve(entry);
         resolve({ entry, rider, company });
       } catch (error) {
-        console.log("error service", error);
         await session.abortTransaction();
         reject(error);
       }

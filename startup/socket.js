@@ -28,7 +28,7 @@ io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
     socket.emit(SERVER_EVENTS.LISTEN_POOL, await entryInstance.getPool(socket));
 
   } else if (socket.user.type === "admin") {
-    
+
     socket.join("admin");
     socket.emit(
       SERVER_EVENTS.LISTEN_POOL_ADMIN,

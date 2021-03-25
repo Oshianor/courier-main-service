@@ -51,7 +51,7 @@ const entrySchema = mongoose.Schema(
         "companyAccepted", // when a company accepts the order
         "driverAccepted", // when a driver accepts the order
         "enrouteToPickup", // when atleast order is in pickup
-        "arrivedAtPickup", // 
+        "arrivedAtPickup", //
         "pickedup", // when he item is picked up
         "enrouteToDelivery", // when atleast order is  delivery
         "arrivedAtDelivery", // when the rider gets to the delivery location
@@ -98,12 +98,12 @@ const entrySchema = mongoose.Schema(
       ref: "Rider",
       default: null,
     },
-    transaction: {
+    transaction: [{
       type: ObjectId,
       index: true,
       ref: "Transaction",
       default: null,
-    },
+    }],
     paymentMethod: {
       type: String,
       default: "cash",
@@ -126,7 +126,7 @@ const entrySchema = mongoose.Schema(
     OTPRecord: [OTPRecordSchema],
     email: {
       type: String,
-      required: true,
+      required: false,
       index: true,
       maxLenght: 50,
     },

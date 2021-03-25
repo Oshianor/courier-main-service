@@ -3,13 +3,14 @@ const Joi = require("joi");
 
 function validateLocalEntry(data) {
   const Schema = Joi.object().keys({
-    email: Joi.string().email().max(50).label("Email").required(),
+    email: Joi.string().email().max(50).label("Email").optional(),
     itemType: Joi.string()
       .label("Item Type")
       .valid("Document", "Parcel", "Edible")
       .required(),
     name: Joi.string().label("Name").required(),
-    address: Joi.string().label("Pickup Address").required(),
+    pickupLatitude: Joi.number().label("Pickup Latitude").required(),
+    pickupLongitude: Joi.number().label("Pickup Longitude").required(),
     description: Joi.string().label("Description").allow("").required(),
     vehicle: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
@@ -17,7 +18,12 @@ function validateLocalEntry(data) {
       .required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
-    phoneNumber: Joi.string().max(10).required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     countryCode: Joi.string().max(5).required(),
     img: Joi.array()
       .items(
@@ -30,13 +36,20 @@ function validateLocalEntry(data) {
       .optional(),
     delivery: Joi.array()
       .items({
-        email: Joi.string().email().max(50).label("Email").required(),
-        phoneNumber: Joi.string().max(10).required(),
+        email: Joi.string().email().max(50).label("Email").optional(),
+        phoneNumber: Joi.string()
+          .regex(/^[1-9][0-9]{9}$/)
+          .required()
+          .messages({
+            "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+          }),
         value: Joi.number().max(9999999999).required(),
         countryCode: Joi.string().max(5).required(),
         name: Joi.string().label("Name").required(),
         itemName: Joi.string().label("Item Name").required(),
-        address: Joi.string().label("Delivery Address").required(),
+        // address: Joi.string().label("Delivery Address").required(),
+        deliveryLatitude: Joi.number().label("Delivery Latitude").required(),
+        deliveryLongitude: Joi.number().label("Delivery Longitude").required(),
         country: Joi.string().label("Country").required(),
         state: Joi.string().label("State").required(),
         quantity: Joi.number().label("Quantity").required(),
@@ -58,7 +71,8 @@ function validateCalculateShipment(data) {
       .label("Item Type")
       .valid("Document", "Parcel", "Edible")
       .required(),
-    address: Joi.string().label("Pickup Address").required(),
+    pickupLatitude: Joi.number().label("Pickup Latitude").required(),
+    pickupLongitude: Joi.number().label("Pickup Longitude").required(),
     vehicle: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .label("Vehicle")
@@ -71,7 +85,8 @@ function validateCalculateShipment(data) {
     state: Joi.string().label("State").required(),
     delivery: Joi.array()
       .items({
-        address: Joi.string().label("Delivery Address").required(),
+        deliveryLatitude: Joi.number().label("Delivery Latitude").required(),
+        deliveryLongitude: Joi.number().label("Delivery Longitude").required(),
         country: Joi.string().label("Country").required(),
         state: Joi.string().label("State").required(),
       })
@@ -83,7 +98,9 @@ function validateCalculateShipment(data) {
 
 function validateSendRiderRequest(data) {
   const Schema = Joi.object().keys({
-    entry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    entry: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
   });
 
   return Schema.validate(data);
@@ -102,12 +119,13 @@ function validateEntryID(data) {
 function validatePickupOTP(data) {
   const Schema = Joi.object().keys({
     OTPCode: Joi.string().min(4).max(4).required(),
-    entry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+    entry: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .required(),
   });
 
   return Schema.validate(data);
 }
-
 
 module.exports = {
   validateLocalEntry,

@@ -1,8 +1,9 @@
-const REDIS_CONFIG = Object.freeze({
-  host: "127.0.0.1",
-  port: 6379,
-});
+const config = require("config");
 
+const REDIS_CONFIG = Object.freeze({
+  host: config.get("redis.host"),
+  port: config.get("redis.port")
+});
 
 const SERVER_EVENTS = Object.freeze({
   // connect to socket
@@ -31,9 +32,10 @@ const SERVER_EVENTS = Object.freeze({
 
   // When an order as been accepted by a rider.
   // we dispatch this to the app to hide that order
-  TAKEN_ENTRY: "takenEntry"
-});
+  TAKEN_ENTRY: "takenEntry",
 
+  "UPDATE_ENTRY_ADMIN": "updateEntryAdmin"
+});
 
 const CLIENT_EVENTS = Object.freeze({
   // get pool details
@@ -50,4 +52,4 @@ module.exports = {
   SERVER_EVENTS,
   CLIENT_EVENTS,
   REDIS_CONFIG,
-}; 
+};

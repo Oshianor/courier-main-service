@@ -5,10 +5,11 @@ const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Organization = require("../models/organization");
 const Transaction = require("../models/transaction");
-const template = require("../templates");
+const Verification = require("../templates/verification");
 const { nanoid } = require("nanoid");
 const { UploadFileFromBinary, Mailer,
-  GenerateToken, isObject, convertToMonthlyDataArray, populateMultiple } = require("../utils");
+  GenerateToken, isObject, convertToMonthlyDataArray } = require("../utils");
+const { populateMultiple } = require("../services/aggregate");
 const { MSG_TYPES } = require("../constant/types");
 const Order = require("../models/order");
 const Rider = require("../models/rider");
@@ -94,7 +95,7 @@ class CompanyService {
         session.endSession();
 
         const subject = "Welcome to Exalt Logistics";
-        const html = template.Verification(token, body.email, "company");
+        const html = Verification(token, body.email, "company");
         Mailer(body.email, subject, html);
         resolve({ company, organization });
       } catch (error) {
@@ -348,7 +349,7 @@ class CompanyService {
   * @param {ObjectId} companyId
   * @param {Object} filter
   */
-  getRiderStatistics(companyId, filter) {
+  getRiderStatistics(companyId, filter = {}) {
     return new Promise(async (resolve, reject) => {
       try {
         let baseFilter = { company: companyId };
@@ -365,7 +366,25 @@ class CompanyService {
             $nin: ["pending","delivered","cancelled","declined"]
         }}).countDocuments();
         // @TODO: Get the correct values for this field
-        const totalRevenue = 0;
+
+        const totalRevenueMatch = {
+          company: ObjectId(companyId),
+          status: "approved",
+          approvedAt: {$ne:null}
+        };
+
+        if(baseFilter.rider){
+          totalRevenueMatch.rider = ObjectId(baseFilter.rider)
+        }
+
+        const revenue = await Transaction.aggregate([
+          {
+            $match: totalRevenueMatch
+          },
+          { $group: { _id: null, sum: { $sum: "$amountWOcommision" } } },
+        ]);
+
+        const totalRevenue = revenue[0] ? revenue[0].sum : 0;
 
         const isSingleRider = baseFilter.hasOwnProperty('rider');
 
@@ -386,7 +405,8 @@ class CompanyService {
 
         resolve(statistics);
       } catch (error) {
-        reject({ statusCode: 500, msg: MSG_TYPES.SERVER_ERROR })
+        console.log("error", error);
+        reject(error)
         return
       }
     })
@@ -404,7 +424,11 @@ class CompanyService {
       const totalRiders = await Rider.find({company: companyId}).countDocuments();
 
       let totalRevenue = await Transaction.aggregate([
-        { $match: {company: ObjectId(companyId),status: "approved",approvedAt: {$ne:null}} },
+        { $match: {
+          company: ObjectId(companyId),
+          status: "approved",
+          approvedAt: {$ne:null}
+        } },
         { $group: { _id: companyId, "total": {$sum: "$amount"} }},
       ]);
 

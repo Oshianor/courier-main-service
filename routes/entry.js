@@ -6,7 +6,7 @@ const { UserAuth, Auth, EnterpriseAuth, E_ROLES } = require("../middlewares/auth
 // Create entry
 router.post("/", UserAuth, controller.entry.localEntry);
 // Create entry by enterprise
-router.post("/enterprise", UserAuth, EnterpriseAuth(E_ROLES.BRANCH, E_ROLES.MAINTAINER), controller.entry.localEntry);
+router.post("/enterprise", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.entry.localEntry);
 // calculate shipment
 router.post(
   "/calculate-shipment",
@@ -15,7 +15,7 @@ router.post(
 );
 // approve an entry for different payment method
 router.post("/confirm", UserAuth, controller.transaction.transaction);
-// approve an entry for enterprise 
+// approve an entry for enterprise
 router.post(
   "/enterprise/confirm",
   UserAuth,

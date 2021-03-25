@@ -18,14 +18,14 @@ router.get(
 );
 // update a single distance price document
 router.patch(
-  "/:distancePrice",
+  "/:dp",
   Auth,
-  hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]),
+  hasRole([ROLES.ADMIN]),
   controller.distancePrice.updateAdmin
 );
 // delete a distance price
 router.delete(
-  "/:distancePrice",
+  "/:dp",
   Auth,
   hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]),
   controller.distancePrice.deleteAdmin

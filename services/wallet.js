@@ -6,6 +6,9 @@ const paystack = require("paystack")(config.get("paystack.secret"));
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");
+const { populateMultiple } = require("../services/aggregate")
+const CardService = require("./card");
+const cardInstance = new CardService();
 
 
 class WalletService {
@@ -52,10 +55,10 @@ class WalletService {
         // )
         .skip(skip)
         .limit(pageSize)
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .lean();
 
-        wallet = populate(wallet, "enterprise");
-
+        wallet = await populateMultiple(wallet, "enterprise");
 
       const total = await Wallet.find().countDocuments();
 
@@ -89,14 +92,14 @@ class WalletService {
           });
         }
 
-        const userInstance = new UserService();
-        const card = await userInstance.getCard(token, body.card);
+        
+        const card = await cardInstance.get({ _id: body.card, user: user.id });
 
         const ref = nanoid(20);
 
         const trans = await paystack.transaction.charge({
           reference: ref,
-          authorization_code: card.data.token,
+          authorization_code: card.token,
           email: user.email,
           amount: parseFloat(body.amount) * 100,
         });

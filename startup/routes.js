@@ -27,13 +27,11 @@ const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
 };
-
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "100mb", extended: true }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use(express.static("public"));
 app.use(fileUpload());
-
 app.use("/api/v1/admin", admin);
 app.use("/api/v1/admin/pricing", pricing);
 app.use("/api/v1/admin/vehicle", vehicle);
@@ -51,7 +49,7 @@ app.use("/api/v1/card", card);
 app.use("/api/v1/wallet", wallet);
 app.use("/api/v1/credit", credit);
 app.use("/api/v1/enterprise", enterprise);
-app.use(endpointNotFound);
 app.use(error);
+app.use(endpointNotFound);
 
 module.exports = app;

@@ -5,20 +5,12 @@
 			key: "5ebd207",
 			expireDate: "20w"
 		},
-    website: "https://logistics-site.netlify.app",
-    url: "https://dev.api.logistics.churchesapp.com",
-    socket: {
-      path: "/sio",
-      transports: ["websocket"]
-    },
-    cors: {
-      origin: "*",
-      exposedHeaders: ["x-auth-token"]
-    },
-    redis: { 
-      host: "127.0.0.1", 
-      port: 6379
-    },
+    courierSite: "https://exalt-courier-website.netlify.app/",
+    logisticsSite: "https://logistics-site.netlify.app/",
+    accountSite: "https://exalt-reset-password.netlify.app",
+    logisticsService: "https://dev.api.logistics.churchesapp.com",
+    accountService: "https://dev.api.logistics.churchesapp.com",
+    cardService: "https://dev.api.logistics.churchesapp.com",
   },
   database: {
     port: 27001,
@@ -29,21 +21,18 @@
     bucket: "exalt-dev",
   },
   mail: {
-    key: "SG.jXcQO8Q7T0SH0nWgiGdIO4gkcE",
+    key: "nWgiGdIO4gkcE",
     email: "sales@exaltapp.com",
   },
-  cdn: {
-    url: "https://d367c9pgq4rf5n.cloudfront.net/",
-  },
-  termii: {
-    key: "TLBMcLgvjJuWsYvZWvcKsdLHFw"
+  otp: {
+    termii: "TLYvZWvcKsdLHFw",
   },
   paystack: {
     secret: "sk_test_44f0d8a956caf6e5ab496afb",
     public: "pk_test_ad7a14781e403d65f206a8abc7",
   },
   googleMap: {
-    key: "AIzaSyCiOe7QVRVMTX43sm_Ic"
+    key: "AIzaSyCiOe7"
   },
   api: {
     key: "suecret",

@@ -56,10 +56,15 @@ exports.localEntry = async (req, res, next) => {
     const settingInstance = new SettingService();
     const DPInstance = new DPService();
     const VehicleInstance = new VehicleService();
-    const country = await countryInstance.getCountryAndState(
+
+    // validate state
+    await countryInstance.getCountryAndState(
       req.body.country,
       req.body.state
     );
+
+    // // validate the states
+    // await countryInstance.validateState(req.body.state, req.body.delivery);
 
     // find a single vehicle to have access to the weight
     const vehicle = await VehicleInstance.get(req.body.vehicle);
@@ -293,6 +298,7 @@ exports.riderAssignToEntry = async (req, res, next) => {
     const riderSub = new RiderSubscription();
     await riderSub.sendRidersEntries(riderIDS, entry);
 
+
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;
   } catch (error) {
@@ -311,15 +317,23 @@ exports.riderAcceptEntry = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const { entry } = await entryInstance.riderAcceptEntry(req.body, req.user);
+    const { entry, rider } = await entryInstance.riderAcceptEntry(
+      req.body,
+      req.user
+    );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     // dispatch action to riders for taken entry
     const riderSub = new RiderSubscription();
     await riderSub.takenEntryForRiders(entry._id);
+
+    // send nofication to the rider device
+    const title = "New Order Alert!!!!";
+    const notifyInstance = new NotifyService();
+    await notifyInstance.textNotify(title, "", rider.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
     return;
@@ -368,14 +382,23 @@ exports.riderStartPickup = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(req.body.entry);
 
+    const userInstance = new UserService();
+    const user = await userInstance.get(
+      { _id: entry.user },
+      {
+        FCMToken: 1,
+      }
+    );
+
     // send nofication to the user device
     const title = "Driver is on his way to the pickup location";
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
     return;
   } catch (error) {
+    console.log("error controller", error);
     next(error);
   }
 };
@@ -391,20 +414,20 @@ exports.riderArriveAtPickup = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const { entry } = await entryInstance.riderArriveAtPickup(
+    const { entry, user } = await entryInstance.riderArriveAtPickup(
       req.body,
       req.user
     );
 
     // send fcm notification
     // send nofication to the user device
-    const title = "Driver has arrived at the pickup location";
-    const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+     const title = "Driver has arrived at the pickup location";
+     const notifyInstance = new NotifyService();
+     await notifyInstance.textNotify(title, "", user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(req.body.entry);
+    await entrySub.updateEntryAdmin(entry);
 
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP);
     return;
@@ -424,7 +447,7 @@ exports.riderComfirmPickupOTPCode = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const entryInstance = new EntryService();
-    const { entry } = await entryInstance.riderComfirmPickupOTPCode(
+    const { entry, user } = await entryInstance.riderComfirmPickupOTPCode(
       req.body,
       req.user
     );
@@ -433,11 +456,11 @@ exports.riderComfirmPickupOTPCode = async (req, res, next) => {
     // send nofication to the user device
     const title = "Driver has confirmed Pickup.";
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    await notifyInstance.textNotify(title, "", user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
     return;

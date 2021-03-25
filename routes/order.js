@@ -16,5 +16,6 @@ router.post("/order-details", controller.order.orderDetails);
 
 router.get("/order-history/:orderId", controller.order.orderHistory);
 
+router.get("/history/:orderId", controller.order.history);
 
 module.exports = router;

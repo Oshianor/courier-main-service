@@ -4,33 +4,39 @@ const Company = require("../models/company");
 const RiderEntryRequest = require("../models/riderEntryRequest");
 const { SocketResponse } = require("../lib/apiResponse");
 const { SERVER_EVENTS, REDIS_CONFIG } = require("../constant/events");
-const { populateSingle, populateMultiple } = require("../utils");
+const { populateSingle, populateMultiple } = require("../services/aggregate");
 const socket = new io(REDIS_CONFIG, { key: "/sio" });
-
 
 class EntrySubscription {
   /**
    * Get All the admin
    * @param {String} entryId
    */
+  getEntry(entryId){
+    return new Promise(async(resolve, reject) => {
+      let entry = await Entry.findById(entryId)
+      .populate("transaction")
+      .populate("orders")
+      .populate("vehicle")
+      .populate(
+        "company",
+        "name email phoneNumber type logo address countryCode"
+      )
+      .populate(
+        "rider",
+        "name email phoneNumber countryCode onlineStatus latitude longitude img"
+      )
+      .lean();
+
+      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
+
+      resolve(entry);
+    })
+  }
+
   newEntry(entryId) {
     return new Promise(async (resolve, reject) => {
-      let entry = await Entry.findOne(entryId)
-        .populate("transaction")
-        .populate("orders")
-        .populate("vehicle")
-        // .populate("user", "name email phoneNumber countryCode")
-        .populate(
-          "company",
-          "name email phoneNumber type logo address countryCode"
-        )
-        .populate(
-          "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
-        )
-        .lean();
-
-      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode");
+      const entry = await this.getEntry(entryId);
 
       socket
         .to("admin")
@@ -43,32 +49,46 @@ class EntrySubscription {
     });
   }
 
+  updateEntry(entryId) {
+    return new Promise(async (resolve, reject) => {
+      const entry = await this.getEntry(entryId);
+
+      socket
+        .to("admin")
+        .emit(
+          SERVER_EVENTS.UPDATE_ENTRY_ADMIN,
+          SocketResponse(false, "ok", entry)
+        );
+
+      resolve(SocketResponse(false, "ok", entry));
+    });
+  }
+
   /**
    * Send pool via socket to all companies
    * @param {Socket Pointer} socket
    */
-  getPoolAdmin(socket) {
+  getPoolAdmin() {
     return new Promise(async (resolve, reject) => {
       let entries = await Entry.find()
-        .select("-metaData")
+        .lean()
         .limit(10)
+        .select("-metaData")
         .populate("transaction")
         .populate("orders")
         .populate("vehicle")
-        // .populate("user", "name email phoneNumber countryCode")
         .populate(
           "company",
           "name email phoneNumber type logo address countryCode"
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
-        .sort({ updatedAt: -1 })
-        .lean();
+        .sort({ updatedAt: -1 });
 
-      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode");
-      const total = await Entry.find().countDocuments();
+      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode img");
+      const total = await Entry.countDocuments();
 
       const meta = {
         total,
@@ -105,12 +125,12 @@ class EntrySubscription {
         )
         .populate(
           "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
+          "name email phoneNumber countryCode onlineStatus latitude longitude img"
         )
         .sort({ updatedAt: -1 })
         .lean();
 
-      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode");
+      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode img");
 
       const total = await Entry.find().countDocuments();
 
@@ -182,43 +202,45 @@ class EntrySubscription {
       });
 
       if (!riderER) {
-        resolve(SocketResponse(true, "No New request"));
+        reject(SocketResponse(true, "No New request"));
         return;
       }
 
-      let entries = await Entry.findOne({
+      let entry = await Entry.findOne({
         status: "companyAccepted",
         _id: riderER.entry,
       })
+        .lean()
         .populate("orders")
-        // .populate("user", "name email phoneNumber countryCode")
-        .select("-metaData")
-        .lean();
+        .select("-metaData");
 
-      entries = await populateSingle(entries, "user", "name email phoneNumber countryCode");
+      if (entry) {
+        entry = await populateSingle(entry, "user", "name email phoneNumber img");
+      }
+        
 
-      resolve(SocketResponse(false, "ok", entries));
+      resolve(SocketResponse(false, "ok", entry));
     });
   }
 
 
   updateEntryAdmin(entryId) {
     return new Promise(async (resolve, reject) => {
-      let entry = await Entry.findById(entryId)
-        .populate("transaction")
-        .populate("orders")
-        // .populate("user", "name email phoneNumber countryCode")
-        .populate(
-          "company",
-          "name email phoneNumber type logo address countryCode"
-        )
-        .populate(
-          "rider",
-          "name email phoneNumber countryCode onlineStatus latitude longitude"
-        )
-        .lean();
+      const entry = await this.getEntry(entryId);
+      // let entry = await Entry.findById(entryId)
+      //   .populate("transaction")
+      //   .populate("orders")
+      //   .populate(
+      //     "company",
+      //     "name email phoneNumber type logo address countryCode"
+      //   )
+      //   .populate(
+      //     "rider",
+      //     "name email phoneNumber countryCode onlineStatus latitude longitude img"
+      //   )
+      //   .lean();
 
-      entry = await populateSingle(entry, "user", "name email phoneNumber countryCode");
+      // entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       socket.to("admin").emit( SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN, SocketResponse(false, "ok", entry));
 

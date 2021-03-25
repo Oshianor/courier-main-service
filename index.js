@@ -7,7 +7,8 @@ const { http, app } = require("./startup/socket")
 const config = require("config");
 const port = process.env.PORT || config.get("application.port");
 const mongoose = require('mongoose');
-
+// require("./scripts/updateEnterpriseTransactions");
+// require("./scripts/createTransactionForEachOrder")
 
 mongoose
   .connect(config.get("database.url"), {

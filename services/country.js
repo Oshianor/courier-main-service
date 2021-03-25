@@ -1,8 +1,8 @@
 const Country = require("../models/countries");
+const { AsyncForEach } = require("../utils");
 
 
 class CountryService {
-
   getCountryAndState(country, state) {
     return new Promise(async (resolve, reject) => {
       // validate country
@@ -33,6 +33,23 @@ class CountryService {
       }
 
       resolve(countryCheck);
+    });
+  }
+
+  validateState(state, delivery) {
+    return new Promise(async (resolve, reject) => {
+     
+      console.log("delivery", delivery);
+      AsyncForEach(delivery, (data, index) => {
+        if (state !== data.state) {
+          return reject({
+            code: 404,
+            msg: "We handle only local delivery within the same state",
+          });
+        }
+      })
+
+      resolve();
     });
   }
 }

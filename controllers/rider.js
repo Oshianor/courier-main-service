@@ -17,7 +17,7 @@ const {
 const { paginate } = require("../utils");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { Verification } = require("../templates");
+const OrderService = require("../services/order");
 
 /**
  * Create Rider
@@ -370,6 +370,7 @@ exports.location = async (req, res, next) => {
     const { error } = validateRiderLocation(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
+    req.body.locationDate = new Date();
     await Rider.updateOne({ _id: req.user.id }, req.body)
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED);
@@ -638,6 +639,17 @@ exports.getEarningStatistics = async (req, res, next) => {
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
   } catch (error) {
     console.log(error)
+    next(error)
+  }
+}
+
+exports.removeOrderFromBasket = async (req, res, next) => {
+  try {
+    const orderInstance = new OrderService();
+    await orderInstance.removeOrderFromRiderBasket(req.user.id, req.params.orderId);
+
+    return JsonResponse(res, 200, "Order cancelled successfully");
+  } catch (error) {
     next(error)
   }
 }

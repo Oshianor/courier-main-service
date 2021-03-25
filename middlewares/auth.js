@@ -118,13 +118,13 @@ const SocketAuth = (socket, next) => {
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
-
+  console.log('Got here => ', token);
   try {
     // call user account service to get details
     const userInstance = new UserService();
     const userParent = await userInstance.getByToken(token);
 
-    req.user = userParent.data;
+    req.user = userParent;
     req.user.id = req.user._id;
     req.token = token;
     delete req.user._id;
@@ -148,9 +148,9 @@ const EnterpriseAuth = (roles = []) => {
     if (req.user.role === E_ROLES.OWNER) {
       next();
     } else {
-      if (roles.length < 1) {
-        return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
-      }
+      // if (roles.length < 1) {
+      //   return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
+      // }
       if (roles.includes(req.user.role)) {
         return next();
       }
@@ -178,7 +178,7 @@ const RiderAuth = async(req, res, next) => {
     const decoded = jwt.verify(token, config.get("application.jwt.key"));
     const riderId = decoded.id.toString();
 
-    redisClient().hget('RIDER_AUTH_TOKENS', riderId, (err, riderToken) => {
+    redisClient.hget('RIDER_AUTH_TOKENS', riderId, (err, riderToken) => {
       if(err){
         return JsonResponse(res, 500, MSG_TYPES.SERVER_ERROR);
       }
@@ -197,7 +197,6 @@ const RiderAuth = async(req, res, next) => {
     }
     return JsonResponse(res, 406, "Session Expired");
   }
-
 }
 
 module.exports = {

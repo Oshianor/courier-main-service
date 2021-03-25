@@ -7,9 +7,10 @@ const Rider = require("../models/rider");
 const OnlineHistory = require("../models/onlineHistory");
 const Company = require("../models/company");
 const Transaction = require("../models/transaction");
-const { Verification } = require("../templates");
+const Verification = require("../templates/verification");
 const { MSG_TYPES } = require("../constant/types");
-const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray, populateMultiple } = require("../utils");
+const { UploadFileFromBinary, Mailer, GenerateToken, convertToDailyDataArray } = require("../utils");
+const { populateMultiple } = require("../services/aggregate");
 const { JsonResponse } = require("../lib/apiResponse");
 const mongoose = require("mongoose");
 
@@ -30,20 +31,15 @@ class RiderService {
           return;
         }
 
-        if (files && files.POI) {
-          const POI = await UploadFileFromBinary(
-            files.POI.data,
-            files.POI.name
-          );
-          body.POI = POI.Key;
-        }
-
-        if (files && files.img) {
-          const img = await UploadFileFromBinary(
-            files.img.data,
-            files.img.name
-          );
-          body.img = img.Key;
+        const fileFields = ["img","POI","POA","LASDRIID","POVO"];
+        for await (let fileField of fileFields){
+          if (files && files[fileField]) {
+            const field = await UploadFileFromBinary(
+              files[fileField].data,
+              files[fileField].name
+            );
+            body[fileField] = field.Key;
+          }
         }
 
         const token = GenerateToken(225);
@@ -64,7 +60,7 @@ class RiderService {
         resolve(newRider);
       } catch (error) {
         console.log(error)
-        reject({ code: 400, msg: MSG_TYPES.SERVER_ERROR });
+        reject(error);
         return;
       }
     });
@@ -168,12 +164,12 @@ class RiderService {
           // .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET"
+            "status type source paymentMethod transaction itemType TEC TED TET name email countryCode phoneNumber"
           )
-          .populate(
-            "company",
-            "name email phoneNumber type logo address countryCode"
-          )
+          // .populate(
+          //   "company",
+          //   "name email phoneNumber type logo address countryCode"
+          // )
           .populate("transaction")
           .sort({ pickupType: -1 })
           .lean();
@@ -368,8 +364,9 @@ class RiderService {
         const order = await Order.findOne({
           rider: riderId,
           $or: [
-            { status: { $ne: "delivered" } },
-            { status: { $ne: "cancelled" } },
+            { status: "pickedup" },
+            { status: "enrouteToDelivery" },
+            { status: "arrivedAtDelivery" },
           ],
         });
 

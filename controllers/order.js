@@ -2,7 +2,7 @@ const config = require("config");
 const io = require("socket.io-emitter");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
-const Rider = require("../models/rider");
+const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const OrderService = require("../services/order");
 const TripLogService = require("../services/triplog");
@@ -24,6 +24,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const { validateRiderID } = require("../request/rating");
 const moment = require("moment");
 const CompanyService = require("../services/company");
+const userInstance = new UserService();
 
 /**
  * Start Delivery trigger by rider
@@ -43,13 +44,19 @@ exports.riderInitiateOrderDelivery = async (req, res, next) => {
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
+    const user = await userInstance.get(
+      { _id: entry.user },
+      {
+        FCMToken: 1,
+      }
+    );
     // send nofication to the user device
     const title = `Delivery for order #${order.orderId}`;
-    const body = `Driver is on his way to ${order.deliveryAddress}.`;
+    const body = `Driver is on his way to this location: ${order.deliveryAddress}.`;
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_DELIVERY);
     return;
@@ -70,20 +77,20 @@ exports.riderArriveAtDelivery = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
-    const { order, entry } = await orderInstance.arriveAtLocation(
+    const { order, entry, user } = await orderInstance.arriveAtLocation(
       req.body,
       req.user
     );
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     // send nofication to the user device
     const title = `Driver has arrived`;
     const body = `Driver has arrived at the delivery location ${order.deliveryAddress}.`;
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, user.FCMToken);
 
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_DELIVERY);
     return;
@@ -109,16 +116,22 @@ exports.confirmDelivery = async (req, res, next) => {
       req.user
     );
 
+    const user = await userInstance.get(
+      { _id: entry.user },
+      {
+        FCMToken: 1,
+      }
+    );
     // send fcm notification
     // send nofication to the user device
     const title = msg;
     const body = "";
     const notifyInstance = new NotifyService();
-    await notifyInstance.textNotify(title, body, entry.user.FCMToken);
+    await notifyInstance.textNotify(title, body, user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();
-    await entrySub.updateEntryAdmin(entry._id);
+    await entrySub.updateEntryAdmin(entry);
 
     JsonResponse(res, 200, msg);
     return;
@@ -188,6 +201,29 @@ exports.orderHistory = async (req, res, next) => {
     const orderDetails = await orderInstance.getOrderHistory(
       req.params.orderId
     );
+
+    JsonResponse(
+      res,
+      200,
+      "Order details retrieved successfully",
+      orderDetails
+    );
+    return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.history = async (req, res, next) => {
+  try {
+
+    const order = await Order.findOne({ orderId: req.params.orderId }).lean();
+    if (!order) {
+      return JsonResponse(res, 404, "No Order was found");
+    }
+
+    const orderInstance = new OrderService();
+    const orderDetails = await orderInstance.getOrderHistory(order._id);
 
     JsonResponse(
       res,
@@ -325,6 +361,21 @@ exports.assignOrderToRider = async (req, res, next) => {
     );
 
     JsonResponse(res, 200, MSG_TYPES.UPDATED, updatedOrder);
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+};
+
+
+exports.adminCancelOrder = async (req, res, next) => {
+  try {
+    const orderInstance = new OrderService();
+    const { orderId } = req.params;
+
+    const updatedEntry = await orderInstance.adminCancelOrder(orderId);
+
+    JsonResponse(res, 200, "Order cancelled successfully", updatedEntry);
   } catch (error) {
     console.log(error);
     next(error);

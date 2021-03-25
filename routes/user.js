@@ -4,8 +4,8 @@ const controller = require("../controllers");
 const { UserAuth, isExaltService } = require("../middlewares/auth");
 
 
-// get my data
-router.patch("/fcmtoken", UserAuth, controller.user.FCMToken);
+// [moved to accounts service]
+//router.patch("/fcmtoken", UserAuth, controller.user.FCMToken);
 
 router.get("/order/pending", UserAuth, controller.user.pending);
 

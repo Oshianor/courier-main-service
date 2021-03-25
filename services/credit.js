@@ -3,8 +3,7 @@ const CreditHistory = require("../models/creditHistory");
 const { nanoid } = require("nanoid");
 const UserService = require("./user");
 const { MSG_TYPES } = require("../constant/types");
-const { populateMultiple } = require("../utils");
-
+const { populateMultiple } = require("../services/aggregate");
 
 class CreditService {
   /**
@@ -110,11 +109,11 @@ class CreditService {
   getAllCredit(skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       let credit = await CreditHistory.find({ type: "loan" })
+      .lean()
       .skip(skip)
       .limit(pageSize)
       // .populate("enterprise", "name email countryCode phoneNumber")
       .sort({createdAt: "desc"})
-      .lean();
 
       credit = await populateMultiple(credit, "enterprise");
 
@@ -171,6 +170,7 @@ class CreditService {
           await creditHistory.updateOne({
             status: "approved",
             admin: user.id,
+            note: body.note || '',
             approvedAt: new Date(),
           });
           await Credit.updateOne(
@@ -182,7 +182,12 @@ class CreditService {
 
         }
 
-        await creditHistory.updateOne({ status: "declined" });
+        await creditHistory.updateOne({
+          status: "declined",
+          admin: user.id,
+          note: body.note,
+          declinedAt: new Date()
+        });
         return resolve({ creditHistory });
       } catch (error) {
         reject(error);

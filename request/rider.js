@@ -15,7 +15,12 @@ function validateRider(body) {
   const schema = Joi.object({
     name: Joi.string().max(30).required(),
     email: Joi.string().email().max(50).optional(),
-    phoneNumber: Joi.string().max(10).required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     address: Joi.string().max(225).required(),
     DOB: Joi.date().required(),
     POIExpiringDate: Joi.date().required(),
@@ -38,7 +43,12 @@ function validateRiderSelf(body) {
   const schema = Joi.object({
     name: Joi.string().max(30).required(),
     email: Joi.string().email().max(50).optional(),
-    phoneNumber: Joi.string().max(10).required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     address: Joi.string().max(225).required(),
     DOB: Joi.date().required(),
     POIExpiringDate: Joi.date().required(),
@@ -57,6 +67,20 @@ function validateRiderSelf(body) {
     state: Joi.string().label("State").required(),
     // password: passwordComplexity(complexityOptions).required(),
     // confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
+
+    BVN: Joi.string().optional(),
+    NIN: Joi.string().optional(),
+    postalCode: Joi.string().optional(),
+    designation: Joi.string().valid("exalt", "freelance").optional(),
+    guarantors: Joi.array()
+      .items({
+        name: Joi.string().required(),
+        phoneNumber: Joi.string().required(),
+        address: Joi.string().required(),
+        relationship: Joi.string().required(),
+      })
+      .max(2)
+      .optional(),
   });
 
   return schema.validate(body);

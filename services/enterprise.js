@@ -231,11 +231,10 @@ class EnterpriseService {
         };
 
         let transactions = await Transaction.find(queryFilter)
-          // .populate("user")
-          .skip(skip)
-          .limit(pageSize)
-          .sort({ createdAt: "desc" })
-          .lean();
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ createdAt: "desc" })
+        .lean();
 
         transactions = await populateMultiple(transactions, "user");
 

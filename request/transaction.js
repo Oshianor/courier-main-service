@@ -19,6 +19,13 @@ function validateTransaction(body) {
         then: Joi.required(),
         otherwise: Joi.forbidden(),
       }),
+    cashPaymentType: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .when("paymentMethod", {
+        is: "cash",
+        then: Joi.string().valid("pickup", "delivery").required(),
+        otherwise: Joi.forbidden(),
+      }),
   });
 
   return schema.validate(body);
@@ -43,6 +50,13 @@ function validateEnterpriseTransaction(body) {
         then: Joi.required(),
         otherwise: Joi.forbidden(),
       }),
+    cashPaymentType: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .when("paymentMethod", {
+        is: "cash",
+        then: Joi.string().valid("pickup", "delivery").required(),
+        otherwise: Joi.forbidden(),
+      }),
   });
 
   return schema.validate(body);
@@ -51,9 +65,17 @@ function validateEnterpriseTransaction(body) {
 function validateTransactionStatus(body) {
   const schema = Joi.object({
     status: Joi.string().valid("approved", "declined").required(),
-    entry: Joi.string()
-      .regex(/^[0-9a-fA-F]{24}$/)
-      .required(),
+    type: Joi.string().valid("pickup","delivery").required(),
+    entry: Joi.when('type', {
+      is: "pickup",
+      then: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+      otherwise: Joi.forbidden()
+    }),
+    order: Joi.when('type', {
+      is: "delivery",
+      then: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
+      otherwise: Joi.forbidden()
+    })
   });
 
   return schema.validate(body);

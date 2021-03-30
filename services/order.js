@@ -3,6 +3,7 @@ const Order = require("../models/order");
 const Company = require("../models/company");
 const Entry = require("../models/entry");
 const Rider = require("../models/rider");
+const Transaction = require("../models/transaction");
 const TripLogService = require("./triplog");
 const NotificationService = require("./notification");
 const { MSG_TYPES } = require("../constant/types");
@@ -393,6 +394,27 @@ class OrderService {
         if (!entry) {
           reject({ code: 404, msg: "This order doesn't exist" });
           return;
+        }
+
+        // check if the payment method is cash and cashPaymenType is 'delivery'
+        if (entry.paymentMethod === "cash" && entry.cashPaymentType === "delivery") {
+          const transaction = await Transaction.findOne({ order: order._id });
+          if (!transaction) {
+            reject({
+              code: 404,
+              msg: "No Transaction was found for this order, Please confirm cash payment first",
+            });
+            return;
+          }
+
+          if (transaction.status !== "approved") {
+            reject({
+              code: 400,
+              msg: `You need to confirm payment before confirming delivery`,
+            });
+
+            return;
+          }
         }
 
 

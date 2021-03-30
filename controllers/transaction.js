@@ -94,26 +94,40 @@ exports.enterpriseTransaction = async (req, res, next) => {
 exports.riderConfirmCashPayment = async (req, res, next) => {
   try {
     const { error } = validateTransactionStatus(req.body);
-    if (error)
-      return JsonResponse(res, 400, error.details[0].message);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
 
-      const entryInstance = new EntryService();
-      const { entry, code, msg } = await entryInstance.riderConfirmCashPayment(
+    const entryInstance = new EntryService();
+    let entryId = req.body.entry;
+    let responseMessage = '';
+    let responseCode = 200;
+    if(req.body.type === "pickup" && req.body.entry){
+      let { entry, code, msg } = await entryInstance.riderConfirmCashPayment(
         req.body,
         req.user
       );
+
+      entryId = entry._id;
+      responseCode = code;
+      responseMessage = msg;
 
       // send fcm notification
       // send nofication to the user device
       const title = "Your payment has been confirmed. Thank you";
       const notifyInstance = new NotifyService();
       await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+    } else {
+      // type is to be "delivery" and order Id is provided
+      const { entry, code, msg } = await entryInstance.riderConfirmCashPaymentAtDelivery(req.body, req.user);
+      entryId = entry._id;
+      responseCode = code;
+      responseMessage = msg;
+    }
 
-      // send socket to admin for update
-      const entrySub = new EntrySubscription();
-      await entrySub.updateEntryAdmin(entry._id);
+    // send socket to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entryId);
 
-    JsonResponse(res, code, msg);
+    JsonResponse(res, responseCode, responseMessage);
     return;
   } catch (error) {
     next(error);

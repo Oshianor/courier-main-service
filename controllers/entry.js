@@ -11,7 +11,7 @@ const {
 } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { paginate } = require("../utils");
+const { paginate, UploadFileFromLocal, UploadFileFromBinary } = require("../utils");
 const CountryService = require("../services/country");
 const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
@@ -23,6 +23,8 @@ const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user");
+const path = require("path");
+const axios = require("axios");
 
 /**
  * Create an Entry
@@ -468,3 +470,26 @@ exports.riderComfirmPickupOTPCode = async (req, res, next) => {
     next(error);
   }
 };
+
+
+exports.validateAddressBook = async (req, res, next) => {
+  try{
+    const dataFile = req?.files?.addresses;
+    if(!dataFile){
+      return res.status(400).send({msg: "Addresses file not uploaded"});
+    };
+
+    const s3Upload = await UploadFileFromBinary(dataFile.data, dataFile.name);
+
+    const response = await axios.post(config.get("lambdas.addressBookValidation"), {
+      addresses: s3Upload.Key
+    });
+
+    if(response && response.data){
+      return res.send({data: response.data.data, msg: "Data validated successfully"});
+    }
+
+  } catch(error){
+    next(error);
+  }
+}

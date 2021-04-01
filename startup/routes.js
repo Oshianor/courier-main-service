@@ -23,6 +23,7 @@ const card = require("../routes/card");
 const wallet = require("../routes/wallet");
 const credit = require("../routes/credit");
 const enterprise = require("../routes/enterprise");
+const interstatePrice = require("../routes/interstatePrice");
 const corsOptions = {
   origin: "*",
   exposedHeaders: ["x-auth-token"],
@@ -37,6 +38,7 @@ app.use("/api/v1/admin/pricing", pricing);
 app.use("/api/v1/admin/vehicle", vehicle);
 app.use("/api/v1/admin/distance-price", distancePrice);
 app.use("/api/v1/company", company);
+app.use("/api/v1/interstate-price", interstatePrice);
 app.use("/api/v1/entry", entry);
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/rider", rider);

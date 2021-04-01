@@ -46,7 +46,7 @@ exports.transaction = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry._id);
 
-    JsonResponse(res, 201, msg, riderBasket);
+    JsonResponse(res, 201, msg);
     return;
   } catch (error) {
     next(error);

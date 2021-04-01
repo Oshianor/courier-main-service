@@ -666,7 +666,7 @@ Verification = (token, email, type) => {
                                             </p>
                                             <p
                                               style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#333333">
-                                              <a href="mailto:sales@exaltchurches.com"
+                                              <a href="mailto:sales@exaltapp.com"
                                                 style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;font-size:14px;text-decoration:underline;color:#FD0E31"></a>
                                             </p><span data-cke-bookmark="1"
                                               style="display:none;line-height:150%">&nbsp;</span>

@@ -1081,7 +1081,7 @@ class EntryService {
           .select("-metaData");
 
         if (!entry) {
-          reject({ code: 404, msg: "This order doesn't exist" });
+          reject({ code: 404, msg: "This entry doesn't exist" });
           return;
         }
 
@@ -1093,14 +1093,19 @@ class EntryService {
           });
           return;
         }
+        if(entry.cashPaymentType !== "pickup"){
+          return reject({code: 400, msg: "You can't confirm cash payment for this order at pickup"})
+        }
 
-        const transaction = await Transaction.findOne({
+        const transactionsFilter = {
           entry: body.entry,
           paymentMethod: "cash",
           status: "pending",
-        });
+        };
 
-        if (!transaction) {
+        const transactions = await Transaction.find(transactionsFilter);
+
+        if (!transactions.length) {
           reject({
             code: 404,
             msg: "No Transaction was found for this entry",
@@ -1121,7 +1126,7 @@ class EntryService {
 
         // when rider select declined on payment status
         if (body.status === "declined") {
-          await transaction.updateOne({ status: "declined" }, { session });
+          await Transaction.updateMany(transactionsFilter, { status: "declined" }, { session });
           await Entry.updateOne(
             { _id: body.entry },
             {
@@ -1147,40 +1152,197 @@ class EntryService {
             entry,
             rider,
             company,
+            transactions,
+            code: 200,
+            msg:
+              "You've successfully declined this payment and the order has been cancelled for this trip.",
+          });
+          return;
+        } else {
+          const currentDate = new Date();
+          await Transaction.updateMany(
+            transactionsFilter,
+            {
+              status: "approved",
+              approvedAt: currentDate,
+            },
+            { session }
+          );
+
+          const tripLogInstance = new TripLogService();
+          await tripLogInstance.createLog(logs, session);
+
+          await session.commitTransaction();
+          session.endSession();
+
+          resolve({
+            entry,
+            rider,
+            company,
+            transactions,
+            code: 200,
+            msg: "Payment has been approved successfully.",
+          });
+        }
+      } catch (error) {
+        await session.abortTransaction();
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Rider confirm user cash payment at a delivery location
+   * @param {Object} body
+   * @param {Auth User} user
+   */
+  riderConfirmCashPaymentAtDelivery(body, user) {
+    return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+      try {
+        // start our transaction
+        session.startTransaction();
+
+        const rider = await Rider.findOne({
+          _id: user.id,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        });
+        if (!rider) {
+          reject({ code: 404, msg: "You can't accept this order" });
+          return;
+        }
+
+        const company = await Company.findOne({
+          _id: rider.company,
+          status: "active",
+          verified: true,
+        });
+
+        if (!company) {
+          reject({ code: 404, msg: "Your company account doesn't exist" });
+          return;
+        }
+
+        // check if correct order exists
+        const order = await Order.findOne({
+          _id: body.order,
+          status: "arrivedAtDelivery",
+          company: company._id,
+          rider: rider._id,
+        })
+          .lean()
+          .populate('entry')
+          .select("-metaData");
+
+        if (!order) {
+          reject({ code: 404, msg: "This order doesn't exist" });
+          return;
+        }
+
+        // check if the payment method is cash
+        if (order.paymentMethod !== "cash") {
+          reject({
+            code: 400,
+            msg: "You can't approve an order that isn't a cash payment",
+          });
+          return;
+        }
+        if(order.cashPaymentType !== "delivery"){
+          return reject({code: 400, msg: "You can't confirm cash payment for this order at delivery"})
+        }
+
+        const transactionFilter = {
+          order: body.order,
+          paymentMethod: "cash",
+          status: "pending",
+        };
+
+        const transaction = await Transaction.findOne(transactionFilter);
+
+        if (!transaction) {
+          return reject({
+            code: 404,
+            msg: "No Transaction was found for this order",
+          });
+        }
+
+        const logs = {
+          type: "confirmPayment",
+          order: order._id,
+          rider: rider._id,
+          user: order.entry.user,
+          entry: order.entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
+
+        // when rider select declined on payment status
+        if (body.status === "declined") {
+          await Transaction.updateOne(transactionFilter, { status: "declined" }, { session });
+          await Order.updateOne(
+            { _id: order._id },
+            {
+              status: "cancelled",
+              cancelledAt: new Date(),
+            },
+            { session }
+          );
+          // await Order.updateMany(
+          //   { entry: entry._id },
+          //   { status: "cancelled", cancelledAt: new Date() },
+          //   { session }
+          // );
+
+          logs.type = "cancelled";
+          const tripLogInstance = new TripLogService();
+          await tripLogInstance.createLog(logs, session);
+
+          await session.commitTransaction();
+          session.endSession();
+
+          resolve({
+            entry: order.entry,
+            rider,
+            company,
             transaction,
             code: 200,
             msg:
               "You've successfully declined this payment and the order has been cancelled for this trip.",
           });
           return;
+        } else {
+          const currentDate = new Date();
+          await Transaction.updateOne(
+            transactionFilter,
+            {
+              status: "approved",
+              approvedAt: currentDate,
+            },
+            { session }
+          );
+
+          const tripLogInstance = new TripLogService();
+          await tripLogInstance.createLog(logs, session);
+
+          await session.commitTransaction();
+          session.endSession();
+
+          resolve({
+            entry: order.entry,
+            rider,
+            company,
+            transaction,
+            code: 200,
+            msg: "Payment has been approved successfully.",
+          });
         }
-
-        const currentDate = new Date();
-        await transaction.updateOne(
-          {
-            status: "approved",
-            approvedAt: currentDate,
-          },
-          { session }
-        );
-
-        const tripLogInstance = new TripLogService();
-        await tripLogInstance.createLog(logs, session);
-
-        await session.commitTransaction();
-        session.endSession();
-
-        resolve({
-          entry,
-          rider,
-          company,
-          transaction,
-          code: 200,
-          msg: "Payment has been approved successfully.",
-        });
       } catch (error) {
+        console.log('Error => ', error);
         await session.abortTransaction();
-        reject(error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
       }
     });
   }
@@ -1237,10 +1399,10 @@ class EntryService {
         //check that there are no instant pickup that needs to be deliveried first
         await this.instantEntries(rider._id, entry);
 
-        // check if the payment method is cash
-        if (entry.paymentMethod === "cash") {
-          const transaction = await Transaction.findOne({ entry: body.entry });
-          if (!transaction) {
+        // check if the payment method is cash and cashPaymenType is 'pickup'
+        if (entry.paymentMethod === "cash" && entry.cashPaymentType === "pickup") {
+          const transactions = await Transaction.find({ entry: body.entry });
+          if (!transactions.length) {
             reject({
               code: 404,
               msg: "No Transaction was found for this entry",
@@ -1248,7 +1410,7 @@ class EntryService {
             return;
           }
 
-          if (transaction.status !== "approved") {
+          if (transactions[0].status !== "approved") {
             reject({
               code: 400,
               msg: `You need to confirm payment before confirming pickup.`,

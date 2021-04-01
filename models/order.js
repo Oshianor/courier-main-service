@@ -247,6 +247,15 @@ const orderSchema = mongoose.Schema(
       // ref: "User",
       default: null,
     },
+    paymentMethod: {
+      type: String,
+      default: "cash",
+      enum: ["card", "cash", "credit", "wallet"],
+    },
+    cashPaymentType: {
+      type: String,
+      enum: ["pickup","delivery"],
+    },
   },
   {
     timestamps: true,

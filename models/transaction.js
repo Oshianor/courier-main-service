@@ -59,6 +59,10 @@ const transactionSchema = new mongoose.Schema(
       default: "card",
       enum: ["card", "cash", "wallet", "credit"],
     },
+    cashPaymentType: {
+      type: String,
+      enum: ["pickup","delivery"],
+    },
     amount: {
       type: Number,
       required: true,

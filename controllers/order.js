@@ -24,6 +24,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const { validateRiderID } = require("../request/rating");
 const moment = require("moment");
 const CompanyService = require("../services/company");
+const RiderService = require("../services/rider");
 const userInstance = new UserService();
 
 /**
@@ -58,7 +59,11 @@ exports.riderInitiateOrderDelivery = async (req, res, next) => {
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, body, user.FCMToken);
 
-    JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_DELIVERY);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_DELIVERY, riderBasket);
     return;
   } catch (error) {
     console.log("error", error);
@@ -92,7 +97,11 @@ exports.riderArriveAtDelivery = async (req, res, next) => {
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, body, user.FCMToken);
 
-    JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_DELIVERY);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_DELIVERY, riderBasket);
     return;
   } catch (error) {
     console.log("error", error);
@@ -133,7 +142,11 @@ exports.confirmDelivery = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry);
 
-    JsonResponse(res, 200, msg);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, msg, riderBasket);
     return;
   } catch (error) {
     next(error);

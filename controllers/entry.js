@@ -88,6 +88,7 @@ exports.localEntry = async (req, res, next) => {
       req.body.img = images;
     }
 
+    // return console.log(req.user);
     const body = await entryInstance.calculateLocalEntry(
       req.body,
       req.user,

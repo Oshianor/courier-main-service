@@ -32,7 +32,35 @@ function validateUpdateInterstatePrice(data) {
     return Schema.validate(data);
 }
 
+function validateCompanyInterstatePrice(data) {
+    const Schema = Joi.object().keys({
+        destinationCountry: Joi.string().label("destination country").required(),
+        destinationState: Joi.string().label("destination State").required(),
+        price: Joi.string().label("Price").required(),
+        currency: Joi.string().label("Currency").required(),
+        source: Joi.string().label("Source").required()
+    });
+
+    return Schema.validate(data);
+}
+
+function validateUpdateCompanyInterstatePrice(data) {
+    const Schema = Joi.object().keys({
+        destinationCountry: Joi.string().label("destination country").required(),
+        destinationState: Joi.string().label("destination State").required(),
+        price: Joi.string().label("Price").required(),
+        currency: Joi.string().label("Currency").required(),
+        source: Joi.string().label("Source").required(),
+        id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).label("id").required(),
+
+    });
+
+    return Schema.validate(data);
+}
+
 module.exports = {
     validateInterstatePrice,
-    validateUpdateInterstatePrice
+    validateUpdateInterstatePrice,
+    validateCompanyInterstatePrice,
+    validateUpdateCompanyInterstatePrice
 };

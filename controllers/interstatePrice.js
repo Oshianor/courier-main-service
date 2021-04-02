@@ -140,11 +140,15 @@ exports.updateCompanyInterstatePrice = async (req, res, next) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message, null, null);
     // create new account record
-    const detail = await model.findOne({ $and: [{ company: req.query.id }, { _id: req.body.id }] });
+    const detail = await model.findOne({ $and: [{ company: req.params.id }, { _id: req.body.id }] });
     if (!detail)
       return JsonResponse(res, 400, MSG_TYPES.NOT_FOUND, null, null);
-
-    await model.updateOne(req.body);
+    if (detail.originCountry !== req.body.destinationCountry) {
+      return JsonResponse(res, 400, "country origin and destination must be the same", null, null)
+    }
+    let data = { source: 'admin', currency: "NGN" }
+    let savedData = Object.assign(req.body, data)
+    await model.updateOne(savedData);
 
     return JsonResponse(res, 200, MSG_TYPES.UPDATED, null, null);
   } catch (error) {

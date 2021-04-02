@@ -29,8 +29,6 @@ function validateCompanyInterstatePrice(data) {
         destinationCountry: Joi.string().label("destination country").required(),
         destinationState: Joi.string().label("destination State").required(),
         price: Joi.string().label("Price").required(),
-        currency: Joi.string().label("Currency").required(),
-        source: Joi.string().label("Source").required()
     });
 
     return Schema.validate(data);
@@ -41,8 +39,6 @@ function validateUpdateCompanyInterstatePrice(data) {
         destinationCountry: Joi.string().label("destination country").required(),
         destinationState: Joi.string().label("destination State").required(),
         price: Joi.string().label("Price").required(),
-        currency: Joi.string().label("Currency").required(),
-        source: Joi.string().label("Source").required(),
         id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).label("id").required(),
 
     });

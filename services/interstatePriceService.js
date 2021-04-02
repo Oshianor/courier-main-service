@@ -12,8 +12,11 @@ class interstatePriceService {
             { destinationCountry: options.destinationCountry },
           ],
         });
+        if (options.originCountry !== options.destinationCountry) reject({ code: 400, msg: "country origin and destination must be the same" })
         if (!checkExist) {
-          let createData = await InterstatePrice.create(options);
+          let data = { source: 'admin', currency: "NGN" }
+          let saveData = Object.assign(options, data)
+          let createData = await InterstatePrice.create(saveData);
           resolve(createData);
         }
         reject({ code: 400, msg: "Inputs already exists" });

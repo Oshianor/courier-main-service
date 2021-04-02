@@ -11,7 +11,7 @@ router.get("/single", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controlle
 router.get("/company/single", Auth, controller.interstatePrice.getCompanyInterStatePriceById);
 router.delete("/delete", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.delete);
 router.delete("/company/delete", Auth, controller.interstatePrice.deleteCompanyInterstatePrice);
-router.put("/edit", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.update);
+router.patch("/edit/:id", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.update);
 router.put("/company/edit", Auth, controller.interstatePrice.updateCompanyInterstatePrice);
 
 module.exports = router;

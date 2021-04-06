@@ -53,6 +53,7 @@ class TransactionService {
 
         // console.log("amount, orders", amount, orders);
 
+
         let msgRES;
         const transactionData = {
           ...body,
@@ -64,6 +65,12 @@ class TransactionService {
           company: entry.company,
           // commissionPercent: pricing.transactionCost,
         }
+
+        let amount = parseFloat(entry.TEC);
+        if(body.pickupType === "instant"){
+          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+        }
+
         if (body.paymentMethod === "card") {
           const card = await cardInstance.get({ _id: body.card, user: user.id });
           const { trans } = await this.chargeCard(card, amount)
@@ -78,11 +85,6 @@ class TransactionService {
         }
 
         const createdTransactions = await this.createTransactionsForOrders(entry, transactionData, body.pickupType, session);
-
-        let amount = parseFloat(entry.TEC);
-        if(body.pickupType === "instant"){
-          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
-        }
 
         const transactionIds = createdTransactions.map((trx) => trx._id);
 

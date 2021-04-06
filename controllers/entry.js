@@ -117,6 +117,15 @@ exports.localEntry = async (req, res, next) => {
   }
 };
 
+
+exports.bulkEntry = async (req, res, next) => {
+  try{
+
+  } catch(error){
+    next(error);
+  }
+}
+
 /**
  * Calculate pricing for shipment
  * @param {*} req

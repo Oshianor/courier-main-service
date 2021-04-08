@@ -1,5 +1,4 @@
-const Joi = require("joi");
-
+ const Joi = require("joi");
 
 function validateLocalEntry(data) {
   const Schema = Joi.object().keys({
@@ -56,6 +55,48 @@ function validateLocalEntry(data) {
       })
       .max(10)
       .required(),
+  });
+
+  return Schema.validate(data);
+}
+
+function validateInterStateEntry(data) {
+  const Schema = Joi.object().keys({
+    itemType: Joi.string()
+      .label("Item Type")
+      .valid("Document", "Parcel", "Edible")
+      .required(),
+    img: Joi.array()
+      .items(
+        Joi.string()
+          .base64({ paddingRequired: false })
+          .label("Item Image")
+          .required()
+      )
+      .max(4)
+      .optional(),
+    vehicle: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .label("Vehicle")
+      .required(),
+    email: Joi.string().email().max(50).label("Email").optional(),
+    name: Joi.string().label("Name").required(),
+    pickupLatitude: Joi.number().label("Pickup Latitude").required(),
+    pickupLongitude: Joi.number().label("Pickup Longitude").required(),
+    description: Joi.string().label("Description").allow("").required(),
+    country: Joi.string().label("Country").required(),
+    state: Joi.string().label("State").required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
+    countryCode: Joi.string().max(5).required(),
+    location: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .label("Location")
+      .required()
   });
 
   return Schema.validate(data);
@@ -133,4 +174,5 @@ module.exports = {
   validatePickupOTP,
   validateSendRiderRequest,
   validateCalculateShipment,
+  validateInterStateEntry,
 };

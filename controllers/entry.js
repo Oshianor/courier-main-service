@@ -18,6 +18,7 @@ const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
+const InterStateAddressService = require("../services/interstatePriceService");
 const EntrySubscription = require("../subscription/entry");
 const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
@@ -59,10 +60,7 @@ exports.localEntry = async (req, res, next) => {
     const VehicleInstance = new VehicleService();
 
     // validate state
-    await countryInstance.getCountryAndState(
-      req.body.country,
-      req.body.state
-    );
+    await countryInstance.getCountryAndState(req.body.country, req.body.state);
 
     // // validate the states
     // await countryInstance.validateState(req.body.state, req.body.delivery);
@@ -99,6 +97,74 @@ exports.localEntry = async (req, res, next) => {
     );
 
     // start our mongoDb transaction
+    const newEntry = await entryInstance.createEntry(body);
+
+    newEntry.metaData = null;
+    // only send out a socket dispatch when it's n ot enterprise
+    // because on enterprise a company has already been assigned
+    if (typeof req.enterprise === "undefined") {
+      const entrySub = new EntrySubscription();
+      await entrySub.newEntry(newEntry._id);
+    }
+
+    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
+    return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Create an interstate Entry
+ * @param {*} req
+ * @param {*} res
+ */
+exports.interStateEntry = async (req, res, next) => {
+  try {
+    const { error } = validateInterStateEntry(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    req.body.company = null;
+    req.body.enterprise = null;
+    // we need to check if it done by an enterprise account
+    if (typeof req.enterprise !== "undefined") {
+      // get owners
+      const company = await Company.findOne({
+        state: req.body.state,
+        ownership: true,
+      }).select({ name: 1, rating: 1, state: 1, country: 1, logo: 1 });
+
+      if (company) {
+        req.body.company = company;
+      }
+
+      req.body.enterprise = req.enterprise._id;
+    }
+
+    const entryInstance = new EntryService();
+    const countryInstance = new CountryService();
+    const VehicleInstance = new VehicleService();
+    const ISAInstance = new InterStateAddressService();
+
+    const location = await ISAInstance.getById(body.location);
+
+    // validate state
+    await countryInstance.getCountryAndState(req.body.country, req.body.state);
+    // find a single vehicle to have access to the weight
+    const vehicle = await VehicleInstance.get(req.body.vehicle);
+    // upload images
+    if (typeof req.body.img !== "undefined") {
+      const images = await entryInstance.uploadArrayOfImages(req.body.img);
+      req.body.img = images;
+    }
+
+    const body = await entryInstance.calculateInterStateEntry(
+      req.body,
+      req.user,
+      vehicle,
+      location
+    );
+
     const newEntry = await entryInstance.createEntry(body);
 
     newEntry.metaData = null;
@@ -299,7 +365,6 @@ exports.riderAssignToEntry = async (req, res, next) => {
     const riderSub = new RiderSubscription();
     await riderSub.sendRidersEntries(riderIDS, entry);
 
-
     JsonResponse(res, 200, MSG_TYPES.RIDER_ASSIGN);
     return;
   } catch (error) {
@@ -430,9 +495,9 @@ exports.riderArriveAtPickup = async (req, res, next) => {
 
     // send fcm notification
     // send nofication to the user device
-     const title = "Driver has arrived at the pickup location";
-     const notifyInstance = new NotifyService();
-     await notifyInstance.textNotify(title, "", user.FCMToken);
+    const title = "Driver has arrived at the pickup location";
+    const notifyInstance = new NotifyService();
+    await notifyInstance.textNotify(title, "", user.FCMToken);
 
     // send socket to admin for update
     const entrySub = new EntrySubscription();

@@ -218,6 +218,30 @@ class EntryService {
     });
   }
 
+
+  /**
+   * Calculate shipment for interstate
+   * @returns Object
+   */
+  calculateInterStateEntry(body, user, vehicle, location) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        body.type = "interState"
+        body.delivery = [
+          {
+            ...location,
+          },
+        ];
+        body.vehicle = vehicle._id;
+
+
+        resolve(body);
+      } catch (error) {
+         reject(error);
+      }
+    })
+  }
+
   /**
    * Upload array of images
    * @param {Array} images

@@ -3,6 +3,7 @@ const { MSG_TYPES } = require("../constant/types");
 const { JsonResponse } = require("../lib/apiResponse");
 const model = require('../models/interstatePrice')
 const interstatePriceService = require("../services/interstatePriceService")
+const interStateInstance = new interstatePriceService();
 
 
 exports.create = async (req, res, next) => {
@@ -12,9 +13,9 @@ exports.create = async (req, res, next) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
-    const interStateInstance = new interstatePriceService();
-    await interStateInstance.create(req.body)
-    return JsonResponse(res, 200, MSG_TYPES.CREATED);
+    const address = await interStateInstance.create(req.body);
+
+    return JsonResponse(res, 200, MSG_TYPES.CREATED, address);
   } catch (error) {
     next(error);
 
@@ -28,7 +29,6 @@ exports.createCompanyInterstatePrice = async (req, res, next) => {
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 
-    const interStateInstance = new interstatePriceService();
     await interStateInstance.createCompanyInterstatePrice(req.query.id, req.body)
     return JsonResponse(res, 200, MSG_TYPES.CREATED);
   } catch (error) {
@@ -63,7 +63,7 @@ exports.getAllCompanyInterstatePrice = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const interStateInstance = new interstatePriceService()
+
     let data = await interStateInstance.getById(req.query.id)
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
   } catch (error) {
@@ -74,7 +74,6 @@ exports.getById = async (req, res, next) => {
 
 exports.getCompanyInterStatePriceById = async (req, res, next) => {
   try {
-    const interStateInstance = new interstatePriceService()
     let data = await interStateInstance.getCompanyInterStatePriceById(req.query.id, req.body)
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
   } catch (error) {
@@ -85,7 +84,6 @@ exports.getCompanyInterStatePriceById = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const interStateInstance = new interstatePriceService()
     let data = await interStateInstance.delete(req.query.id)
     return JsonResponse(res, 200, MSG_TYPES.DELETED, data);
   } catch (error) {
@@ -96,7 +94,6 @@ exports.delete = async (req, res, next) => {
 
 exports.deleteCompanyInterstatePrice = async (req, res, next) => {
   try {
-    const interStateInstance = new interstatePriceService()
     let data = await interStateInstance.deleteCompanyInterstatePrice(req.query.id, req.body)
     return JsonResponse(res, 200, MSG_TYPES.DELETED, data);
   } catch (error) {

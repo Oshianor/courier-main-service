@@ -61,7 +61,7 @@ class EntryService {
       const session = await mongoose.startSession();
       try {
         let newEntry = null;
-        await session.withTransaction(async() => {
+        await session.withTransaction(async () => {
           // await session.startTransaction();
 
           newEntry = new Entry(body);
@@ -78,7 +78,7 @@ class EntryService {
         session.endSession();
         resolve(newEntry);
       } catch (error) {
-        console.log('Session => ', error);
+        console.log("Session => ", error);
         await session.abortTransaction();
         reject(error);
       }
@@ -141,9 +141,9 @@ class EntryService {
 
                 // set the coordinates for pickup address
                 body.delivery[elemIndex].pickupLatitude = body.pickupLatitude;
-                  // pickup[0].geometry.location.lat;
+                // pickup[0].geometry.location.lat;
                 body.delivery[elemIndex].pickupLongitude = body.pickupLongitude;
-                  // pickup[0].geometry.location.lng;
+                // pickup[0].geometry.location.lng;
 
                 const time = parseFloat(element.duration.value / 60);
                 const singleDistance = parseFloat(
@@ -191,7 +191,8 @@ class EntryService {
                   parseFloat(setting.baseFare);
 
                 // set price for each order
-                body.delivery[elemIndex].estimatedCost = Math.ceil(parseFloat(amount) / 100) * 100;
+                body.delivery[elemIndex].estimatedCost =
+                  Math.ceil(parseFloat(amount) / 100) * 100;
                 // parseFloat(km) + parseFloat(weight) + parseFloat(setting.baseFare);
 
                 // set total price for the entry
@@ -218,28 +219,56 @@ class EntryService {
     });
   }
 
-
   /**
    * Calculate shipment for interstate
    * @returns Object
    */
-  calculateInterStateEntry(body, user, vehicle, location) {
+  calculateInterStateEntry(body, user, vehicle, location, distance) {
     return new Promise(async (resolve, reject) => {
       try {
-        body.type = "interState"
+
+        const data = distance.rows[0].elements[0];
+        console.log("data", data);
+        const time = parseFloat(data.duration.value / 60);
+        const singleDistance = parseFloat(data.distance.value / 1000);
+        body.type = "interState";
+        body.TET = time;
+        body.TED = singleDistance;
+        body.TEC = location.interState.price;
+        body.user = user.id;
+        body.pickupAddress = distance?.origin_addresses[0],
+        body.deliveryAddresses = distance?.destination_addresses;
         body.delivery = [
           {
-            ...location,
+            state: location.state,
+            itemName: "box",
+            pickupAddress: distance?.origin_addresses[0],
+            estimatedTravelduration: time,
+            estimatedDistance: singleDistance,
+            country: location.country,
+            phoneNumber: location.phoneNumber,
+            name: location.name,
+            countryCode: location.countryCode,
+            deliveryAddress: location.address,
+            pickupLatitude: body.pickupLatitude,
+            pickupLongitude: body.pickupLongitude,
+            deliveryLatitude: location.lat,
+            deliveryLongitude: location.lng,
+            user: user.id,
+            orderId: nanoid(8),
+            enterprise: body.enterprise,
+            company: body.company,
+            estimatedCost: location.interState.price,
+            vehicle: vehicle._id,
           },
         ];
         body.vehicle = vehicle._id;
 
-
         resolve(body);
       } catch (error) {
-         reject(error);
+        reject(error);
       }
-    })
+    });
   }
 
   /**
@@ -306,7 +335,8 @@ class EntryService {
           },
         });
 
-        console.log("distance", distance.data);
+        // console.log("distance", distance.data);
+        // console.log("distance", distance.data.rows);
 
         if (distance.data.status !== "OK") {
           reject({ code: 500, msg: "Location provided is invalid" });
@@ -481,16 +511,18 @@ class EntryService {
         );
 
         // calculate our commision from the company pricing plan
-        for await(let transaction of transactions){
-          const commissionAmount =
-          parseFloat((transaction.amount * pricing.transactionCost) / 100);
+        for await (let transaction of transactions) {
+          const commissionAmount = parseFloat(
+            (transaction.amount * pricing.transactionCost) / 100
+          );
 
           await transaction.updateOne(
             {
               company: user.id,
               commissionPercent: pricing.transactionCost,
               commissionAmount,
-              amountWOcommision: parseFloat(transaction.amount) - parseFloat(commissionAmount),
+              amountWOcommision:
+                parseFloat(transaction.amount) - parseFloat(commissionAmount),
             },
             { session }
           );
@@ -1117,8 +1149,11 @@ class EntryService {
           });
           return;
         }
-        if(entry.cashPaymentType !== "pickup"){
-          return reject({code: 400, msg: "You can't confirm cash payment for this order at pickup"})
+        if (entry.cashPaymentType !== "pickup") {
+          return reject({
+            code: 400,
+            msg: "You can't confirm cash payment for this order at pickup",
+          });
         }
 
         const transactionsFilter = {
@@ -1150,7 +1185,11 @@ class EntryService {
 
         // when rider select declined on payment status
         if (body.status === "declined") {
-          await Transaction.updateMany(transactionsFilter, { status: "declined" }, { session });
+          await Transaction.updateMany(
+            transactionsFilter,
+            { status: "declined" },
+            { session }
+          );
           await Entry.updateOne(
             { _id: body.entry },
             {
@@ -1257,7 +1296,7 @@ class EntryService {
           rider: rider._id,
         })
           .lean()
-          .populate('entry')
+          .populate("entry")
           .select("-metaData");
 
         if (!order) {
@@ -1273,8 +1312,11 @@ class EntryService {
           });
           return;
         }
-        if(order.cashPaymentType !== "delivery"){
-          return reject({code: 400, msg: "You can't confirm cash payment for this order at delivery"})
+        if (order.cashPaymentType !== "delivery") {
+          return reject({
+            code: 400,
+            msg: "You can't confirm cash payment for this order at delivery",
+          });
         }
 
         const transactionFilter = {
@@ -1305,7 +1347,11 @@ class EntryService {
 
         // when rider select declined on payment status
         if (body.status === "declined") {
-          await Transaction.updateOne(transactionFilter, { status: "declined" }, { session });
+          await Transaction.updateOne(
+            transactionFilter,
+            { status: "declined" },
+            { session }
+          );
           await Order.updateOne(
             { _id: order._id },
             {
@@ -1364,9 +1410,9 @@ class EntryService {
           });
         }
       } catch (error) {
-        console.log('Error => ', error);
+        console.log("Error => ", error);
         await session.abortTransaction();
-        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
   }
@@ -1424,7 +1470,10 @@ class EntryService {
         await this.instantEntries(rider._id, entry);
 
         // check if the payment method is cash and cashPaymenType is 'pickup'
-        if (entry.paymentMethod === "cash" && entry.cashPaymentType === "pickup") {
+        if (
+          entry.paymentMethod === "cash" &&
+          entry.cashPaymentType === "pickup"
+        ) {
           const transactions = await Transaction.find({ entry: body.entry });
           if (!transactions.length) {
             reject({
@@ -1592,7 +1641,7 @@ class EntryService {
       try {
         const updateResult = await Entry.updateMany(filter, set);
 
-        resolve(updateResult)
+        resolve(updateResult);
       } catch (error) {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }

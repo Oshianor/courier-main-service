@@ -118,7 +118,6 @@ const SocketAuth = (socket, next) => {
 const UserAuth = async (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token) return JsonResponse(res, 401, MSG_TYPES.ACCESS_DENIED);
-  console.log('Got here => ', token);
   try {
     // call user account service to get details
     const userInstance = new UserService();
@@ -130,8 +129,7 @@ const UserAuth = async (req, res, next) => {
     delete req.user._id;
     next();
   } catch (ex) {
-    console.log('Error ', ex);
-    console.log('Exception', ex);
+    console.log('User Auth Error ', ex);
     if (ex.msg) {
       return JsonResponse(res, 401, ex.msg);
     }
@@ -151,7 +149,7 @@ const EnterpriseAuth = (roles = []) => {
       // if (roles.length < 1) {
       //   return JsonResponse(res, 403, MSG_TYPES.PERMISSION);
       // }
-      if (roles.includes(req.user.role)) {
+      if (roles.includes(req.user.rolfe)) {
         return next();
       }
       return JsonResponse(res, 403, MSG_TYPES.PERMISSION);

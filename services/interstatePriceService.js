@@ -61,9 +61,9 @@ class interstatePriceService {
             state: body.destinationState,
             country: body.destinationCountry,
           });
-        });        
+        });
 
-       await InterstateAddress.create(location, { session }); 
+        await InterstateAddress.create(location, { session });
 
         await newISP.save({ session });
 
@@ -81,7 +81,10 @@ class interstatePriceService {
 
   createCompanyInterstatePrice = (id, body) => {
     return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
       try {
+        // start our transaction
+        session.startTransaction();
         const getCompanyDetails = await Company.findById({ _id: id });
         const checkExist = await InterstatePrice.findOne({
           $and: [
@@ -92,7 +95,13 @@ class interstatePriceService {
             { company: getCompanyDetails._id },
             { organization: getCompanyDetails.organization },
           ],
-        });
+        }).lean();
+        if (getCompanyDetails.country !== body.destinationCountry) {
+          reject({
+            code: 400,
+            msg: "country origin and destination must be the same",
+          });
+        }
         if (!checkExist) {
           let data = {
             originCountry: getCompanyDetails.country,
@@ -100,12 +109,35 @@ class interstatePriceService {
             company: getCompanyDetails._id,
             organization: getCompanyDetails.organization,
           };
+          body.currency = "NGN";
+          body.source = "company"
           let savedData = Object.assign(body, data);
-          let createData = await InterstatePrice.create(savedData);
-          resolve(createData);
+          // let createData = await InterstatePrice.create(savedData);
+          const newISP = new InterstatePrice(savedData);
+          const location = [];
+          await AsyncForEach(body.location, async (arr) => {
+            const address = await entryInstance.getGooglePlace(arr.address);
+            location.push({
+              ...arr,
+              address: address[0].formatted_address,
+              ...address[0].geometry.location,
+              interState: newISP._id,
+              state: body.destinationState,
+              country: body.destinationCountry,
+            });
+          });
+          await InterstateAddress.create(location, { session });
+          await newISP.save({ session });
+
+          await session.commitTransaction();
+          session.endSession();
+
+          resolve(newISP);
         }
-        reject({ code: 400, msg: "Inputs already exists" });
+        reject({ code: 400, msg: "Company inter state pricing for the specified location already exists" });
       } catch (error) {
+        console.log(error, 'error found')
+        await session.abortTransaction();
         reject({ code: 500, msg: "something went wrong" });
       }
     });

@@ -8,6 +8,7 @@ const {
   validatePickupOTP,
   validateSendRiderRequest,
   validateCalculateShipment,
+  validateInterStateEntry,
 } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -18,7 +19,7 @@ const DPService = require("../services/distancePrice");
 const SettingService = require("../services/setting");
 const VehicleService = require("../services/vehicle");
 const CompanyService = require("../services/company");
-const InterStateAddressService = require("../services/interstatePriceService");
+const InterStateAddressService = require("../services/interstateAddressService");
 const EntrySubscription = require("../subscription/entry");
 const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
@@ -146,12 +147,22 @@ exports.interStateEntry = async (req, res, next) => {
     const VehicleInstance = new VehicleService();
     const ISAInstance = new InterStateAddressService();
 
-    const location = await ISAInstance.getById(body.location);
 
+    const location = await ISAInstance.getById(req.body.location);
+    console.log("location", location);
     // validate state
     await countryInstance.getCountryAndState(req.body.country, req.body.state);
     // find a single vehicle to have access to the weight
     const vehicle = await VehicleInstance.get(req.body.vehicle);
+    req.body.delivery = [
+      {
+        deliveryLatitude: location.lat,
+        deliveryLongitude: location.lng,
+      },
+    ];
+
+    // get distance calculation
+    const distance = await entryInstance.getDistanceMetrix(req.body);
     // upload images
     if (typeof req.body.img !== "undefined") {
       const images = await entryInstance.uploadArrayOfImages(req.body.img);
@@ -162,8 +173,11 @@ exports.interStateEntry = async (req, res, next) => {
       req.body,
       req.user,
       vehicle,
-      location
+      location,
+      distance.data
     );
+
+    console.log("body", body);
 
     const newEntry = await entryInstance.createEntry(body);
 

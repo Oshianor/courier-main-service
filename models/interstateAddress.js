@@ -7,7 +7,7 @@ const interStateAddressSchema = mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
-      ref: "interstate",
+      ref: "interstatePrice",
     },
     email: {
       type: String,

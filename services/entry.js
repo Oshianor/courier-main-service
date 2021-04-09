@@ -248,7 +248,7 @@ class EntryService {
         delete entryData.delivery;
 
         const entries = [];
-        const numOrdersPerEntry = 3;
+        const numOrdersPerEntry = 10;
         const groupedDeliveries = this.chunkArray(body.deliveries, numOrdersPerEntry);
 
         for(let deliveries of groupedDeliveries){

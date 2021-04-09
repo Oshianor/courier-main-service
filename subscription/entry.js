@@ -1,5 +1,5 @@
 const io = require("socket.io-emitter");
-const Entry = require("../models/entry")
+const Entry = require("../models/entry");
 const Company = require("../models/company");
 const RiderEntryRequest = require("../models/riderEntryRequest");
 const { SocketResponse } = require("../lib/apiResponse");
@@ -28,10 +28,11 @@ class EntrySubscription {
       )
       .lean();
 
+      
       entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       resolve(entry);
-    })
+    });
   }
 
   newEntry(entryId) {
@@ -87,7 +88,11 @@ class EntrySubscription {
         )
         .sort({ updatedAt: -1 });
 
-      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode img");
+      entries = await populateMultiple(
+        entries,
+        "user",
+        "name email phoneNumber countryCode img"
+      );
       const total = await Entry.countDocuments();
 
       const meta = {
@@ -109,7 +114,7 @@ class EntrySubscription {
     return new Promise(async (resolve, reject) => {
       const page = data.page ?? 1;
       const pageSize = data.pageSize ?? 10;
-      const skip = (page - 1) * pageSize
+      const skip = (page - 1) * pageSize;
 
       let entries = await Entry.find()
         .select("-metaData")
@@ -130,7 +135,11 @@ class EntrySubscription {
         .sort({ updatedAt: -1 })
         .lean();
 
-      entries = await populateMultiple(entries, "user", "name email phoneNumber countryCode img");
+      entries = await populateMultiple(
+        entries,
+        "user",
+        "name email phoneNumber countryCode img"
+      );
 
       const total = await Entry.find().countDocuments();
 
@@ -138,7 +147,7 @@ class EntrySubscription {
         total,
         pagination: {
           page: page,
-          pageSize
+          pageSize,
         },
       };
 
@@ -223,7 +232,6 @@ class EntrySubscription {
     });
   }
 
-
   updateEntryAdmin(entryId) {
     return new Promise(async (resolve, reject) => {
       const entry = await this.getEntry(entryId);
@@ -242,10 +250,15 @@ class EntrySubscription {
 
       // entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
-      socket.to("admin").emit( SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN, SocketResponse(false, "ok", entry));
+      socket
+        .to("admin")
+        .emit(
+          SERVER_EVENTS.LISTEN_POOL_UPDATE_ADMIN,
+          SocketResponse(false, "ok", entry)
+        );
 
       resolve(entry);
-    })
+    });
   }
 }
 

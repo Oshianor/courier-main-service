@@ -27,6 +27,7 @@ const UserService = require("../services/user");
 const AddressService = require("../services/address");
 const path = require("path");
 const axios = require("axios");
+const RiderService = require("../services/rider");
 
 /**
  * Create an Entry
@@ -94,6 +95,7 @@ exports.localEntry = async (req, res, next) => {
       req.body.img = images;
     }
 
+    // return console.log(req.user);
     const body = await entryInstance.calculateLocalEntry(
       req.body,
       req.user,
@@ -402,7 +404,11 @@ exports.riderAcceptEntry = async (req, res, next) => {
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, "", rider.FCMToken);
 
-    JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.RIDER_ACCEPTED, riderBasket);
     return;
   } catch (error) {
     next(error);
@@ -462,7 +468,11 @@ exports.riderStartPickup = async (req, res, next) => {
     const notifyInstance = new NotifyService();
     await notifyInstance.textNotify(title, "", user.FCMToken);
 
-    JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.PROCEED_TO_PICKUP, riderBasket);
     return;
   } catch (error) {
     console.log("error controller", error);
@@ -496,7 +506,11 @@ exports.riderArriveAtPickup = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry);
 
-    JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP, riderBasket);
     return;
   } catch (error) {
     next(error);
@@ -529,7 +543,11 @@ exports.riderComfirmPickupOTPCode = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry);
 
-    JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, 200, MSG_TYPES.PICKED_UP, riderBasket);
     return;
   } catch (error) {
     next(error);

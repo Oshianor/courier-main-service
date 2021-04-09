@@ -18,6 +18,7 @@ const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user");
+const RiderService = require("../services/rider");
 
 
 
@@ -115,6 +116,7 @@ exports.riderConfirmCashPayment = async (req, res, next) => {
       const title = "Your payment has been confirmed. Thank you";
       const notifyInstance = new NotifyService();
       await notifyInstance.textNotify(title, "", entry.user.FCMToken);
+
     } else {
       // type is to be "delivery" and order Id is provided
       const { entry, code, msg } = await entryInstance.riderConfirmCashPaymentAtDelivery(req.body, req.user);
@@ -127,7 +129,11 @@ exports.riderConfirmCashPayment = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entryId);
 
-    JsonResponse(res, responseCode, responseMessage);
+    // Get rider basket
+    const riderInstance = new RiderService();
+    const riderBasket = await riderInstance.getRiderBasket(req.user);
+
+    JsonResponse(res, responseCode, responseMessage, riderBasket);
     return;
   } catch (error) {
     next(error);

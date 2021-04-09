@@ -8,6 +8,7 @@ const {
   validatePickupOTP,
   validateSendRiderRequest,
   validateCalculateShipment,
+  validateBulkEntry,
 } = require("../request/entry");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
@@ -23,6 +24,7 @@ const RiderSubscription = require("../subscription/rider");
 const CompanySubscription = require("../subscription/company");
 const NotifyService = require("../services/notification");
 const UserService = require("../services/user");
+const AddressService = require("../services/address");
 const path = require("path");
 const axios = require("axios");
 
@@ -82,7 +84,9 @@ exports.localEntry = async (req, res, next) => {
     const setting = await settingInstance.get({ source: "admin" });
 
     // get distance calculation
-    const distance = await entryInstance.getDistanceMetrix(req.body);
+    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
+    const deliveryLongLats = req.body.delivery.map((delivery) => [delivery.deliveryLongitude, delivery.deliveryLatitude]);
+    const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
 
     // check
     if (typeof req.body.img !== "undefined") {
@@ -120,6 +124,101 @@ exports.localEntry = async (req, res, next) => {
 
 exports.bulkEntry = async (req, res, next) => {
   try{
+    // validate data
+    const { error } = validateBulkEntry(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    // validate addresses with address-service
+    const entryInstance = new EntryService();
+    // const countryInstance = new CountryService();
+    // const settingInstance = new SettingService();
+    // const DPInstance = new DPService();
+    // const VehicleInstance = new VehicleService();
+    const addressInstance = new AddressService();
+
+    const addressIds = req.body.delivery.map(order => order.addressId);
+    // Get verified entry addresses
+    const addresses = await addressInstance.getEntryAddresses(req.token, addressIds);
+
+    // Put retrieved address data in delivery locations
+    for(let deliveryLocation of req.body.delivery){
+      deliveryLocation.address = addresses.find((address) => address._id === deliveryLocation.addressId);
+    }
+
+    // validate state
+    // const country = "Nigeria";
+    // const state = 'Lagos';
+    // await countryInstance.getCountryAndState(country, state);
+
+    // // validate the states
+    // await countryInstance.validateState(req.body.state, req.body.delivery);
+
+    // find a single vehicle to have access to the weight
+    // const vehicle = await VehicleInstance.get(req.body.vehicle);
+
+    // check if we have pricing for the location
+    // const distancePrice = await DPInstance.get({
+    //   country: country,
+    //   state: state,
+    //   vehicle: req.body.vehicle,
+    // });
+
+    // get admin settings pricing
+    // const setting = await settingInstance.get({ source: "admin" });
+
+    // get distance calculation
+    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
+    const deliveryLongLats = req.body.delivery.map((delivery) => [
+      delivery.address.location.coordinates[0],
+      delivery.address.location.coordinates[1]
+    ]);
+
+    const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
+
+    // start from single point
+    // order others based on single point
+
+    // Image upload
+    if (typeof req.body.img !== "undefined") {
+      const images = await entryInstance.uploadArrayOfImages(req.body.img);
+      req.body.img = images;
+    }
+
+    const orderedDeliveries = await entryInstance.sortOrdersByDistance(req.body.delivery, distance.data);
+
+    req.body.deliveries = orderedDeliveries;
+    req.body.enterprise = req.enterprise._id;
+
+    const company = await Company.findOne({
+      state: req.body.state,
+      ownership: true,
+    }).select({ name: 1, rating: 1, state: 1, country: 1, logo: 1 });
+
+    if (company) {
+      req.body.company = company;
+    }
+
+    const entries = await entryInstance.calculateBulkEntry(req.body, req.user, distance.data);
+
+    const createdEntries = await entryInstance.createBulkEntries(entries);
+
+
+    // const body = await entryInstance.calculateLocalEntry(
+    //   req.body,
+    //   req.user,
+    //   distance.data,
+    //   setting,
+    //   distancePrice,
+    //   vehicle
+    // );
+
+    // Group the orders in tens, create entries from them..
+
+    // start our mongoDb transaction
+    // const newEntry = await entryInstance.createEntry(body);
+
+    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, createdEntries);
+    return;
 
   } catch(error){
     next(error);
@@ -160,7 +259,9 @@ exports.calculateShipment = async (req, res, next) => {
     const setting = await settingInstance.get({ source: "admin" });
 
     // get distance calculation
-    const distance = await entryInstance.getDistanceMetrix(req.body);
+    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
+    const deliveryLongLats = req.body.delivery.map((delivery) => [delivery.deliveryLongitude, delivery.deliveryLatitude]);
+    const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
 
     const body = await entryInstance.calculateLocalEntry(
       req.body,

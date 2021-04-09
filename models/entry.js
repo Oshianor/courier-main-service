@@ -43,6 +43,8 @@ const entrySchema = mongoose.Schema(
       enum: ["local", "interState", "international"],
       default: "local",
     },
+    linkedEntry: [ObjectId], // used for inter state created entry
+    parentEntry: ObjectId, 
     status: {
       type: String,
       enum: [
@@ -98,12 +100,14 @@ const entrySchema = mongoose.Schema(
       ref: "Rider",
       default: null,
     },
-    transaction: [{
-      type: ObjectId,
-      index: true,
-      ref: "Transaction",
-      default: null,
-    }],
+    transaction: [
+      {
+        type: ObjectId,
+        index: true,
+        ref: "Transaction",
+        default: null,
+      },
+    ],
     paymentMethod: {
       type: String,
       default: "cash",
@@ -111,7 +115,7 @@ const entrySchema = mongoose.Schema(
     },
     cashPaymentType: {
       type: String,
-      enum: ["pickup","delivery"],
+      enum: ["pickup", "delivery"],
     },
     pickupType: {
       type: String,

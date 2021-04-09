@@ -634,11 +634,13 @@ Verification = (token, email, type) => {
                                               Our Mailing Address is:</h4>
                                             <p
                                               style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#333333">
-                                              <br><span
-                                                style="font-family:lato, 'helvetica neue', helvetica, arial, sans-serif">The
-                                                Waterside, 5 Admiralty Road Off Admiralty Way.<br>Lekki Phase 1,
-                                                Eti-Osa,<br>Lagos, Nigeria.</span><span data-cke-bookmark="1"
-                                                style="display:none">&nbsp;</span></p>
+                                              <br>
+                                              <span
+                                                style="font-family:lato, 'helvetica neue', helvetica, arial, sans-serif">
+                                                11 Olaide Tomori street, Ikeja<br>Lagos, Nigeria.</span><span data-cke-bookmark="1"
+                                                style="display:none">&nbsp;
+                                              </span>
+                                            </p>
                                           </td>
                                         </tr>
                                       </tbody>
@@ -658,7 +660,11 @@ Verification = (token, email, type) => {
                                               Contact Details</h4>
                                             <p
                                               style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:21px;color:#333333">
-                                              +234 1 280 9113<br>(+234) 90 8300 0098<br><br><a
+                                              (+234) 70 1947 8407
+                                              <br>
+                                              (+234) 70 3266 4079
+                                              <br><br>
+                                              <a
                                                 href="mailto:support@exaltapp.com"
                                                 style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;font-size:14px;text-decoration:underline;color:#FD0E31">support@exaltapp.com</a><br><a
                                                 href="mailto:sales@exaltapp.com"

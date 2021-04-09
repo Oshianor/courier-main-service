@@ -22,6 +22,10 @@ const OTPCode = require("../templates/otpCode");
 const { MSG_TYPES } = require("../constant/types");
 const { Client } = require("@googlemaps/google-maps-services-js");
 const client = new Client({});
+const DPService = require("../services/distancePrice");
+const SettingService = require("../services/setting");
+const VehicleService = require("../services/vehicle");
+const CountryService = require("../services/country");
 const userInstance = new UserService();
 
 class EntryService {
@@ -110,11 +114,7 @@ class EntryService {
         body.instantPricing = setting.instantPricing;
         body.deliveryAddresses = distance.destination_addresses;
         body.pickupAddress = distance.origin_addresses[0];
-        body.metaData = {
-          distance,
-          distancePrice,
-          setting,
-        };
+
         // get item type price
         let itemTypePrice = 0;
         if (body.itemType === "Document") {
@@ -177,18 +177,37 @@ class EntryService {
                 body.TET = body.TET + time;
                 body.TED = body.TED + singleDistance;
 
-                // estimated cost
-                // calculate the km travelled for each trip multiplied by our price per km
-                const km =
-                  parseFloat(singleDistance) * parseFloat(distancePrice.price);
-                // calculate the weight of each order for each trip multiplied by our price per weight
-                const weight =
-                  parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
-                const amount =
-                  parseFloat(km) +
-                  parseFloat(weight) +
-                  parseFloat(itemTypePrice) +
-                  parseFloat(setting.baseFare);
+                let amount;
+                if(
+                  user.enterprise &&
+                  user.enterprise.paymentType === "fixed" &&
+                  user.enterprise.fixedPaymentPrice
+                  ){
+                  // Use fixed payment price for enterprise accounts using that
+                  amount = user.enterprise.fixedPaymentPrice;
+                  body.metaData = {
+                    paymentType: "fixed",
+                    fixedPaymentPrice: user.enterprise.fixedPaymentPrice
+                  }
+                } else {
+                  // Use calculated amount
+                  // estimated cost
+                  // calculate the km travelled for each trip multiplied by our price per km
+                  const km = parseFloat(singleDistance) * parseFloat(distancePrice.price);
+                  // calculate the weight of each order for each trip multiplied by our price per weight
+                  const weight = parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
+                  amount =
+                    parseFloat(km) +
+                    parseFloat(weight) +
+                    parseFloat(itemTypePrice) +
+                    parseFloat(setting.baseFare);
+
+                  body.metaData = {
+                    distance,
+                    distancePrice,
+                    setting,
+                  };
+                }
 
                 // set price for each order
                 body.delivery[elemIndex].estimatedCost = Math.ceil(parseFloat(amount) / 100) * 100;
@@ -218,6 +237,228 @@ class EntryService {
     });
   }
 
+  calculateBulkEntry(body, user, distance){
+    return new Promise(async (resolve, reject) => {
+      try {
+        const settingInstance = new SettingService();
+        const DPInstance = new DPService();
+        const VehicleInstance = new VehicleService();
+        const countryInstance = new CountryService();
+
+        await countryInstance.getCountryAndState(body.country, body.state);
+        // find a single vehicle to have access to the weight
+        const vehicle = await VehicleInstance.get(body.vehicle);
+
+        // check if we have pricing for the location
+        const distancePrice = await DPInstance.get({
+          country: body.country,
+          state: body.state,
+          vehicle: body.vehicle,
+        });
+
+        // get admin settings pricing
+        const setting = await settingInstance.get({ source: "admin" });
+
+        const entryData = { ...body };
+        delete entryData.delivery;
+
+        const entries = [];
+        const numOrdersPerEntry = 10;
+        const groupedDeliveries = this.chunkArray(body.deliveries, numOrdersPerEntry);
+
+        for(let deliveries of groupedDeliveries){
+          entries.push({
+            ...entryData,
+            deliveries
+          });
+        }
+
+        for(let entry of entries){
+          entry.TED = 0;
+          entry.TET = 0;
+          entry.TEC = 0;
+          entry.user = user.id;
+          entry.instantPricing = setting.instantPricing;
+          entry.deliveryAddresses = entry.deliveries.map((delivery) => delivery.address.address);
+          entry.pickupAddress = distance.origin_addresses[0];
+          entry.metaData = {
+            distance,
+            distancePrice,
+            setting,
+          };
+          // get item type price
+          let itemTypePrice = 0;
+          if (entry.itemType === "Document") {
+            itemTypePrice = setting.documentPrice;
+          } else {
+            itemTypePrice = setting.parcelPrice;
+          }
+          // const ordered
+          for(let delivery of entry.deliveries){
+            delivery.pickupLatitude = entry.pickupLatitude;
+            delivery.pickupLongitude = entry.pickupLongitude;
+
+            const time = parseFloat(delivery.distance.duration.value / 60);
+            const singleDistance = parseFloat(delivery.distance.distance.value / 1000);
+            // add user id
+            delivery.user = user.id;
+            delivery.instantPricing = setting.instantPricing;
+            delivery.vehicle = entry.vehicle;
+
+            // orderId
+            delivery.orderId = nanoid(8);
+            // set company id on individual orders
+            delivery.company = entry.company;
+            // set enterprise id on individual enterprise account
+            delivery.enterprise = entry.enterprise;
+            // add pickup details for each order
+            delivery.pickupAddress = distance.origin_addresses[0];
+            // set duration of an order from the pick up point to the delivery point
+            delivery.estimatedTravelduration = time;
+            // set distance of an order from the pick up point to the delivery point
+            delivery.estimatedDistance = singleDistance;
+
+            delivery.deliveryLongitude = delivery.address.location.coordinates[0];
+            delivery.deliveryLatitude = delivery.address.location.coordinates[1];
+            delivery.countryCode = delivery.address.countryCode;
+            delivery.phoneNumber = delivery.address.phoneNumber;
+            delivery.state = delivery.address.state;
+            delivery.country = delivery.address.country;
+            delivery.name = delivery.address.fullName;
+            delivery.email = delivery.address.email;
+
+            delete delivery.address;
+            delete delivery.distance;
+
+            // total the distance travelled and time
+            entry.TET = entry.TET + time;
+            entry.TED = entry.TED + singleDistance;
+            // estimated cost
+            // calculate the km travelled for each trip multiplied by our price per km
+            const km =
+              parseFloat(singleDistance) * parseFloat(distancePrice.price);
+            // calculate the weight of each order for each trip multiplied by our price per weight
+            const weight =
+              parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
+            const amount =
+              parseFloat(km) +
+              parseFloat(weight) +
+              parseFloat(itemTypePrice) +
+              parseFloat(setting.baseFare);
+
+            // set price for each order
+            delivery.estimatedCost = Math.ceil(parseFloat(amount) / 100) * 100;
+            // set total price for the entry
+            entry.TEC = entry.TEC + Math.ceil(parseFloat(amount) / 100) * 100;
+          }
+        }
+
+        // create entries and orders
+        return resolve(entries);
+      } catch(error){
+        console.log(error);
+        reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
+      }
+    })
+
+  }
+
+  /**
+   * Create an entry
+   * @param {Object} body
+   */
+  createBulkEntries(entries) {
+    return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+      try {
+        const createdEntries = [];
+        for await(let entry of entries){
+          await session.withTransaction(async() => {
+
+            const newEntry = new Entry(entry);
+            await AsyncForEach(entry.deliveries, async (row, index, arr) => {
+              entry.deliveries[index].entry = newEntry._id;
+            });
+            const newOrders = await Order.create(entry.deliveries, { session });
+
+            newEntry.orders = newOrders;
+            entry.orders = newEntry.orders;
+            const createdEntry = await newEntry.save({ session: session });
+
+            createdEntries.push(createdEntry);
+          });
+        }
+
+        session.endSession();
+        resolve(createdEntries);
+      } catch (error) {
+        console.log('Session => ', error);
+        await session.abortTransaction();
+        reject(error);
+      }
+    });
+  }
+
+  chunkArray(array, chunkSize){
+    return Array(Math.ceil(array.length / chunkSize))
+      .fill()
+      .map((_, index) => index * chunkSize)
+      .map(begin => array.slice(begin, begin + chunkSize));
+  }
+
+  sortOrdersByDistance(deliveries, distance){
+    return new Promise(async(resolve, reject) => {
+      try{
+        for(let i = 0; i < deliveries.length; i++){
+          deliveries[i].distance = distance.rows[0].elements[i];
+          deliveries[i].deliveryAddress = distance.destination_addresses[i];
+        }
+
+        // console.log('Body => ', body);
+        // console.log('Distance matrix data => ', distance);
+        // for (let i = 0; i < deliveries.length; i++) {
+        //   const firstDeliveryLong = deliveries[0].address.location.coordinates[0];
+        //   const firstDeliveryLat = deliveries[0].address.location.coordinates[1];
+
+        //   const currentDeliveryLong = deliveries[i].address.location.coordinates[0];
+        //   const currentDeliveryLat = deliveries[i].address.location.coordinates[1];
+
+        //   deliveries[i]["distance"] = this.calculateDistance(firstDeliveryLat,firstDeliveryLong, currentDeliveryLat, currentDeliveryLong,"K");
+        // }
+
+        deliveries.sort(function(a, b) {
+          return getDistanceNumber(a.distance) - getDistanceNumber(b.distance);
+
+          function getDistanceNumber(distance){
+            return Number(distance.distance.text.replace("km",""));
+          }
+        });
+
+        resolve(deliveries);
+
+      } catch(error){
+        console.log('Error [group]=> ', error)
+        reject({ err: 500, msg: MSG_TYPES.SERVER_ERROR});
+      }
+    })
+  }
+
+  calculateDistance(lat1, lon1, lat2, lon2, unit) {
+    var radlat1 = Math.PI * lat1/180
+    var radlat2 = Math.PI * lat2/180
+    // var radlon1 = Math.PI * lon1/180
+    // var radlon2 = Math.PI * lon2/180
+    var theta = lon1-lon2
+    var radtheta = Math.PI * theta/180
+    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    dist = Math.acos(dist)
+    dist = dist * 180/Math.PI
+    dist = dist * 60 * 1.1515
+    if (unit=="K") { dist = dist * 1.609344 }
+    if (unit=="N") { dist = dist * 0.8684 }
+    return dist;
+  }
+
   /**
    * Upload array of images
    * @param {Array} images
@@ -238,33 +479,19 @@ class EntryService {
 
   /**
    * Calculate the distance and duration via google API
-   * @param {Object} body
+   *
    */
-  getDistanceMetrix(body) {
+  getDistanceMetrix(pickupLongLat, deliveryLongLats) {
     return new Promise(async (resolve, reject) => {
       try {
-        // get all coords locations and sort them.
-        // const origins = [body.address];
-        // const destinations = [];
-        // // get all origin and destination
-        // await AsyncForEach(body.delivery, (data, index, arr) => {
-        //   destinations.push(data.address);
-        // });
 
         const origins = [
-          { lat: body.pickupLatitude, lng: body.pickupLongitude },
+          { lng: pickupLongLat[0], lat: pickupLongLat[1] },
         ];
-        const destinations = [];
-        // get all origin and destination
-        await AsyncForEach(body.delivery, (data, index, arr) => {
-          destinations.push({
-            lat: data.deliveryLatitude,
-            lng: data.deliveryLongitude,
-          });
-        });
-
-        // console.log("origins", origins);
-        // console.log("destinations", destinations);
+        const destinations = deliveryLongLats.map((longLat) => ({
+          lng: longLat[0],
+          lat: longLat[1]
+        }));
 
         // get distance and duration from google map distance matrix
         const N = 5000;
@@ -440,7 +667,7 @@ class EntryService {
 
         // start our transaction
         session.startTransaction();
-        // return reject({code: 400, msg: "Got here"})
+
         await entry.updateOne(
           {
             company: user.id,

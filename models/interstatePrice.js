@@ -42,7 +42,7 @@ const interstatePriceSchema = mongoose.Schema(
             required: true,
         },
         price: {
-            type: String,
+            type: Number,
             index: true,
             required: true,
         },

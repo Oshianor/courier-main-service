@@ -130,10 +130,6 @@ exports.bulkEntry = async (req, res, next) => {
 
     // validate addresses with address-service
     const entryInstance = new EntryService();
-    // const countryInstance = new CountryService();
-    // const settingInstance = new SettingService();
-    // const DPInstance = new DPService();
-    // const VehicleInstance = new VehicleService();
     const addressInstance = new AddressService();
 
     const addressIds = req.body.delivery.map(order => order.addressId);
@@ -145,28 +141,6 @@ exports.bulkEntry = async (req, res, next) => {
       deliveryLocation.address = addresses.find((address) => address._id === deliveryLocation.addressId);
     }
 
-    // validate state
-    // const country = "Nigeria";
-    // const state = 'Lagos';
-    // await countryInstance.getCountryAndState(country, state);
-
-    // // validate the states
-    // await countryInstance.validateState(req.body.state, req.body.delivery);
-
-    // find a single vehicle to have access to the weight
-    // const vehicle = await VehicleInstance.get(req.body.vehicle);
-
-    // check if we have pricing for the location
-    // const distancePrice = await DPInstance.get({
-    //   country: country,
-    //   state: state,
-    //   vehicle: req.body.vehicle,
-    // });
-
-    // get admin settings pricing
-    // const setting = await settingInstance.get({ source: "admin" });
-
-    // get distance calculation
     const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
     const deliveryLongLats = req.body.delivery.map((delivery) => [
       delivery.address.location.coordinates[0],
@@ -174,9 +148,6 @@ exports.bulkEntry = async (req, res, next) => {
     ]);
 
     const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
-
-    // start from single point
-    // order others based on single point
 
     // Image upload
     if (typeof req.body.img !== "undefined") {
@@ -198,27 +169,11 @@ exports.bulkEntry = async (req, res, next) => {
       req.body.company = company;
     }
 
-    const entries = await entryInstance.calculateBulkEntry(req.body, req.user, distance.data);
+    const entriesData = await entryInstance.calculateBulkEntry(req.body, req.user, distance.data);
 
-    const createdEntries = await entryInstance.createBulkEntries(entries);
+    const createdEntries = await entryInstance.createBulkEntries(entriesData);
 
-
-    // const body = await entryInstance.calculateLocalEntry(
-    //   req.body,
-    //   req.user,
-    //   distance.data,
-    //   setting,
-    //   distancePrice,
-    //   vehicle
-    // );
-
-    // Group the orders in tens, create entries from them..
-
-    // start our mongoDb transaction
-    // const newEntry = await entryInstance.createEntry(body);
-
-    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, createdEntries);
-    return;
+    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, createdEntries);
 
   } catch(error){
     next(error);

@@ -2,6 +2,7 @@ const config = require("config");
 
 const account = `${config.get("application.accountService")}/api/v1`;
 const card = `${config.get("application.cardService")}/api/v1`;
+const address = `${config.get("application.addressService")}/api/v1`;
 
 
 const ACCOUNT_SERVICE = Object.freeze({
@@ -42,8 +43,14 @@ const CARD_SERVICE = Object.freeze({
   CARD_FIND: `${card}/find`
 });
 
+const ADDRESS_SERVICE = Object.freeze({
+  // get addresses to create a bulk entry with
+  GET_ENTRY_ADDRESSES: `${address}/address/enterprise/entry-addresses`
+})
+
 
 module.exports = {
   ACCOUNT_SERVICE,
   CARD_SERVICE,
+  ADDRESS_SERVICE
 };

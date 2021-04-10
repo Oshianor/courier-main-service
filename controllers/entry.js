@@ -174,12 +174,14 @@ exports.bulkEntry = async (req, res, next) => {
 
     const createdEntries = await entryInstance.createBulkEntries(entriesData);
 
+    const shipment = await entryInstance.createShipment(createdEntries);
+
     const totalCost = createdEntries.reduce((prev, next) => {
       return prev + next.TEC;
     }, 0);
 
 
-    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, { entries:createdEntries, totalCost});
+    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, { entries: shipment, totalCost});
 
   } catch(error){
     next(error);
@@ -260,7 +262,8 @@ exports.interStateEntry = async (req, res, next) => {
       await entrySub.newEntry(newEntry._id);
     }
 
-    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, newEntry);
+    const shipment = await entryInstance.createShipment(newEntry);
+    JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, shipment);
     return;
   } catch (error) {
     next(error);

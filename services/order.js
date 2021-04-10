@@ -477,7 +477,6 @@ class OrderService {
         // entry.OTPCode = null;
         order.status = "delivered";
 
-        console.log("Got Here");
         const logs = {
           type: "delivered",
           order: order._id,

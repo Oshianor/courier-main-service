@@ -60,21 +60,26 @@ const Mailer = (to, subject, html, from = config.get("mail.email")) => {
 };
 
 
-const UploadFileFormLocal = async (file, churchId) => {
+const UploadFileFromLocal = async (file, churchId) => {
   try {
     console.log("start");
 
     const params = {
       Bucket: config.get("aws.bucket"),
-      Key: `${churchId}/${Date.now()}`,
+      Key: Date.now()+'-'+file.name,
       // ACL: "public-read"
     };
 
-    const fileContent = fs.readFileSync(__dirname + "/../" + file.path);
+    console.log('Params', params);
+    console.log('File', file);
+
+    const filePath = path.join(__dirname,'../files/',file.name);
+    console.log('File path => ', filePath);
+    const fileContent = fs.readFileSync(filePath);
     params.Body = fileContent;
     params.ContentEncoding = file.encoding;
     params.ContentType = file.mimetype;
-    params.Key = params.Key + "." + file.mimetype.split("/")[1];
+    // params.Key = params.Key;
 
     console.log("params", params);
 
@@ -82,7 +87,7 @@ const UploadFileFormLocal = async (file, churchId) => {
     console.log("Uploaded in:", upload);
     return upload;
   } catch (error) {
-    console.log(error);
+    console.log('Error => ', error);
   }
 };
 
@@ -210,7 +215,7 @@ module.exports = {
   GenerateToken,
   GenerateOTP,
   Mailer,
-  UploadFileFormLocal,
+  UploadFileFromLocal,
   UploadFileFromBinary,
   UploadFileFromBase64,
   AsyncForEach,

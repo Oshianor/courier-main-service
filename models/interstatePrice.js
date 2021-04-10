@@ -3,6 +3,12 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const interstatePriceSchema = mongoose.Schema(
   {
+    interStateAddress: {
+      type: ObjectId,
+      required: true,
+      index: true,
+      ref: "interstateAddress",
+    },
     source: {
       type: String,
       index: true,
@@ -48,6 +54,10 @@ const interstatePriceSchema = mongoose.Schema(
     currency: {
       type: String,
       default: "NGN",
+    },
+    status: {
+      type: Boolean,
+      default: false
     },
   },
   {

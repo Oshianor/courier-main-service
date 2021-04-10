@@ -3,12 +3,6 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 const interStateAddressSchema = mongoose.Schema(
   {
-    interState: {
-      type: ObjectId,
-      required: true,
-      index: true,
-      ref: "interstatePrice",
-    },
     email: {
       type: String,
       required: false,
@@ -54,6 +48,10 @@ const interStateAddressSchema = mongoose.Schema(
       type: Number,
       required: true,
       default: 0.0,
+    },
+    status: {
+      type: Boolean,
+      default: false
     },
   },
   {

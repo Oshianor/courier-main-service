@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const { validateInterstatePrice, validateUpdateInterstatePrice, validateCompanyInterstatePrice, validateUpdateCompanyInterstatePrice } = require("../request/interstatePrice");
+const { validateInterstatePrice, validateUpdateInterstatePrice, validateCompanyInterstatePrice, validateUpdateCompanyInterstatePrice, validateInterstateDropOffPrice } = require("../request/interstatePrice");
+const { validateInterstateAddress } = require("../request/interStateAddress");
 const { MSG_TYPES } = require("../constant/types");
 const { JsonResponse } = require("../lib/apiResponse");
 const model = require('../models/interstatePrice')
@@ -199,3 +200,40 @@ exports.updateCompanyInterstatePrice = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.createInterstateAddress = async (req, res, next) => {
+  try {
+    // validate request
+    const { error } = validateInterstateAddress(req.body);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message);
+
+    const data = await interStateInstance.createInterstateAddress(req.body)
+    return JsonResponse(res, 200, MSG_TYPES.CREATED, data);
+  } catch (error) {
+    next(error)
+  }
+}
+
+exports.createDropoffPrice = async (req, res, next) => {
+  try {
+    // validate request
+    const { error } = validateInterstateDropOffPrice(req.body);
+    if (error)
+      return JsonResponse(res, 400, error.details[0].message);
+
+    const data = await interStateInstance.createDropoffPrice(req.body)
+    return JsonResponse(res, 200, MSG_TYPES.CREATED, data);
+  } catch (error) {
+    next(error)
+  }
+}
+
+exports.getInterstateAddress = async (req, res, next) => {
+  try {
+    const data = await interStateInstance.getInterstateAddress(req.body)
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
+  } catch (error) {
+    next(error)
+  }
+}

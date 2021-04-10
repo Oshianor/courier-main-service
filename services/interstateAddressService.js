@@ -16,14 +16,13 @@ class interstateAddressService {
         if (!findData) {
           return reject({ code: 404, msg: "No Location address was found" });
         }
-        
+
         resolve(findData);
       } catch (error) {
         reject(error);
       }
     });
   };
-
 }
 
 module.exports = interstateAddressService;

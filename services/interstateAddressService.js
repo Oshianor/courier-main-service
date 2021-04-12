@@ -1,10 +1,9 @@
 const InterstateAddress = require("../models/interstateAddress");
 
 class interstateAddressService {
-
   /**
    * Get address location details
-   * @param {ObjectID} id 
+   * @param {ObjectID} id
    * @returns Object
    */
   getById = (locationId) => {

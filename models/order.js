@@ -256,6 +256,12 @@ const orderSchema = mongoose.Schema(
       type: String,
       enum: ["pickup","delivery"],
     },
+    type: {
+      // this is used to identify our post either for poll or for personal company request
+      type: String,
+      enum: ["local", "interState", "international"],
+      default: "local",
+    },
   },
   {
     timestamps: true,

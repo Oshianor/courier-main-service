@@ -231,7 +231,7 @@ exports.createDropoffPrice = async (req, res, next) => {
 
 exports.getInterstateAddress = async (req, res, next) => {
   try {
-    const data = await interStateInstance.getInterstateAddress(req.body)
+    const data = await interStateInstance.getInterstateAddress(req.query.state)
     return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
   } catch (error) {
     next(error)

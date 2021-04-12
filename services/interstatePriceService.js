@@ -203,6 +203,87 @@ class interstatePriceService {
       }
     });
   };
+
+  createInterstateAddress = (options) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const checkExist = await InterstateAddress.findOne({ $and: [{ address: options.address }, { name: options.name }, { email: options.email }] });
+        if (checkExist) {
+          return reject({
+            code: 400,
+            msg:
+              " specified interstate address already exists",
+          });
+        }
+        const address = await entryInstance.getGooglePlace(options.address)
+        const Geo = address[0].geometry.location;
+        const data = Object.assign(options, Geo)
+        const createAddress = await InterstateAddress.create(data)
+        resolve(createAddress);
+      } catch (error) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
+
+  createDropoffPrice = (options) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let getAddressDetail = await InterstateAddress.findById({ _id: options.interStateAddress });
+        const checkExist = await InterstatePrice.findOne({
+          $and: [
+            { originCountry: options.originCountry },
+            { originState: options.originState },
+            { destinationState: getAddressDetail.state },
+          ],
+        })
+        if (checkExist) {
+          return reject({
+            code: 400,
+            msg:
+              "Inter state pricing for the specified location already exists",
+          });
+        } else {
+
+          if (options.originCountry !== getAddressDetail.country) {
+            reject({
+              code: 400,
+              msg: "country origin and destination must be the same",
+            });
+          }
+
+          options.destinationState = getAddressDetail.state
+          options.destinationCountry = getAddressDetail.country
+          options.currency = "NGN"
+          options.source = "admin"
+          let addDropOffPrice = await InterstatePrice.create(options)
+          resolve(addDropOffPrice)
+        }
+
+      } catch (error) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
+
+  getInterstateAddress = (state) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let address = await InterstateAddress.find({ state: state })
+        if (address.length >= 1) {
+          resolve(address);
+        }
+        return reject({
+          code: 404,
+          msg:
+            "No dropoff address for this state at the moment",
+        });
+      } catch (error) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
 }
+
 
 module.exports = interstatePriceService;

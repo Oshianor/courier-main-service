@@ -174,7 +174,12 @@ exports.bulkEntry = async (req, res, next) => {
 
     const createdEntries = await entryInstance.createBulkEntries(entriesData);
 
-    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, createdEntries);
+    const totalCost = createdEntries.reduce((prev, next) => {
+      return prev + next.TEC;
+    }, 0);
+
+
+    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, { entries:createdEntries, totalCost});
 
   } catch(error){
     next(error);

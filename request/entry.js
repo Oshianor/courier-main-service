@@ -107,7 +107,7 @@ function validateBulkEntry(data){
       .messages({
         "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
       }),
-    
+
     itemType: Joi.string().valid("Document", "Parcel").required(),
     delivery: Joi.array().items({
       addressId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),
@@ -123,7 +123,9 @@ function validateBulkEntry(data){
     pickupLongitude: Joi.number().label("Pickup Longitude").required(),
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
-    countryCode: Joi.string().max(5).required()
+    countryCode: Joi.string().max(5).required(),
+    type: Joi.string().valid("local","interState").required(),
+    description: Joi.string().optional()
   });
 
   return schema.validate(data);

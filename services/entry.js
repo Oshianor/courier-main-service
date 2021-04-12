@@ -266,7 +266,7 @@ class EntryService {
         delete entryData.delivery;
 
         const entries = [];
-        const numOrdersPerEntry = 2;
+        const numOrdersPerEntry = 10;
         const groupedDeliveries = this.chunkArray(body.deliveries, numOrdersPerEntry);
 
         for(let deliveries of groupedDeliveries){
@@ -448,10 +448,10 @@ class EntryService {
             TET: totalEstimatedTime,
             TED: totalEstimatedDistance,
             parentEntry,
-            user: entries[1].user,
-            enterprise: entries[1].enterprise,
-            company: entries[1].company,
-            instantPricing: entries[1].instantPricing
+            user: entries[0].user,
+            enterprise: entries[0].enterprise,
+            company: entries[0].company,
+            instantPricing: entries[0].instantPricing
           }], { session });
         });
 

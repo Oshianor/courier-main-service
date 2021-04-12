@@ -246,3 +246,21 @@ exports.changeInterstateAddressStatus = async (req, res, next) => {
     next(error)
   }
 }
+
+exports.getAllInterstateAddress = async (req, res, next) => {
+  try {
+    const data = await interStateInstance.getAllInterstateAddress(req.params.pagesize, req.params.pagenumber)
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
+  } catch (error) {
+    next(error)
+  }
+}
+
+exports.getAllInterstateDropOff = async (req, res, next) => {
+  try {
+    const data = await interStateInstance.getAllInterstateDropOff(req.params.pagesize, req.params.pagenumber)
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
+  } catch (error) {
+    next(error)
+  }
+}

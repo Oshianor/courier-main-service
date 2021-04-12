@@ -285,7 +285,7 @@ class interstatePriceService {
   getInterstateAddress = (state) => {
     return new Promise(async (resolve, reject) => {
       try {
-        let address = await InterstateAddress.find({ $and: [{ state: state }, { status: true }] })
+        let address = await InterstateAddress.find({ $and: [{ state: { $regex: state, $options: 'i' } }, { status: true }] })
         if (address.length >= 1) {
           resolve(address);
         }

@@ -125,7 +125,6 @@ exports.localEntry = async (req, res, next) => {
 
 exports.bulkEntry = async (req, res, next) => {
   try{
-    console.log('GHit!-=--')
     // validate data
     const { error } = validateBulkEntry(req.body);
     if (error) return JsonResponse(res, 400, error.details[0].message);

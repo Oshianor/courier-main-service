@@ -266,10 +266,10 @@ class interstatePriceService {
     })
   }
 
-  getInterstateAddress = (option) => {
+  getInterstateAddress = (state) => {
     return new Promise(async (resolve, reject) => {
       try {
-        let address = await InterstateAddress.find({ state: option.state })
+        let address = await InterstateAddress.find({ state: state })
         if (address.length >= 1) {
           resolve(address);
         }

@@ -17,5 +17,7 @@ router.post("/interstateAddress/create", Auth, controller.interstatePrice.create
 router.post("/dropoffprice/create", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.createDropoffPrice);
 router.get("/interstateAddress/fetch", Auth, controller.interstatePrice.getInterstateAddress);
 router.patch("/interstateAddress/status/:id", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.changeInterstateAddressStatus);
+router.get("/interstateAddress/all/:pagesize/:pagenumber", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.getAllInterstateAddress);
+router.get("/interstateDropOffPrice/all/:pagesize/:pagenumber", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.getAllInterstateDropOff);
 
 module.exports = router;

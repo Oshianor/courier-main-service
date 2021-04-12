@@ -30,6 +30,7 @@ class CardService {
         );
         resolve(response.data.data);
       } catch (error) {
+        console.log('an ERROR => ', error);
         if (error.response) {
           return reject(error.response.data);
         }

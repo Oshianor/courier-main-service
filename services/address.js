@@ -17,7 +17,6 @@ class AddressService {
           }
         });
         // console.log("response", response);
-        console.log('REsp => ', response);
         resolve(response.data.data);
 
       } catch (error) {

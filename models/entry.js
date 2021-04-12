@@ -44,7 +44,12 @@ const entrySchema = mongoose.Schema(
       default: "local",
     },
     linkedEntry: [ObjectId], // used for inter state created entry
-    parentEntry: ObjectId, 
+    parentEntry: {
+      type: ObjectId,
+      required: false,
+      ref: "Entry",
+      default: null
+    },
     status: {
       type: String,
       enum: [

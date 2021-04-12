@@ -87,6 +87,12 @@ function validateInterStateEntry(data) {
       }),
     email: Joi.string().email().max(50).label("Email").optional(),
     name: Joi.string().label("Name").required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     pickupLatitude: Joi.number().label("Pickup Latitude").required(),
     pickupLongitude: Joi.number().label("Pickup Longitude").required(),
     description: Joi.string().label("Description").allow("").required(),
@@ -130,7 +136,8 @@ function validateBulkEntry(data){
     state: Joi.string().label("State").required(),
     countryCode: Joi.string().max(5).required(),
     type: Joi.string().valid("local","interState").required(),
-    description: Joi.string().optional()
+    description: Joi.string().optional(),
+    parentEntry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
   });
 
   return schema.validate(data);

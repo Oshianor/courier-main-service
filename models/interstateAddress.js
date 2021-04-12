@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const interStateAddressSchema = mongoose.Schema(
+const InterStateAddressSchema = mongoose.Schema(
   {
     email: {
       type: String,
@@ -59,10 +59,7 @@ const interStateAddressSchema = mongoose.Schema(
   }
 );
 
-const interstateAddress = mongoose.model(
-  "interstateAddress",
-  interStateAddressSchema
-);
+const InterstateAddress = mongoose.model("InterStateAddress",InterStateAddressSchema);
 
-module.exports = interstateAddress;
+module.exports = InterstateAddress;
 

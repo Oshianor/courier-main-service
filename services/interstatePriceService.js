@@ -10,8 +10,8 @@ class interstatePriceService {
 
   /**
    * Create interstate for admin
-   * @param {*} body 
-   * @returns 
+   * @param {*} body
+   * @returns
    */
   create = (body) => {
     return new Promise(async (resolve, reject) => {
@@ -146,12 +146,15 @@ class interstatePriceService {
   getById = (id) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const findData = await InterstatePrice.findById({ _id: id });
+        const findData = await InterstatePrice.findById({ _id: id })
+        .populate("interStateAddress");
+
         if (!findData) {
           return reject({ code: 404, msg: "Data not found" });
         }
         resolve(findData);
       } catch (error) {
+        console.log(error)
         reject({ code: 500, msg: "something went wrong" });
       }
     });

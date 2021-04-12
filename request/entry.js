@@ -79,6 +79,12 @@ function validateInterStateEntry(data) {
       .regex(/^[0-9a-fA-F]{24}$/)
       .label("Vehicle")
       .required(),
+    phoneNumber: Joi.string()
+      .regex(/^[1-9][0-9]{9}$/)
+      .required()
+      .messages({
+        "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
+      }),
     email: Joi.string().email().max(50).label("Email").optional(),
     name: Joi.string().label("Name").required(),
     pickupLatitude: Joi.number().label("Pickup Latitude").required(),
@@ -107,7 +113,6 @@ function validateBulkEntry(data){
       .messages({
         "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
       }),
-
     itemType: Joi.string().valid("Document", "Parcel").required(),
     delivery: Joi.array().items({
       addressId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),

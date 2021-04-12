@@ -302,6 +302,7 @@ exports.enable = async (req, res, next) => {
  */
 exports.getGeneralStats = async (req, res, next) => {
   try{
+
     const statistics = await statisticsInstance.getGeneralStatistics();
 
     JsonResponse(res, 200, MSG_TYPES.FETCHED, statistics);

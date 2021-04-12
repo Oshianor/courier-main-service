@@ -30,6 +30,7 @@ const AddressService = require("../services/address");
 const path = require("path");
 const axios = require("axios");
 const RiderService = require("../services/rider");
+const interstatePriceService = require("../services/interstatePriceService");
 
 /**
  * Create an Entry
@@ -216,24 +217,25 @@ exports.interStateEntry = async (req, res, next) => {
     const entryInstance = new EntryService();
     const countryInstance = new CountryService();
     const VehicleInstance = new VehicleService();
-    const ISAInstance = new InterStateAddressService();
+    const InterstatePriceInstance = new interstatePriceService();
 
-
-    const location = await ISAInstance.getById(req.body.location);
-    console.log("location", location);
+    const interstatePrice = await InterstatePriceInstance.getById(req.body.location);
     // validate state
     await countryInstance.getCountryAndState(req.body.country, req.body.state);
     // find a single vehicle to have access to the weight
     const vehicle = await VehicleInstance.get(req.body.vehicle);
     req.body.delivery = [
       {
-        deliveryLatitude: location.lat,
-        deliveryLongitude: location.lng,
+        deliveryLatitude: interstatePrice.interStateAddress.lat,
+        deliveryLongitude: interstatePrice.interStateAddress.lng,
       },
     ];
 
+    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
+    const deliveryLongLats = [[interstatePrice.interStateAddress.lng, interstatePrice.interStateAddress.lat]]
+
     // get distance calculation
-    const distance = await entryInstance.getDistanceMetrix(req.body);
+    const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
     // upload images
     if (typeof req.body.img !== "undefined") {
       const images = await entryInstance.uploadArrayOfImages(req.body.img);
@@ -244,11 +246,9 @@ exports.interStateEntry = async (req, res, next) => {
       req.body,
       req.user,
       vehicle,
-      location,
+      interstatePrice,
       distance.data
     );
-
-    console.log("body", body);
 
     const newEntry = await entryInstance.createEntry(body);
 

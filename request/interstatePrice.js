@@ -102,6 +102,27 @@ function validateUpdateCompanyInterstatePrice(data) {
   })
 
 
+
+
+  return Schema.validate(data);
+}
+
+
+function validateInterstateDropOffPrice(data) {
+  const Schema = Joi.object().keys({
+    originCountry: Joi.string().label("origin country").required(),
+    originState: Joi.string().label("origin State").required(),
+    destinationState: Joi.string().label("destination State").required(),
+    price: Joi.number().label("Price").required(),
+    interStateAddress: Joi.string()
+      .regex(/^[0-9a-fA-F]{24}$/)
+      .label("id")
+      .required(),
+  })
+
+
+
+
   return Schema.validate(data);
 }
 
@@ -110,4 +131,5 @@ module.exports = {
   validateUpdateInterstatePrice,
   validateCompanyInterstatePrice,
   validateUpdateCompanyInterstatePrice,
+  validateInterstateDropOffPrice,
 };

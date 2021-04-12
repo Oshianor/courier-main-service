@@ -10,8 +10,8 @@ class interstatePriceService {
 
   /**
    * Create interstate for admin
-   * @param {*} body 
-   * @returns 
+   * @param {*} body
+   * @returns
    */
   create = (body) => {
     return new Promise(async (resolve, reject) => {
@@ -146,12 +146,15 @@ class interstatePriceService {
   getById = (id) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const findData = await InterstatePrice.findById({ _id: id });
+        const findData = await InterstatePrice.findById({ _id: id })
+        .populate("interStateAddress");
+
         if (!findData) {
           return reject({ code: 404, msg: "Data not found" });
         }
         resolve(findData);
       } catch (error) {
+        console.log(error)
         reject({ code: 500, msg: "something went wrong" });
       }
     });
@@ -203,6 +206,113 @@ class interstatePriceService {
       }
     });
   };
+
+  createInterstateAddress = (options) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const checkExist = await InterstateAddress.findOne({ $and: [{ address: options.address }, { name: options.name }, { email: options.email }] });
+        if (checkExist) {
+          return reject({
+            code: 400,
+            msg:
+              " specified interstate address already exists",
+          });
+        }
+        const address = await entryInstance.getGooglePlace(options.address)
+        const Geo = address[0].geometry.location;
+        const data = Object.assign(options, Geo)
+        const createAddress = await InterstateAddress.create(data)
+        resolve(createAddress);
+      } catch (error) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
+
+  createDropoffPrice = (options) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let getAddressDetail = await InterstateAddress.findById({ _id: options.interStateAddress });
+        const checkExist = await InterstatePrice.findOne({
+          $and: [
+            { originCountry: options.originCountry },
+            { originState: options.originState },
+            { destinationState: options.destinationState },
+          ],
+        })
+        if (checkExist) {
+          return reject({
+            code: 400,
+            msg:
+              "Inter state pricing for the specified location already exists",
+          });
+        } else {
+
+          if (options.originCountry !== getAddressDetail.country) {
+            reject({
+              code: 400,
+              msg: "country origin and destination must be the same",
+            });
+          }
+
+          if (options.destinationState !== getAddressDetail.state) {
+            reject({
+              code: 400,
+              msg: "destination state does not match with the address you choose",
+            });
+          }
+
+          options.destinationCountry = getAddressDetail.country
+          options.currency = "NGN"
+          options.source = "admin"
+          options.status = true
+          let addDropOffPrice = await InterstatePrice.create(options)
+          let dropoffPriceId = addDropOffPrice._id
+          let finalDropOff = await InterstatePrice.findById({ _id: dropoffPriceId }, {
+            "source": 0, "currency": 0,
+            "originCountry": 0, "originState": 0, "destinationState": 0, "destinationCountry": 0, "status": 0, "createdAt": 0, "updatedAt": 0, "__v": 0
+          })
+            .populate({ path: "interStateAddress", model: 'interstateAddress' })
+          resolve(finalDropOff)
+        }
+
+      } catch (error) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
+
+  getInterstateAddress = (state) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let address = await InterstateAddress.find({ $and: [{ state: state }, { status: true }] })
+        if (address.length >= 1) {
+          resolve(address);
+        }
+        return reject({
+          code: 404,
+          msg:
+            "No dropoff address for this state at the moment",
+        });
+      } catch (error) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
+
+
+  changeInterstateAddressStatus = (id) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let updateStatus = await InterstateAddress.findByIdAndUpdate({ _id: id }, { status: false })
+        resolve(updateStatus);
+      } catch (err) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
 }
+
+
 
 module.exports = interstatePriceService;

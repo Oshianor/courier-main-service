@@ -30,6 +30,7 @@ const AddressService = require("../services/address");
 const path = require("path");
 const axios = require("axios");
 const RiderService = require("../services/rider");
+const interstatePriceService = require("../services/interstatePriceService");
 
 /**
  * Create an Entry
@@ -194,7 +195,7 @@ exports.interStateEntry = async (req, res, next) => {
     req.body.company = null;
     req.body.enterprise = null;
     // we need to check if it done by an enterprise account
-    if (typeof req.enterprise !== "undefined") {
+    if (req.user.enterprise) {
       // get owners
       const company = await Company.findOne({
         state: req.body.state,
@@ -205,32 +206,30 @@ exports.interStateEntry = async (req, res, next) => {
         req.body.company = company;
       }
 
-      req.body.enterprise = req.enterprise._id;
+      req.body.enterprise = req.user.enterprise._id;
     }
 
     const entryInstance = new EntryService();
     const countryInstance = new CountryService();
     const VehicleInstance = new VehicleService();
-    const ISAInstance = new InterStateAddressService();
+    const InterstatePriceInstance = new interstatePriceService();
 
-
-    const location = await ISAInstance.getById(req.body.location);
-    console.log("location", location);
+    const interstatePrice = await InterstatePriceInstance.getById(req.body.location);
     // validate state
     await countryInstance.getCountryAndState(req.body.country, req.body.state);
     // find a single vehicle to have access to the weight
     const vehicle = await VehicleInstance.get(req.body.vehicle);
     req.body.delivery = [
       {
-        deliveryLatitude: location.lat,
-        deliveryLongitude: location.lng,
+        deliveryLatitude: interstatePrice.interStateAddress.lat,
+        deliveryLongitude: interstatePrice.interStateAddress.lng,
       },
     ];
 
-    // get distance calculation
     const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
-    const deliveryLongLats = [[location.lng, location.lat]];
+    const deliveryLongLats = [[interstatePrice.interStateAddress.lng, interstatePrice.interStateAddress.lat]]
 
+    // get distance calculation
     const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
     // upload images
     if (typeof req.body.img !== "undefined") {
@@ -242,11 +241,9 @@ exports.interStateEntry = async (req, res, next) => {
       req.body,
       req.user,
       vehicle,
-      location,
+      interstatePrice,
       distance.data
     );
-
-    console.log("body", body);
 
     const newEntry = await entryInstance.createEntry(body);
 

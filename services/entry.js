@@ -527,7 +527,7 @@ class EntryService {
    * Calculate shipment for interstate
    * @returns Object
    */
-  calculateInterStateEntry(body, user, vehicle, location, distance) {
+  calculateInterStateEntry(body, user, vehicle, interstatePrice, distance) {
     return new Promise(async (resolve, reject) => {
       try {
 
@@ -540,31 +540,33 @@ class EntryService {
         body.type = entryType;
         body.TET = time;
         body.TED = singleDistance;
-        body.TEC = location.interState.price;
+        body.TEC = interstatePrice.price;
         body.user = user.id;
         body.pickupAddress = distance?.origin_addresses[0],
         body.deliveryAddresses = distance?.destination_addresses;
+        body.enterprise = body.enterprise,
+        body.company = body.company,
         body.delivery = [
           {
-            state: location.state,
+            state: interstatePrice.interStateAddress.state,
             itemName: "box",
             pickupAddress: distance?.origin_addresses[0],
             estimatedTravelduration: time,
             estimatedDistance: singleDistance,
-            country: location.country,
-            phoneNumber: location.phoneNumber,
-            name: location.name,
-            countryCode: location.countryCode,
-            deliveryAddress: location.address,
+            country: interstatePrice.interStateAddress.country,
+            phoneNumber: interstatePrice.interStateAddress.phoneNumber,
+            name: interstatePrice.interStateAddress.name,
+            countryCode: interstatePrice.interStateAddress.countryCode,
+            deliveryAddress: interstatePrice.interStateAddress.address,
             pickupLatitude: body.pickupLatitude,
             pickupLongitude: body.pickupLongitude,
-            deliveryLatitude: location.lat,
-            deliveryLongitude: location.lng,
+            deliveryLatitude: interstatePrice.interStateAddress.lat,
+            deliveryLongitude: interstatePrice.interStateAddress.lng,
             user: user.id,
             orderId: nanoid(8),
             enterprise: body.enterprise,
             company: body.company,
-            estimatedCost: location.interState.price,
+            estimatedCost: interstatePrice.price,
             vehicle: vehicle._id,
             type: entryType
           },

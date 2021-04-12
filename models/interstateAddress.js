@@ -1,14 +1,8 @@
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId;
 
-const interStateAddressSchema = mongoose.Schema(
+const InterStateAddressSchema = mongoose.Schema(
   {
-    interState: {
-      type: ObjectId,
-      required: true,
-      index: true,
-      ref: "interstatePrice",
-    },
     email: {
       type: String,
       required: false,
@@ -55,16 +49,17 @@ const interStateAddressSchema = mongoose.Schema(
       required: true,
       default: 0.0,
     },
+    status: {
+      type: Boolean,
+      default: true
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const interstateAddress = mongoose.model(
-  "interstateAddress",
-  interStateAddressSchema
-);
+const InterstateAddress = mongoose.model("InterStateAddress",InterStateAddressSchema);
 
-module.exports = interstateAddress;
+module.exports = InterstateAddress;
 

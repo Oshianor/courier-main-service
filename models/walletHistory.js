@@ -34,6 +34,11 @@ const WalletHistorySchema = mongoose.Schema(
       type: ObjectId,
       ref: "Entry",
     },
+    shipment: {
+      type: ObjectId,
+      ref: "Shipment",
+      default: null
+    },
     type: {
       type: String,
       enum: ["debit", "credit"],

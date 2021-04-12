@@ -29,6 +29,11 @@ const CreditHistorySchema = mongoose.Schema(
       type: ObjectId,
       ref: "Entry",
     },
+    shipment: {
+      type: ObjectId,
+      ref: "Shipment",
+      default: null
+    },
     type: {
       type: String,
       enum: ["repaid", "loan", "debit"],

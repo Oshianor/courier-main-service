@@ -457,6 +457,7 @@ class EntryService {
 
         resolve(shipment[0]);
       } catch(error){
+        console.log('error => ', error);
         return reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
       }
     })

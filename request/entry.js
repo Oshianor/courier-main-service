@@ -113,7 +113,6 @@ function validateBulkEntry(data){
       .messages({
         "string.pattern.base": `Phone Number can't not have a leading zero (0)`,
       }),
-
     itemType: Joi.string().valid("Document", "Parcel").required(),
     delivery: Joi.array().items({
       addressId: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required(),

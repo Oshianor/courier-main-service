@@ -48,6 +48,10 @@ const ShipmentSchema = new mongoose.Schema(
       ref: "Company",
       default: null,
     },
+    instantPricing: {
+      type: Number,
+      default: 1.5,
+    },
   },
   {
     timestamps: true,

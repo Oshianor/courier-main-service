@@ -439,7 +439,6 @@ class EntryService {
           return prev + next.TET;
         }, 0);
 
-        console.log('---', entries, entries[0]);
         let shipment = null;
         await session.withTransaction(async () => {
           shipment = await Shipment.create([{
@@ -451,11 +450,12 @@ class EntryService {
             parentEntry,
             user: entries[1].user,
             enterprise: entries[1].enterprise,
-            company: entries[1].company
+            company: entries[1].company,
+            instantPricing: entries[1].instantPricing
           }], { session });
         });
 
-        resolve(shipment);
+        resolve(shipment[0]);
       } catch(error){
         return reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
       }

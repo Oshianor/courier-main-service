@@ -237,3 +237,12 @@ exports.getInterstateAddress = async (req, res, next) => {
     next(error)
   }
 }
+
+exports.changeInterstateAddressStatus = async (req, res, next) => {
+  try {
+    const data = await interStateInstance.changeInterstateAddressStatus(req.params.id)
+    return JsonResponse(res, 200, MSG_TYPES.UPDATED, data);
+  } catch (error) {
+    next(error)
+  }
+}

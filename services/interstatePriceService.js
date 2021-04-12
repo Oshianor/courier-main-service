@@ -237,7 +237,7 @@ class interstatePriceService {
           $and: [
             { originCountry: options.originCountry },
             { originState: options.originState },
-            { destinationState: getAddressDetail.state },
+            { destinationState: options.destinationState },
           ],
         })
         if (checkExist) {
@@ -255,12 +255,25 @@ class interstatePriceService {
             });
           }
 
-          options.destinationState = getAddressDetail.state
+          if (options.destinationState !== getAddressDetail.state) {
+            reject({
+              code: 400,
+              msg: "destination state does not match with the address you choose",
+            });
+          }
+
           options.destinationCountry = getAddressDetail.country
           options.currency = "NGN"
           options.source = "admin"
+          options.status = true
           let addDropOffPrice = await InterstatePrice.create(options)
-          resolve(addDropOffPrice)
+          let dropoffPriceId = addDropOffPrice._id
+          let finalDropOff = await InterstatePrice.findById({ _id: dropoffPriceId }, {
+            "source": 0, "currency": 0,
+            "originCountry": 0, "originState": 0, "destinationState": 0, "destinationCountry": 0, "status": 0, "createdAt": 0, "updatedAt": 0, "__v": 0
+          })
+            .populate({ path: "interStateAddress", model: 'interstateAddress' })
+          resolve(finalDropOff)
         }
 
       } catch (error) {
@@ -272,7 +285,7 @@ class interstatePriceService {
   getInterstateAddress = (state) => {
     return new Promise(async (resolve, reject) => {
       try {
-        let address = await InterstateAddress.find({ state: state })
+        let address = await InterstateAddress.find({ $and: [{ state: state }, { status: true }] })
         if (address.length >= 1) {
           resolve(address);
         }
@@ -286,7 +299,20 @@ class interstatePriceService {
       }
     })
   }
+
+
+  changeInterstateAddressStatus = (id) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let updateStatus = await InterstateAddress.findByIdAndUpdate({ _id: id }, { status: false })
+        resolve(updateStatus);
+      } catch (err) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
 }
+
 
 
 module.exports = interstatePriceService;

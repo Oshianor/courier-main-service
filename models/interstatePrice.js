@@ -57,7 +57,6 @@ const interstatePriceSchema = mongoose.Schema(
     },
     status: {
       type: Boolean,
-      default: false
     },
   },
   {

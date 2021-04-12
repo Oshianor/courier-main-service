@@ -10,6 +10,7 @@ const {
   validateTransaction,
   validateTransactionStatus,
   validateEnterpriseTransaction,
+  validateBulkEntryTransaction
 } = require("../request/transaction");
 const TransactionService = require("../services/transaction");
 const EntryService = require("../services/entry");
@@ -82,6 +83,38 @@ exports.enterpriseTransaction = async (req, res, next) => {
 
     JsonResponse(res, 201, msg);
     return;
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * enterprise confirm payment method and entry [for bulk entry]
+ * @param {*} req
+ * @param {*} res
+ */
+exports.bulkEntryTransaction = async (req, res, next) => {
+  try {
+    const { error } = validateBulkEntryTransaction(req.body);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const transactionInstance = new TransactionService();
+    const { shipment, msg } = await transactionInstance.createBulkEntryTransaction(req.body, req.user, req.enterprise);
+
+    // const entryInstance = new EntryService();
+    // const { riderIDS } = await entryInstance.silentlyAsignRiderToEntry(entry);
+
+    // if (riderIDS) {
+    //   // send entries to all the rider
+    //   const riderSub = new RiderSubscription();
+    //   await riderSub.sendRidersEntries(riderIDS, entry);
+    // }
+
+    // // send socket to admin for update
+    // const entrySub = new EntrySubscription();
+    // await entrySub.updateEntryAdmin(entry._id);
+
+    return JsonResponse(res, 201, msg);
   } catch (error) {
     next(error);
   }

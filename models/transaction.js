@@ -19,6 +19,11 @@ const transactionSchema = new mongoose.Schema(
       required: true,
       ref: "Order",
     },
+    shipment: {
+      type: ObjectId,
+      ref: "Shipment",
+      default: null
+    },
     user: {
       type: ObjectId,
       required: true,

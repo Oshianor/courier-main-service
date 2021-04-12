@@ -8,6 +8,7 @@ const Transaction = require("../models/transaction");
 const RiderEntryRequest = require("../models/riderEntryRequest");
 const Pricing = require("../models/pricing");
 const Rider = require("../models/rider");
+const Shipment = require("../models/shipment");
 const TripLogService = require("./triplog");
 const UserService = require("./user");
 const NotificationService = require("./notification");
@@ -27,6 +28,7 @@ const SettingService = require("../services/setting");
 const VehicleService = require("../services/vehicle");
 const CountryService = require("../services/country");
 const userInstance = new UserService();
+
 
 class EntryService {
   /**
@@ -264,7 +266,7 @@ class EntryService {
         delete entryData.delivery;
 
         const entries = [];
-        const numOrdersPerEntry = 10;
+        const numOrdersPerEntry = 2;
         const groupedDeliveries = this.chunkArray(body.deliveries, numOrdersPerEntry);
 
         for(let deliveries of groupedDeliveries){
@@ -368,7 +370,7 @@ class EntryService {
    * Create an entry
    * @param {Object} body
    */
-  createBulkEntries(entries) {
+  createBulkEntries(entries, parentEntry) {
     return new Promise(async (resolve, reject) => {
       const session = await mongoose.startSession();
       try {
@@ -390,14 +392,74 @@ class EntryService {
           });
         }
 
+
+        const shipmentRecord = await this.createMultipleEntryShipmentRecord(createdEntries, parentEntry, session);
+
+
         session.endSession();
-        resolve(createdEntries);
+        resolve(shipmentRecord);
+        // resolve(createdEntries);
       } catch (error) {
         console.log('Session => ', error);
         await session.abortTransaction();
         reject(error);
       }
     });
+  }
+
+  /**
+   *
+   * @param {Array} entries array of related entries - from either bulk entry or interstate
+   */
+  createMultipleEntryShipmentRecord(entries, parentEntry = null, session){
+    return new Promise(async(resolve, reject) => {
+      try{
+
+        const entryIds = entries.map((entry) => entry._id);
+        if(parentEntry){
+          entryIds.push(parentEntry);
+        }
+
+        entries = await Entry.find({_id: { $in: entryIds }})
+        .populate("orders");
+
+        const orderIds = entries.map((entry) => {
+          return entry.orders.map((order) => order._id);
+        }).flat();
+
+        const totalEstimatedCost = entries.reduce((prev, next) => {
+          return prev + next.TEC;
+        }, 0);
+
+        const totalEstimatedDistance = entries.reduce((prev, next) => {
+          return prev + next.TED;
+        }, 0);
+
+        const totalEstimatedTime = entries.reduce((prev, next) => {
+          return prev + next.TET;
+        }, 0);
+
+        console.log('---', entries, entries[0]);
+        let shipment = null;
+        await session.withTransaction(async () => {
+          shipment = await Shipment.create([{
+            entries: entryIds,
+            orders: orderIds,
+            TEC: totalEstimatedCost,
+            TET: totalEstimatedTime,
+            TED: totalEstimatedDistance,
+            parentEntry,
+            user: entries[1].user,
+            enterprise: entries[1].enterprise,
+            company: entries[1].company
+          }], { session });
+        });
+
+        resolve(shipment);
+      } catch(error){
+        return reject({code: 500, msg: MSG_TYPES.SERVER_ERROR});
+      }
+    })
   }
 
   chunkArray(array, chunkSize){
@@ -439,7 +501,7 @@ class EntryService {
 
       } catch(error){
         console.log('Error [group]=> ', error)
-        reject({ err: 500, msg: MSG_TYPES.SERVER_ERROR});
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR});
       }
     })
   }
@@ -472,7 +534,9 @@ class EntryService {
         console.log("data", data);
         const time = parseFloat(data.duration.value / 60);
         const singleDistance = parseFloat(data.distance.value / 1000);
-        body.type = "interState";
+        const entryType = "interState";
+
+        body.type = entryType;
         body.TET = time;
         body.TED = singleDistance;
         body.TEC = location.interState.price;
@@ -501,8 +565,10 @@ class EntryService {
             company: body.company,
             estimatedCost: location.interState.price,
             vehicle: vehicle._id,
+            type: entryType
           },
         ];
+
         body.vehicle = vehicle._id;
 
         resolve(body);

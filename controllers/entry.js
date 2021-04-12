@@ -172,14 +172,9 @@ exports.bulkEntry = async (req, res, next) => {
 
     const entriesData = await entryInstance.calculateBulkEntry(req.body, req.user, distance.data);
 
-    const createdEntries = await entryInstance.createBulkEntries(entriesData);
+    const shipment = await entryInstance.createBulkEntries(entriesData, req.body.parentEntry);
 
-    const totalCost = createdEntries.reduce((prev, next) => {
-      return prev + next.TEC;
-    }, 0);
-
-
-    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, { entries:createdEntries, totalCost});
+    return JsonResponse(res, 201, MSG_TYPES.ORDER_POSTED, shipment);
 
   } catch(error){
     next(error);
@@ -233,7 +228,10 @@ exports.interStateEntry = async (req, res, next) => {
     ];
 
     // get distance calculation
-    const distance = await entryInstance.getDistanceMetrix(req.body);
+    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
+    const deliveryLongLats = [[location.lng, location.lat]];
+
+    const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
     // upload images
     if (typeof req.body.img !== "undefined") {
       const images = await entryInstance.uploadArrayOfImages(req.body.img);

@@ -89,10 +89,10 @@ function validateBulkEntryTransaction(body) {
     shipment: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .required(),
-    // pickupType: Joi.string()
-    //   .label("Pickup Type")
-    //   .valid("instant", "anytime")
-    //   .required(),
+    pickupType: Joi.string()
+      .label("Pickup Type")
+      .valid("instant", "anytime")
+      .required(),
     card: Joi.string()
       .regex(/^[0-9a-fA-F]{24}$/)
       .when("paymentMethod", {

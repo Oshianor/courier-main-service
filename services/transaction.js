@@ -283,6 +283,9 @@ class TransactionService {
           populate: "orders",
           select: "-metaData"
         });
+        if(!shipment){
+          return reject({code: 404, msg: "Shipment not found"});
+        }
 
          // calculate our commision from the company pricing plan
          const company = await Company.findOne({
@@ -304,12 +307,10 @@ class TransactionService {
         let msg;
         const transactionData = {};
 
-        body.pickupType = "anytime";
-
         let amount = parseFloat(shipment.TEC);
-        // if(body.pickupType === "instant"){
-        //   amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
-        // }
+        if(body.pickupType === "instant"){
+          amount = calculateInstantPrice(shipment.TEC, shipment.instantPricing);
+        }
 
         if (body.paymentMethod === "card") {
           const card = await cardInstance.get({ _id: body.card, user: user.id });
@@ -334,6 +335,7 @@ class TransactionService {
           msg = "Cash Payment Method Confirmed";
         }
 
+        let shipmentTransactionIds = [];
         for await(let entry of shipment.entries){
           const entryTransactionData = {
             ...transactionData,
@@ -352,6 +354,7 @@ class TransactionService {
           const createdTransactions = await this.createTransactionsForOrders(entry, entryTransactionData, body.pickupType, session);
 
           const transactionIds = createdTransactions.map((trx) => trx._id);
+          shipmentTransactionIds = [...shipmentTransactionIds, ...transactionIds];
 
           let entryAmount = parseFloat(entry.TEC);
           await Entry.updateOne(
@@ -381,6 +384,8 @@ class TransactionService {
             { session }
           );
         }
+
+        await Shipment.updateOne({_id: shipment._id}, {transactions: shipmentTransactionIds});
 
         await session.commitTransaction();
         session.endSession();

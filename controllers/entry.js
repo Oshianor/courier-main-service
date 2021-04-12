@@ -200,7 +200,7 @@ exports.interStateEntry = async (req, res, next) => {
     req.body.company = null;
     req.body.enterprise = null;
     // we need to check if it done by an enterprise account
-    if (typeof req.enterprise !== "undefined") {
+    if (req.user.enterprise) {
       // get owners
       const company = await Company.findOne({
         state: req.body.state,
@@ -211,7 +211,7 @@ exports.interStateEntry = async (req, res, next) => {
         req.body.company = company;
       }
 
-      req.body.enterprise = req.enterprise._id;
+      req.body.enterprise = req.user.enterprise._id;
     }
 
     const entryInstance = new EntryService();

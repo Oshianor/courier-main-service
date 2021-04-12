@@ -7,7 +7,7 @@ const interstatePriceSchema = mongoose.Schema(
       type: ObjectId,
       required: true,
       index: true,
-      ref: "interstateAddress",
+      ref: "InterStateAddress",
     },
     source: {
       type: String,

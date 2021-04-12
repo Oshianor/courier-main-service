@@ -147,7 +147,7 @@ class interstatePriceService {
     return new Promise(async (resolve, reject) => {
       try {
         const findData = await InterstatePrice.findById({ _id: id })
-        .populate("interStateAddress");
+          .populate("interStateAddress");
 
         if (!findData) {
           return reject({ code: 404, msg: "Data not found" });
@@ -272,7 +272,7 @@ class interstatePriceService {
             "source": 0, "currency": 0,
             "originCountry": 0, "originState": 0, "destinationState": 0, "destinationCountry": 0, "status": 0, "createdAt": 0, "updatedAt": 0, "__v": 0
           })
-            .populate({ path: "interStateAddress", model: 'interstateAddress' })
+            .populate({ path: "interStateAddress", model: 'InterStateAddress' })
           resolve(finalDropOff)
         }
 
@@ -311,7 +311,51 @@ class interstatePriceService {
       }
     })
   }
+
+  getAllInterstateAddress = (pagesize, pagenumber) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let getAddress = await InterstateAddress.find({})
+          .skip((parseInt(pagenumber) - 1) * parseInt(pagesize))
+          .limit(parseInt(pagesize));
+        if (getAddress) {
+          resolve(getAddress)
+        }
+        return reject({
+          code: 404,
+          msg:
+            "No interstate address at the moment",
+        });
+      } catch (err) {
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
+
+  getAllInterstateDropOff = (pagesize, pagenumber) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let getDropoffPrice = await InterstatePrice.find({})
+          .populate({ path: "interStateAddress", model: 'InterStateAddress' })
+          .skip((parseInt(pagenumber) - 1) * parseInt(pagesize))
+          .limit(parseInt(pagesize));
+        if (getDropoffPrice) {
+          resolve(getDropoffPrice)
+        }
+        return reject({
+          code: 404,
+          msg:
+            "No interstate dropoff price at the moment",
+        });
+      } catch (error) {
+        console.log(error)
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
 }
+
+
 
 
 

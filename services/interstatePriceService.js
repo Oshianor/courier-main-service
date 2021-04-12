@@ -304,7 +304,8 @@ class interstatePriceService {
   changeInterstateAddressStatus = (id) => {
     return new Promise(async (resolve, reject) => {
       try {
-        let updateStatus = await InterstateAddress.findByIdAndUpdate({ _id: id }, { status: false })
+        let checkStatus = await InterstateAddress.findOne({ _id: id })
+        let updateStatus = await InterstateAddress.findByIdAndUpdate({ _id: id }, { status: checkStatus.status === false ? true : false })
         resolve(updateStatus);
       } catch (err) {
         reject({ code: 500, msg: "something went wrong" });
@@ -321,8 +322,8 @@ class interstatePriceService {
 
         const total = await InterstateAddress.countDocuments();
 
-          
-          resolve({ data, total });
+
+        resolve({ data, total });
       } catch (err) {
         reject(error);
       }
@@ -339,7 +340,7 @@ class interstatePriceService {
 
         const total = await InterstatePrice.countDocuments();
 
-          resolve({data, total});
+        resolve({ data, total });
 
       } catch (error) {
         console.log(error)

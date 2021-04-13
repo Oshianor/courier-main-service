@@ -5,7 +5,8 @@ const {
   validateCompanyInterstatePrice,
   validateUpdateCompanyInterstatePrice,
   validateInterstateDropOffPrice,
-  validateGetDropLocationPrices
+  validateGetDropLocationPrices,
+  updateInterstateDropOffPrice
 } = require("../request/interstatePrice");
 const { validateInterstateAddress } = require("../request/interStateAddress");
 const { MSG_TYPES } = require("../constant/types");
@@ -135,7 +136,7 @@ exports.updateInterstateAddress = async (req, res, next) => {
 exports.updateDropOffPrice = async (req, res, next) => {
   try {
     // validate request
-    const { error } = validateInterstateDropOffPrice(req.body);
+    const { error } = updateInterstateDropOffPrice(req.body);
     if (error)
       return JsonResponse(res, 400, error.details[0].message);
 

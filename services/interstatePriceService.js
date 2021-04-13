@@ -154,8 +154,12 @@ class interstatePriceService {
     return new Promise(async (resolve, reject) => {
       try {
         let priceId = await InterstatePrice.findOne({ interStateAddress: id })
-        let dropOffPrice = priceId._id
-        await InterstatePrice.findByIdAndRemove({ _id: dropOffPrice })
+        if (priceId) {
+          let dropOffPrice = priceId._id
+          await InterstatePrice.findByIdAndRemove({ _id: dropOffPrice })
+          const deleteData = await InterstateAddress.findByIdAndRemove({ _id: id });
+          resolve(deleteData);
+        }
         const deleteData = await InterstateAddress.findByIdAndRemove({ _id: id });
         resolve(deleteData);
       } catch (error) {

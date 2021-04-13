@@ -153,6 +153,9 @@ class interstatePriceService {
   deleteInterstateAddress = (id) => {
     return new Promise(async (resolve, reject) => {
       try {
+        let priceId = await InterstatePrice.findOne({ interStateAddress: id })
+        let dropOffPrice = priceId._id
+        await InterstatePrice.findByIdAndRemove({ _id: dropOffPrice })
         const deleteData = await InterstateAddress.findByIdAndRemove({ _id: id });
         resolve(deleteData);
       } catch (error) {
@@ -164,6 +167,9 @@ class interstatePriceService {
   deleteInterstateDropOffPrice = (id) => {
     return new Promise(async (resolve, reject) => {
       try {
+        let findPrice = await InterstatePrice.findById({ _id: id })
+        let PriceAddress = findPrice.interStateAddress
+        await InterstateAddress.findByIdAndRemove({ _id: PriceAddress })
         const deleteData = await InterstatePrice.findByIdAndRemove({ _id: id });
         resolve(deleteData);
       } catch (error) {
@@ -205,26 +211,8 @@ class interstatePriceService {
               "Inter state pricing for the specified location does not exists",
           });
         } else {
-          let getAddressDetail = await InterstateAddress.findById({ _id: options.interStateAddress });
-          if (options.originCountry !== getAddressDetail.country) {
-            reject({
-              code: 400,
-              msg: "country origin and destination must be the same",
-            });
-          }
-
-          if (options.destinationState !== getAddressDetail.state) {
-            reject({
-              code: 400,
-              msg: "destination state does not match with the address you choose",
-            });
-          }
-
-          options.destinationCountry = getAddressDetail.country
-          options.currency = "NGN"
-          options.source = "admin"
-          options.status = true
-          await InterstatePrice.findByIdAndUpdate({ _id: id }, options)
+          let price = { price: options.price }
+          await InterstatePrice.findByIdAndUpdate({ _id: id }, price)
           let getEditedDropOff = await InterstatePrice.findById({ _id: id }, {
             "source": 0, "currency": 0,
             "originCountry": 0, "originState": 0, "destinationState": 0, "destinationCountry": 0, "status": 0, "createdAt": 0, "updatedAt": 0, "__v": 0

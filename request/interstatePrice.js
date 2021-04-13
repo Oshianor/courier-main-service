@@ -119,10 +119,14 @@ function validateInterstateDropOffPrice(data) {
       .label("id")
       .required(),
   })
+  return Schema.validate(data);
+}
 
 
-
-
+function updateInterstateDropOffPrice(data) {
+  const Schema = Joi.object().keys({
+    price: Joi.number().label("Price").required(),
+  })
   return Schema.validate(data);
 }
 
@@ -132,4 +136,5 @@ module.exports = {
   validateCompanyInterstatePrice,
   validateUpdateCompanyInterstatePrice,
   validateInterstateDropOffPrice,
+  updateInterstateDropOffPrice,
 };

@@ -1985,10 +1985,15 @@ class EntryService {
         };
 
         const entries = await Entry.find(filter)
-        .populate("orders")
-        .skip(skip)
-        .limit(pageSize)
-        .sort({ createdAt: "desc" });
+          .populate("orders")
+          .populate("transaction")
+          .populate(
+            "company",
+            "_id name email phoneNumber img countryCode country state"
+          )
+          .skip(skip)
+          .limit(pageSize)
+          .sort({ createdAt: "desc" });
 
         const total = await Entry.countDocuments(filter);
 

@@ -135,7 +135,6 @@ function validateBulkEntry(data){
     country: Joi.string().label("Country").required(),
     state: Joi.string().label("State").required(),
     countryCode: Joi.string().max(5).required(),
-    type: Joi.string().valid("local","interState").required(),
     description: Joi.string().optional(),
     parentEntry: Joi.string().regex(/^[0-9a-fA-F]{24}$/).optional(),
   });

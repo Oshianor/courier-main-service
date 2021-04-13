@@ -269,6 +269,14 @@ class EntryService {
         const numOrdersPerEntry = 10;
         const groupedDeliveries = this.chunkArray(body.deliveries, numOrdersPerEntry);
 
+        // let parentInterstateEntryPrice = 0;
+        // if(body.parentEntry){
+        //   const parentEntry = await Entry.findOne({_id: body.parentEntry });
+        //   if(!parentEntry){
+        //     return reject({code: 404})
+        //   }
+        // }
+
         for(let deliveries of groupedDeliveries){
           entries.push({
             ...entryData,
@@ -280,10 +288,12 @@ class EntryService {
           entry.TED = 0;
           entry.TET = 0;
           entry.TEC = 0;
+
           entry.user = user.id;
           entry.instantPricing = setting.instantPricing;
           entry.deliveryAddresses = entry.deliveries.map((delivery) => delivery.address.address);
           entry.pickupAddress = distance.origin_addresses[0];
+          entry.type = "local";
 
           // get item type price
           let itemTypePrice = 0;
@@ -410,12 +420,13 @@ class EntryService {
 
         const shipmentRecord = await this.createMultipleEntryShipmentRecord(createdEntries, parentEntry, session);
 
-        session.endSession();
+        // await session.commitTransaction();
+        // session.endSession();
         resolve(shipmentRecord);
         // resolve(createdEntries);
       } catch (error) {
         console.log('Session => ', error);
-        await session.abortTransaction();
+        // await session.abortTransaction();
         reject(error);
       }
     });
@@ -431,6 +442,11 @@ class EntryService {
 
         const entryIds = entries.map((entry) => entry._id);
         if(parentEntry){
+          const parentEntryRecord = await Entry.findOne({_id: parentEntry });
+          if(!parentEntryRecord){
+            return reject({code: 404, msg: "Parent entry not found"});
+          }
+
           entryIds.push(parentEntry);
         }
 
@@ -469,7 +485,7 @@ class EntryService {
           }], { session });
         });
 
-        await Entry.updateMany({_id: { $in: entryIds }}, { shipment: shipment[0]._id});
+        await Entry.updateMany({_id: { $in: entryIds }}, { shipment: shipment[0]._id}, {session});
 
         resolve(shipment[0]);
       } catch(error){

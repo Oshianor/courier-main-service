@@ -225,6 +225,24 @@ class interstatePriceService {
       }
     })
   }
+
+  getDropOffLocationPrices(data) {
+    return new Promise(async(resolve, reject) => {
+      const { originCountry, originState, destinationState, destinationCountry } = data;
+      try {
+        const prices = await InterstatePrice.find({
+          originCountry,
+          originState,
+          destinationState,
+          destinationCountry
+        }).populate({ path: "interStateAddress", model: 'InterStateAddress' })
+
+        resolve(prices);
+      } catch(error){
+        reject({ code: 500, msg: "something went wrong" });
+      }
+    })
+  }
 }
 
 

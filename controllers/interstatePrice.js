@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
-const { validateInterstatePrice, validateUpdateInterstatePrice, validateCompanyInterstatePrice, validateUpdateCompanyInterstatePrice, validateInterstateDropOffPrice } = require("../request/interstatePrice");
+const {
+  validateInterstatePrice,
+  validateUpdateInterstatePrice,
+  validateCompanyInterstatePrice,
+  validateUpdateCompanyInterstatePrice,
+  validateInterstateDropOffPrice,
+  validateGetDropLocationPrices
+} = require("../request/interstatePrice");
 const { validateInterstateAddress } = require("../request/interStateAddress");
 const { MSG_TYPES } = require("../constant/types");
 const { JsonResponse } = require("../lib/apiResponse");
@@ -134,6 +141,19 @@ exports.updateDropOffPrice = async (req, res, next) => {
 
     const data = await interStateInstance.updateDropOffPrice(req.params.id, req.body)
     return JsonResponse(res, 200, MSG_TYPES.CREATED, data);
+  } catch (error) {
+    next(error)
+  }
+}
+
+exports.getDropOffLocationPrices = async (req, res, next) => {
+  try {
+    // validate request
+    const { error } = validateGetDropLocationPrices(req.query);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
+    const data = await interStateInstance.getDropOffLocationPrices(req.query);
+    return JsonResponse(res, 200, MSG_TYPES.FETCHED, data);
   } catch (error) {
     next(error)
   }

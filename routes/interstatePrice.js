@@ -13,4 +13,6 @@ router.get("/price/all", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), contro
 router.delete("/price/delete/:id", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.deleteInterstateDropOffPrice);
 router.patch("/price/update/:id", Auth, hasRole([ROLES.SUPER_ADMIN, ROLES.ADMIN]), controller.interstatePrice.updateDropOffPrice);
 
+router.get("/address/price", Auth, controller.interstatePrice.getDropOffLocationPrices);
+
 module.exports = router;

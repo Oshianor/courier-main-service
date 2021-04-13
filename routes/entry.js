@@ -51,8 +51,11 @@ router.post(
 router.post("/confirm-pickup", Auth, controller.entry.riderComfirmPickupOTPCode);
 
 router.post("/validate", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.entry.validateAddressBook);
+
 router.post("/enterprise/bulk", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.entry.bulkEntry);
+router.get("/enterprise/bulk", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.entry.getBulkShipments);
 
 router.post("/enterprise/bulk/confirm", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.transaction.bulkEntryTransaction);
+
 
 module.exports = router;

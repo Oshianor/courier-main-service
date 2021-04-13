@@ -469,6 +469,8 @@ class EntryService {
           }], { session });
         });
 
+        await Entry.updateMany({_id: { $in: entryIds }}, { shipment: shipment[0]._id});
+
         resolve(shipment[0]);
       } catch(error){
         console.log('error => ', error);
@@ -1956,6 +1958,29 @@ class EntryService {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     });
+  }
+
+  getBulkShipments(enterpriseId, skip, pageSize) {
+    return new Promise(async (resolve, reject) => {
+      try{
+        const filter = {
+          enterprise: enterpriseId,
+          shipment: { $ne : null }
+        };
+
+        const entries = await Entry.find(filter)
+        .populate("orders")
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ createdAt: "desc" });
+
+        const total = await Entry.countDocuments(filter);
+
+        resolve({entries, total});
+      } catch(error){
+        reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
+      }
+    })
   }
 }
 

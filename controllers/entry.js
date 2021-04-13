@@ -655,3 +655,23 @@ exports.validateAddressBook = async (req, res, next) => {
     next(error);
   }
 }
+
+
+exports.getBulkShipments = async(req, res, next) => {
+  try{
+    const { page, pageSize, skip } = paginate(req);
+
+    const entryInstance = new EntryService();
+    const {entries, total} = await entryInstance.getBulkShipments(req.enterprise._id, skip, pageSize);
+
+    const meta = {
+      total,
+      pagination: { pageSize, page },
+    };
+
+    JsonResponse(res, 200, MSG_TYPES.FETCHED, entries, meta);
+
+  } catch(error){
+    next(error);
+  }
+}

@@ -237,6 +237,11 @@ const entrySchema = mongoose.Schema(
       type: Date,
       default: null,
     },
+    shipment: {
+      type: ObjectId,
+      ref: "Shipment",
+      default: null
+    },
   },
   {
     timestamps: true,

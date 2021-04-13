@@ -284,11 +284,7 @@ class EntryService {
           entry.instantPricing = setting.instantPricing;
           entry.deliveryAddresses = entry.deliveries.map((delivery) => delivery.address.address);
           entry.pickupAddress = distance.origin_addresses[0];
-          entry.metaData = {
-            distance,
-            distancePrice,
-            setting,
-          };
+
           // get item type price
           let itemTypePrice = 0;
           if (entry.itemType === "Document") {
@@ -336,18 +332,38 @@ class EntryService {
             // total the distance travelled and time
             entry.TET = entry.TET + time;
             entry.TED = entry.TED + singleDistance;
-            // estimated cost
-            // calculate the km travelled for each trip multiplied by our price per km
-            const km =
-              parseFloat(singleDistance) * parseFloat(distancePrice.price);
-            // calculate the weight of each order for each trip multiplied by our price per weight
-            const weight =
-              parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
-            const amount =
-              parseFloat(km) +
-              parseFloat(weight) +
-              parseFloat(itemTypePrice) +
-              parseFloat(setting.baseFare);
+
+            let amount;
+            if(
+              user.enterprise &&
+              user.enterprise.paymentType === "fixed" &&
+              user.enterprise.fixedPaymentPrice
+            ){
+              // Use fixed payment price for enterprise accounts using that
+              amount = user.enterprise.fixedPaymentPrice;
+              body.metaData = {
+                paymentType: "fixed",
+                fixedPaymentPrice: user.enterprise.fixedPaymentPrice
+              }
+            } else {
+              // Use calculated amount
+              // estimated cost
+              // calculate the km travelled for each trip multiplied by our price per km
+              const km = parseFloat(singleDistance) * parseFloat(distancePrice.price);
+              // calculate the weight of each order for each trip multiplied by our price per weight
+              const weight = parseFloat(vehicle.weight) * parseFloat(setting.weightPrice);
+              amount =
+                parseFloat(km) +
+                parseFloat(weight) +
+                parseFloat(itemTypePrice) +
+                parseFloat(setting.baseFare);
+
+              body.metaData = {
+                distance,
+                distancePrice,
+                setting,
+              };
+            }
 
             // set price for each order
             delivery.estimatedCost = Math.ceil(parseFloat(amount) / 100) * 100;
@@ -392,9 +408,7 @@ class EntryService {
           });
         }
 
-
         const shipmentRecord = await this.createMultipleEntryShipmentRecord(createdEntries, parentEntry, session);
-
 
         session.endSession();
         resolve(shipmentRecord);

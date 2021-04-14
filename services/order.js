@@ -279,7 +279,7 @@ class OrderService {
         );
 
         // send OTP code to the receipant
-        const subject = `Delivery OTP Code for ${order.orderId}`;
+        const subject = `Delivery OTP Code for #${order.orderId}`;
         const html = OTPCode(token);
         Mailer(order.email, subject, html);
 
@@ -329,6 +329,7 @@ class OrderService {
 
         resolve({ order, entry, rider, company, user });
       } catch (error) {
+        console.log("error", error);
         await session.abortTransaction();
         reject(error);
       }

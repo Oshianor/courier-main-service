@@ -264,7 +264,6 @@ class OrderService {
           return;
         }
 
-
         const token = GenerateOTP(4);
 
         // update the order and entry status
@@ -327,7 +326,7 @@ class OrderService {
         await session.commitTransaction();
         session.endSession();
 
-        resolve({ order, entry, rider, company, user });
+        resolve({ order, entry, rider, company, user: entryUser });
       } catch (error) {
         await session.abortTransaction();
         reject(error);

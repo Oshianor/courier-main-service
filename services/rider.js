@@ -164,7 +164,7 @@ class RiderService {
           // .populate("user", "name email phoneNumber countryCode")
           .populate(
             "entry",
-            "status type source paymentMethod transaction itemType TEC TED TET name email countryCode phoneNumber"
+            "status type source paymentMethod transaction itemType TEC TED TET name email countryCode phoneNumber cashPaymentType"
           )
           // .populate(
           //   "company",

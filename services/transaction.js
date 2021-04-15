@@ -40,7 +40,8 @@ class TransactionService {
           status: "request",
           user: user.id,
         })
-        .populate("orders");
+          .populate("orders")
+          .select("-metaData");
 
         if (!entry) {
           return reject({
@@ -254,6 +255,7 @@ class TransactionService {
 
         // send out new entry that has apporved payment method
         entry.metaData = null;
+        entry.cashPaymentType = body.cashPaymentType;
         resolve({ entry, msg });
       } catch (error) {
         await session.abortTransaction();

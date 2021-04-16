@@ -14,7 +14,6 @@ const populateMultiple = async (dataArray, model, option) => {
   modelIds = modelIds.map((id) => id.toString());
 
   let modelDataArray = [];
-  console.log("modelIds", modelIds);
   try{
     if(model === 'enterprise'){
       modelDataArray = await enterpriseInstance.getAll(modelIds);

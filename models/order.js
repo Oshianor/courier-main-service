@@ -261,7 +261,7 @@ const orderSchema = mongoose.Schema(
       type: String,
       enum: ["local", "interState", "international"],
       default: "local",
-    },
+    }
   },
   {
     timestamps: true,

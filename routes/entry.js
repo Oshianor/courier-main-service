@@ -57,5 +57,7 @@ router.get("/enterprise/bulk", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES
 
 router.post("/enterprise/bulk/confirm", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.transaction.bulkEntryTransaction);
 
+router.patch("/enterprise/:entryId/confirm-pickup", UserAuth, EnterpriseAuth([E_ROLES.BRANCH, E_ROLES.MAINTAINER]), controller.entry.enterpriseComfirmPickup);
+
 
 module.exports = router;

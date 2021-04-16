@@ -82,6 +82,8 @@ exports.riderArriveAtDelivery = async (req, res, next) => {
     if (error) return JsonResponse(res, 400, error.details[0].message);
 
     const orderInstance = new OrderService();
+    // return console.log('[textNotify]', user);
+
     const { order, entry, user } = await orderInstance.arriveAtLocation(
       req.body,
       req.user

@@ -242,6 +242,11 @@ const entrySchema = mongoose.Schema(
       ref: "Shipment",
       default: null
     },
+    pickupConfirmedBy: {
+      type: String,
+      enum: ["rider","enterprise"],
+      default: "rider"
+    }
   },
   {
     timestamps: true,

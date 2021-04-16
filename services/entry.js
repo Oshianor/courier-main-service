@@ -1533,6 +1533,8 @@ class EntryService {
             { session }
           );
 
+          // dispatch entrySub.updateEnterpriseEntry (so confirm button gets enabled)
+
           logs.type = "cancelled";
           const tripLogInstance = new TripLogService();
           await tripLogInstance.createLog(logs, session);
@@ -1689,11 +1691,6 @@ class EntryService {
             },
             { session }
           );
-          // await Order.updateMany(
-          //   { entry: entry._id },
-          //   { status: "cancelled", cancelledAt: new Date() },
-          //   { session }
-          // );
 
           logs.type = "cancelled";
           const tripLogInstance = new TripLogService();
@@ -1986,15 +1983,15 @@ class EntryService {
         };
 
         const entries = await Entry.find(filter)
-          .populate("orders")
-          .populate("transaction")
+        .populate("orders")
+        .populate("transaction")
           .populate(
             "company",
             "_id name email phoneNumber img countryCode country state"
           )
-          .skip(skip)
-          .limit(pageSize)
-          .sort({ createdAt: "desc" });
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ createdAt: "desc" });
 
         const total = await Entry.countDocuments(filter);
 
@@ -2003,6 +2000,120 @@ class EntryService {
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }
     })
+  }
+
+  /**
+   *
+   * @param {ObjectId} entryId
+   */
+  enterpriseComfirmPickup(entryId) {
+    return new Promise(async (resolve, reject) => {
+      const session = await mongoose.startSession();
+      try {
+        // start our transaction
+        session.startTransaction();
+
+        // check if the entry has not been taken by another rider
+        const entry = await Entry.findOne({
+          _id: entryId,
+          status: "arrivedAtPickup"
+        })
+          .lean()
+          .select("-metaData");
+
+        if (!entry){
+          return reject({ code: 404, msg: "This entry doesn't exist"});
+        }
+
+        const rider = await Rider.findOne({
+          _id: entry.rider,
+          status: "active",
+          onlineStatus: true,
+          verified: true,
+        })
+        .lean();
+
+        if (!rider) {
+          return reject({ code: 404, msg: "You can't accept this entry because rider was not found"});
+        }
+
+        //check that there are no instant pickup that needs to be deliveried first
+        await this.instantEntries(rider._id, entry);
+
+        // check if the payment method is cash and cashPaymenType is 'pickup'
+        if (entry.paymentMethod === "cash" && entry.cashPaymentType === "pickup") {
+          const transactions = await Transaction.find({ entry: entry._id });
+          if (!transactions.length) {
+            return reject({code: 404, msg: "No Transaction was found for this entry"});
+          }
+
+          if (transactions[0].status !== "approved") {
+            return reject({ code: 400, msg: `The rider is yet to confirm payment for this pickup.`});
+          }
+        }
+
+        // update the status to delivery updated
+        await Entry.updateOne({ _id: entry._id },
+          {
+            status: "pickedup",
+            OTPCode: null,
+            pickupConfirmedBy: "enterprise"
+          },
+          { session }
+        );
+        // update all order status
+        await Order.updateMany(
+          { entry: entry._id },
+          { status: "pickedup" },
+          { session }
+        );
+
+        const logs = {
+          type: "pickedup",
+          order: entry.orders,
+          rider: rider._id,
+          user: entry.user,
+          entry: entry._id,
+          latitude: rider.latitude,
+          longitude: rider.longitude,
+          metaData: {},
+        };
+        const tripLogInstance = new TripLogService();
+        await tripLogInstance.createLog(logs, session);
+
+        await session.commitTransaction();
+        session.endSession();
+
+        resolve({ entry, rider });
+      } catch (error) {
+        await session.abortTransaction();
+        reject(error);
+      }
+    });
+  }
+
+  getEnterpriseEntry(filter = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const entry = await Entry.findOne(filter)
+        .populate("orders")
+        .populate("transaction")
+        .populate(
+          "company",
+          "_id name email phoneNumber img countryCode country state"
+        );
+
+        if (!entry) {
+          reject({ code: 404, msg: "Entry not found" });
+        }
+
+        resolve(entry);
+      } catch (error) {
+        console.log(error);
+        reject({ code: 404, msg: MSG_TYPES.NOT_FOUND });
+        return;
+      }
+    });
   }
 }
 

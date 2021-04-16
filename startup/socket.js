@@ -38,6 +38,11 @@ io.on(SERVER_EVENTS.CONNECTION, async (socket) => {
       console.log("data", data);
       await entryInstance.getPoolAdminHistory(socket, data);
     });
+  } else if (socket.user.group === "enterprise") {
+    // subcribe individual users to their IDs
+    socket.join(String(socket.user.enterprise));
+
+    // socket.to(String(socket.user.id)).emit(SERVER_EVENTS.ASSIGN_ENTRY, await entryInstance.getAssignEntry(socket));
   }
 });
 

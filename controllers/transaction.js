@@ -166,6 +166,11 @@ exports.riderConfirmCashPayment = async (req, res, next) => {
     const riderInstance = new RiderService();
     const riderBasket = await riderInstance.getRiderBasket(req.user);
 
+     // send socket event to enterprise to enable confirm-pickup button(if payment is on pickup)
+     if(req.body.type === "pickup"){
+      await entrySub.updateEnterpriseEntry(entryId);
+    }
+
     JsonResponse(res, responseCode, responseMessage, riderBasket);
     return;
   } catch (error) {

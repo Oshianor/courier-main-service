@@ -6,6 +6,8 @@ const { SocketResponse } = require("../lib/apiResponse");
 const { SERVER_EVENTS, REDIS_CONFIG } = require("../constant/events");
 const { populateSingle, populateMultiple } = require("../services/aggregate");
 const socket = new io(REDIS_CONFIG, { key: "/sio" });
+const EntryService = require("../services/entry");
+
 
 class EntrySubscription {
   /**
@@ -28,7 +30,7 @@ class EntrySubscription {
       )
       .lean();
 
-      
+
       entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       resolve(entry);
@@ -226,7 +228,6 @@ class EntrySubscription {
       if (entry) {
         entry = await populateSingle(entry, "user", "name email phoneNumber img");
       }
-        
 
       resolve(SocketResponse(false, "ok", entry));
     });
@@ -235,20 +236,6 @@ class EntrySubscription {
   updateEntryAdmin(entryId) {
     return new Promise(async (resolve, reject) => {
       const entry = await this.getEntry(entryId);
-      // let entry = await Entry.findById(entryId)
-      //   .populate("transaction")
-      //   .populate("orders")
-      //   .populate(
-      //     "company",
-      //     "name email phoneNumber type logo address countryCode"
-      //   )
-      //   .populate(
-      //     "rider",
-      //     "name email phoneNumber countryCode onlineStatus latitude longitude img"
-      //   )
-      //   .lean();
-
-      // entry = await populateSingle(entry, "user", "name email phoneNumber countryCode img");
 
       socket
         .to("admin")
@@ -258,6 +245,22 @@ class EntrySubscription {
         );
 
       resolve(entry);
+    });
+  }
+
+  updateEnterpriseEntry(entryId) {
+    return new Promise(async (resolve, reject) => {
+      const entryInstance = new EntryService();
+      const entry = await entryInstance.getEnterpriseEntry({_id: entryId});
+
+      socket
+        .to(entry.enterprise)
+        .emit(
+          SERVER_EVENTS.UPDATE_ENTERPRISE_ENTRY,
+          SocketResponse(false, "ok", entry)
+        );
+
+      resolve(SocketResponse(false, "ok", entry));
     });
   }
 }

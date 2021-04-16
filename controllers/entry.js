@@ -31,6 +31,7 @@ const path = require("path");
 const axios = require("axios");
 const RiderService = require("../services/rider");
 const interstatePriceService = require("../services/interstatePriceService");
+const RiderSub = require("../subscription/rider");
 
 /**
  * Create an Entry
@@ -589,6 +590,11 @@ exports.riderArriveAtPickup = async (req, res, next) => {
     const riderInstance = new RiderService();
     const riderBasket = await riderInstance.getRiderBasket(req.user);
 
+    // send socket event to enterprise (if payment is on delivery)
+    if(entry.paymentMethod !== "cash" || entry.cashPaymentType !== "pickup"){
+      await entrySub.updateEnterpriseEntry(entry._id);
+    }
+
     JsonResponse(res, 200, MSG_TYPES.ARRIVED_AT_PICKUP, riderBasket);
     return;
   } catch (error) {
@@ -675,3 +681,38 @@ exports.getBulkShipments = async(req, res, next) => {
     next(error);
   }
 }
+
+/**
+ * Enterprise Confirm Rider pickup
+ * @param {*} req
+ * @param {*} res
+ */
+exports.enterpriseComfirmPickup = async (req, res, next) => {
+  try {
+
+    const entryInstance = new EntryService();
+    const { entry } = await entryInstance.enterpriseComfirmPickup(req.params.entryId);
+
+    // send fcm notification
+    // send nofication to the user device
+    // const title = "Driver has confirmed Pickup.";
+    // const notifyInstance = new NotifyService();
+    // await notifyInstance.textNotify(title, "", req.user.FCMToken);
+
+    // socket - send to admin for update
+    const entrySub = new EntrySubscription();
+    await entrySub.updateEntryAdmin(entry);
+
+    // socket - send riderBasket to rider
+    const riderSub = new RiderSub();
+    await riderSub.updateRiderBasket(entry.rider);
+
+    // socket - send updated entry to enterprise
+    await entrySub.updateEnterpriseEntry(entry._id);
+
+    JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
+    return;
+  } catch (error) {
+    next(error);
+  }
+};

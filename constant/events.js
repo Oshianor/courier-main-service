@@ -34,7 +34,15 @@ const SERVER_EVENTS = Object.freeze({
   // we dispatch this to the app to hide that order
   TAKEN_ENTRY: "takenEntry",
 
-  "UPDATE_ENTRY_ADMIN": "updateEntryAdmin"
+  // Updates an entry's data on the admin dashboard
+  UPDATE_ENTRY_ADMIN: "updateEntryAdmin",
+
+  // When a rider arrives at pickup/confirms cash payment on pickup
+  // we dispatch this to enable the "confirm entry pickup" button on enterprise
+  UPDATE_ENTERPRISE_ENTRY: "updateEnterpriseEntry",
+
+  // Updates a rider's basket on the rider app
+  UPDATE_RIDER_BASKET: "updateRiderBasket"
 });
 
 const CLIENT_EVENTS = Object.freeze({

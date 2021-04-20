@@ -204,6 +204,7 @@ class EnterpriseService {
           )
           .populate("rider", "name email phoneNumber countryCode img rating")
           .populate("orders")
+          .populate("transaction")
           .skip(skip)
           .limit(pageSize)
           .sort({ createdAt: "desc" });

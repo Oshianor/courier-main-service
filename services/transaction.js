@@ -322,15 +322,17 @@ class TransactionService {
           transactionData.txRef = trans.data.reference;
 
           msg = "Card Payment Successfully Processed";
-
+          transactionData.status = "approved";
         } else if (body.paymentMethod === "wallet") {
           await this.chargeWallet(enterprise, amount, user, null, shipment._id);
 
           msg = "Wallet Payment Successfully Processed";
+          transactionData.status = "approved";
         } else if (body.paymentMethod === "credit") {
           await this.chargeCredit(enterprise, amount, user, null, shipment._id);
 
           msg = "Payment Successfully Processed with line of Credit";
+          transactionData.status = "approved";
         } else {
           transactionData.status = "pending";
 
@@ -344,7 +346,6 @@ class TransactionService {
             ...body,
             enterprise: enterprise._id,
             user: user.id,
-            status: "approved",
             approvedAt: new Date(),
             entry: entry._id,
             shipment: shipment._id,

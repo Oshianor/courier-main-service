@@ -1984,6 +1984,7 @@ class EntryService {
 
         const entries = await Entry.find(filter)
         .populate("orders")
+        .populate("rider")
         .populate("transaction")
           .populate(
             "company",

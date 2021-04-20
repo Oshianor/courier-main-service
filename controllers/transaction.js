@@ -101,20 +101,24 @@ exports.bulkEntryTransaction = async (req, res, next) => {
     const transactionInstance = new TransactionService();
     const { shipment, msg } = await transactionInstance.createBulkEntryTransaction(req.body, req.user, req.enterprise);
 
-    // const entryInstance = new EntryService();
-    // const { riderIDS } = await entryInstance.silentlyAsignRiderToEntry(entry);
+    JsonResponse(res, 201, msg);
 
-    // if (riderIDS) {
-    //   // send entries to all the rider
-    //   const riderSub = new RiderSubscription();
-    //   await riderSub.sendRidersEntries(riderIDS, entry);
-    // }
+    for(let entry of shipment.entries){
+      // // send socket to admin for update
+      const entrySub = new EntrySubscription();
+      await entrySub.updateEntryAdmin(entry._id);
 
-    // // send socket to admin for update
-    // const entrySub = new EntrySubscription();
-    // await entrySub.updateEntryAdmin(entry._id);
+      const entryInstance = new EntryService();
+      const { riderIDS } = await entryInstance.silentlyAsignRiderToEntry(entry);
 
-    return JsonResponse(res, 201, msg);
+      if (riderIDS) {
+        // send entries to all the rider
+        const riderSub = new RiderSubscription();
+        await riderSub.sendRidersEntries(riderIDS, entry);
+      }
+    }
+
+
   } catch (error) {
     next(error);
   }
@@ -167,7 +171,7 @@ exports.riderConfirmCashPayment = async (req, res, next) => {
     const riderBasket = await riderInstance.getRiderBasket(req.user);
 
      // send socket event to enterprise to enable confirm-pickup button(if payment is on pickup)
-     if(req.body.type === "pickup"){
+    if(req.body.type === "pickup"){
       await entrySub.updateEnterpriseEntry(entryId);
     }
 

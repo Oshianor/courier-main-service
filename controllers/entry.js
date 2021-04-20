@@ -11,6 +11,7 @@ const {
   validateInterStateEntry,
   validateBulkEntry,
 } = require("../request/entry");
+const { validateGetEnterpriseEntries } = require("../request/enterprise");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate, UploadFileFromLocal, UploadFileFromBinary } = require("../utils");
@@ -665,10 +666,21 @@ exports.validateAddressBook = async (req, res, next) => {
 
 exports.getBulkShipments = async(req, res, next) => {
   try{
+    const { error } = validateGetEnterpriseEntries(req.query);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
     const { page, pageSize, skip } = paginate(req);
 
+    const filter = { enterprise: req.enterprise._id };
+    if(req.query.status === "pending"){
+      filter.status = "arrivedAtPickup"
+    }
+    if(req.query.status === "completed"){
+      filter.status = "pickedup"
+    }
+
     const entryInstance = new EntryService();
-    const {entries, total} = await entryInstance.getBulkShipments(req.enterprise._id, skip, pageSize);
+    const {entries, total} = await entryInstance.getBulkShipments(filter, skip, pageSize);
 
     const meta = {
       total,

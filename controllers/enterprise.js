@@ -1,5 +1,10 @@
 const EnterpriseService = require("../services/enterprise");
-const { validateEnterprise, validateMaintainer, validateEnterpriseUpdate } = require("../request/enterprise");
+const {
+  validateEnterprise,
+  validateMaintainer,
+  validateEnterpriseUpdate,
+  validateGetEnterpriseEntries
+} = require("../request/enterprise");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
 const { paginate } = require("../utils");
@@ -112,17 +117,30 @@ const statisticsInstance = new StatisticsService();
  */
 exports.allEntries = async (req, res, next) => {
   try {
+    const { error } = validateGetEnterpriseEntries(req.query);
+    if (error) return JsonResponse(res, 400, error.details[0].message);
+
     const { page, pageSize, skip } = paginate(req);
+    const filter = { enterprise: req.enterprise._id };
+
+    if(req.query.status === "pending"){
+      filter.status = "arrivedAtPickup"
+    }
+    if(req.query.status === "completed"){
+      filter.status = "pickedup"
+    }
 
     const { entries, total } = await enterpriseInstance.getAllEntries(
-      req.enterprise,
+      filter,
       skip,
       pageSize
     );
+
     const meta = {
       total,
       pagination: { pageSize, page },
     };
+
     JsonResponse(res, 200, MSG_TYPES.FETCHED, entries, meta);
   } catch (error) {
     next(error);

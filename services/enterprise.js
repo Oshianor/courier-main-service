@@ -190,14 +190,10 @@ class EnterpriseService {
    * @param {number} skip
    * @param {number} pageSize
    */
-  getAllEntries(enterprise, skip, pageSize) {
+  getAllEntries(filter, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
-        const queryFilter = {
-          enterprise: enterprise._id,
-        };
-
-        const entries = await Entry.find(queryFilter)
+        const entries = await Entry.find(filter)
           .populate(
             "company",
             "name email phoneNumber countryCode img state address rating"
@@ -209,7 +205,7 @@ class EnterpriseService {
           .limit(pageSize)
           .sort({ createdAt: "desc" });
 
-        const total = await Entry.countDocuments(queryFilter);
+        const total = await Entry.countDocuments(filter);
 
         resolve({ entries, total });
       } catch (error) {

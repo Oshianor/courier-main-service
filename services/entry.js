@@ -1974,11 +1974,11 @@ class EntryService {
     });
   }
 
-  getBulkShipments(enterpriseId, skip, pageSize) {
+  getBulkShipments(filter, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try{
-        const filter = {
-          enterprise: enterpriseId,
+        filter = {
+          ...filter,
           shipment: { $ne : null }
         };
 

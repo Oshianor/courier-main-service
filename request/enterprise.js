@@ -50,8 +50,17 @@ function validateMaintainer(body) {
 }
 
 
+function validateGetEnterpriseEntries(body){
+  const schema = Joi.object({
+    status: Joi.string().valid("pending","completed").optional()
+  }).unknown(true);
+
+  return schema.validate(body);
+}
+
 module.exports = {
   validateEnterprise,
   validateMaintainer,
-  validateEnterpriseUpdate
+  validateEnterpriseUpdate,
+  validateGetEnterpriseEntries
 };

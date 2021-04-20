@@ -193,6 +193,10 @@ class EnterpriseService {
   getAllEntries(filter, skip, pageSize) {
     return new Promise(async (resolve, reject) => {
       try {
+        filter = {
+          ...filter,
+          shipment: null
+        }
         const entries = await Entry.find(filter)
           .populate(
             "company",

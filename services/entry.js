@@ -2098,6 +2098,7 @@ class EntryService {
         const entry = await Entry.findOne(filter)
         .populate("orders")
         .populate("transaction")
+        .populate("rider")
         .populate(
           "company",
           "_id name email phoneNumber img countryCode country state"

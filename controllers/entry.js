@@ -720,7 +720,7 @@ exports.enterpriseComfirmPickup = async (req, res, next) => {
     await riderSub.updateRiderBasket(entry.rider);
 
     // socket - send updated entry to enterprise
-    await entrySub.updateEnterpriseEntry(entry._id);
+   // await entrySub.updateEnterpriseEntry(entry._id);
 
     JsonResponse(res, 200, MSG_TYPES.PICKED_UP);
     return;

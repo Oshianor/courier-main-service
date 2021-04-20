@@ -124,7 +124,7 @@ exports.allEntries = async (req, res, next) => {
     const filter = { enterprise: req.enterprise._id };
 
     if(req.query.status === "pending"){
-      filter.status = "arrivedAtPickup"
+      filter.status = "arrivedAtPickup";
     }
     if(req.query.status === "completed"){
       filter.status = "pickedup"

@@ -260,6 +260,8 @@ class EntrySubscription {
           SocketResponse(false, "ok", entry)
         );
 
+      console.log('[updateEnterpriseEntry] fired');
+
       resolve(SocketResponse(false, "ok", entry));
     });
   }

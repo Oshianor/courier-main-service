@@ -11,6 +11,7 @@ const redis = require("redis");
 const axios = require("axios");
 const { REDIS_CONFIG } = require("../constant/events")
 const redisClient = redis.createClient(REDIS_CONFIG);
+const Transaction = require("../models/transaction");
 
 redisClient.on("error", (error) => {
   console.log('Redis Client Error: ', error);
@@ -211,6 +212,22 @@ const calculateInstantPrice = (cost, instantPricing) => {
   return amount;
 }
 
+const filterUnpaidCashOnPickUpEntries = async (entries, total) => {
+  for(let entry of entries){
+    if(entry.paymentMethod === "cash" && entry.cashPaymentType === "pickup"){
+      const entryTransactions = await Transaction.find({entry: entry._id});
+
+      if(entryTransactions[0] && entryTransactions[0].status !== "approved"){
+        const entryIndex = entries.findIndex((currEntry) => entry._id.toString() === currEntry._id.toString());
+        entries.splice(entryIndex, 1);
+        total = total - 1;
+      }
+    }
+  }
+
+  return { filteredEntries: entries, filteredTotal: total };
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -225,5 +242,6 @@ module.exports = {
   redisClient,
   sendOTPByTermii,
   convertToDailyDataArray,
-  calculateInstantPrice
+  calculateInstantPrice,
+  filterUnpaidCashOnPickUpEntries
 };

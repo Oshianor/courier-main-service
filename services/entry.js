@@ -18,6 +18,7 @@ const {
   GenerateOTP,
   Mailer,
   UploadFileFromBase64,
+  filterUnpaidCashOnPickUpEntries
 } = require("../utils");
 const OTPCode = require("../templates/otpCode");
 const { MSG_TYPES } = require("../constant/types");
@@ -1982,7 +1983,7 @@ class EntryService {
           shipment: { $ne : null }
         };
 
-        const entries = await Entry.find(filter)
+        let entries = await Entry.find(filter)
         .populate("orders")
         .populate("rider")
         .populate("transaction")
@@ -1994,9 +1995,17 @@ class EntryService {
         .limit(pageSize)
         .sort({ createdAt: "desc" });
 
-        const total = await Entry.countDocuments(filter);
+        let total = await Entry.countDocuments(filter);
 
-        resolve({entries, total});
+        // For enterprise pickup confirmation
+        // Filter out Cash on Pickup entries that haven't been paid for.
+        if(filter.status === "arrivedAtPickup"){
+          const { filteredEntries, filteredTotal } = await filterUnpaidCashOnPickUpEntries(entries, total);
+          entries = filteredEntries;
+          total = filteredTotal;
+        }
+
+        resolve({ entries, total });
       } catch(error){
         reject({ code: 500, msg: MSG_TYPES.SERVER_ERROR });
       }

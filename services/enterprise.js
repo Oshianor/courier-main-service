@@ -5,6 +5,7 @@ const {
   UploadFileFromBinary,
   UploadFileFromBase64,
   convertToMonthlyDataArray,
+  filterUnpaidCashOnPickUpEntries
 } = require("../utils");
 const { populateMultiple } = require("../services/aggregate");
 const UserService = require("./user");
@@ -197,7 +198,7 @@ class EnterpriseService {
           ...filter,
           shipment: null
         }
-        const entries = await Entry.find(filter)
+        let entries = await Entry.find(filter)
           .populate(
             "company",
             "name email phoneNumber countryCode img state address rating"
@@ -209,7 +210,15 @@ class EnterpriseService {
           .limit(pageSize)
           .sort({ createdAt: "desc" });
 
-        const total = await Entry.countDocuments(filter);
+        let total = await Entry.countDocuments(filter);
+
+        // For enterprise pickup confirmation
+        // Filter out Cash on Pickup entries that haven't been paid for.
+        if(filter.status === "arrivedAtPickup"){
+          const { filteredEntries, filteredTotal } = await filterUnpaidCashOnPickUpEntries(entries, total);
+          entries = filteredEntries;
+          total = filteredTotal;
+        }
 
         resolve({ entries, total });
       } catch (error) {

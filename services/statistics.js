@@ -53,8 +53,6 @@ class StatisticsService {
         monthlySuccessfulDeliveries = convertToMonthlyDataArray(monthlySuccessfulDeliveries, 'numberOfDeliveries');
         monthlyFailedDeliveries = convertToMonthlyDataArray(monthlyFailedDeliveries, 'numberOfDeliveries');
 
-
-        console.log(filter);
         let monthlyRevenues = await Transaction.aggregate([
           { $match: {...filter, status: "approved"} },
           { $group:{ _id: {$month: "$approvedAt"}, revenue: {$sum: "$amount"}} },

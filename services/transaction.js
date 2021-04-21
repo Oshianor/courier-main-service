@@ -39,6 +39,7 @@ class TransactionService {
           _id: body.entry,
           status: "request",
           user: user.id,
+          shipment: null
         })
           .populate("orders")
           .select("-metaData");
@@ -69,8 +70,13 @@ class TransactionService {
         }
 
         let amount = parseFloat(entry.TEC);
+
+        // Calculate instant price amounts
         if(body.pickupType === "instant"){
-          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+          amount = 0;
+          for(let order of entry.orders){
+            amount += calculateInstantPrice(order.estimatedCost, entry.instantPricing);
+          }
         }
 
         if (body.paymentMethod === "card") {
@@ -144,6 +150,7 @@ class TransactionService {
           _id: body.entry,
           status: "request",
           user: user.id,
+          shipment: null
         })
           .populate("orders")
           .populate("user", "name email phoneNumber countryCode")
@@ -152,7 +159,7 @@ class TransactionService {
         if (!entry) {
           reject({
             code: 404,
-            msg: "Entry transaction already processed.",
+            msg: "Entry not found or already processed.",
           });
           return;
         }
@@ -193,8 +200,13 @@ class TransactionService {
         }
 
         let amount = parseFloat(entry.TEC);
+
+        // Calculate instant price amounts
         if(body.pickupType === "instant"){
-          amount = calculateInstantPrice(entry.TEC, entry.instantPricing);
+          amount = 0;
+          for(let order of entry.orders){
+            amount += calculateInstantPrice(order.estimatedCost, entry.instantPricing);
+          }
         }
 
         if (body.paymentMethod === "card") {
@@ -284,7 +296,8 @@ class TransactionService {
           match: { status: "request", user: user.id },
           populate: "orders",
           select: "-metaData"
-        });
+        }).lean()
+
         if(!shipment){
           return reject({code: 404, msg: "Shipment not found"});
         }
@@ -309,27 +322,37 @@ class TransactionService {
         let msg;
         const transactionData = {};
 
-        let amount = parseFloat(shipment.TEC);
+        let shipmentAmount = parseFloat(shipment.TEC);
+
+        // Calculate instant price amounts
         if(body.pickupType === "instant"){
-          amount = calculateInstantPrice(shipment.TEC, shipment.instantPricing);
+          shipmentAmount = 0;
+          for(let entry of shipment.entries){
+            let entryAmount = 0;
+            for(let order of entry.orders){
+              entryAmount = entryAmount + calculateInstantPrice(order.estimatedCost, shipment.instantPricing);
+            }
+            entry.TEC = entryAmount;
+            shipmentAmount = shipmentAmount + entryAmount;
+          }
         }
 
         if (body.paymentMethod === "card") {
           const card = await cardInstance.get({ _id: body.card, user: user.id });
 
-          const { trans } = await this.chargeCard(card, amount);
+          const { trans } = await this.chargeCard(card, shipmentAmount);
 
           transactionData.txRef = trans.data.reference;
 
           msg = "Card Payment Successfully Processed";
           transactionData.status = "approved";
         } else if (body.paymentMethod === "wallet") {
-          await this.chargeWallet(enterprise, amount, user, null, shipment._id);
+          await this.chargeWallet(enterprise, shipmentAmount, user, null, shipment._id);
 
           msg = "Wallet Payment Successfully Processed";
           transactionData.status = "approved";
         } else if (body.paymentMethod === "credit") {
-          await this.chargeCredit(enterprise, amount, user, null, shipment._id);
+          await this.chargeCredit(enterprise, shipmentAmount, user, null, shipment._id);
 
           msg = "Payment Successfully Processed with line of Credit";
           transactionData.status = "approved";
@@ -359,7 +382,6 @@ class TransactionService {
           const transactionIds = createdTransactions.map((trx) => trx._id);
           shipmentTransactionIds = [...shipmentTransactionIds, ...transactionIds];
 
-          let entryAmount = parseFloat(entry.TEC);
           await Entry.updateOne(
             { _id: entry._id },
             {
@@ -368,7 +390,7 @@ class TransactionService {
               pickupType: body.pickupType,
               status: "companyAccepted",
               approvedAt: new Date(),
-              TEC: entryAmount,
+              TEC: entry.TEC,
               paymentMethod: body.paymentMethod,
               cashPaymentType: body.cashPaymentType
             },
@@ -388,7 +410,10 @@ class TransactionService {
           );
         }
 
-        await Shipment.updateOne({_id: shipment._id}, {transactions: shipmentTransactionIds});
+        await Shipment.updateOne({ _id: shipment._id },{
+          transactions: shipmentTransactionIds,
+          TEC: shipmentAmount
+        }, { session });
 
         await session.commitTransaction();
         session.endSession();
@@ -478,7 +503,10 @@ class TransactionService {
           const newTransaction = new Transaction(transactionData);
 
           const createdTransaction = await newTransaction.save({ session });
-          await order.updateOne({ transaction: newTransaction._id }, { session });
+          await Order.updateOne({ _id: order._id },{
+            transaction: newTransaction._id,
+            estimatedCost: orderCost
+          }, { session });
 
           transactions.push(createdTransaction);
         }

@@ -1881,7 +1881,11 @@ class EntryService {
         // update the status to delivery updated
         await Entry.updateOne(
           { _id: body.entry },
-          { status: "pickedup", OTPCode: null },
+          {
+            status: "pickedup",
+            OTPCode: null,
+            pickupDate: new Date()
+          },
           { session }
         );
         // update all order status
@@ -2067,7 +2071,8 @@ class EntryService {
           {
             status: "pickedup",
             OTPCode: null,
-            pickupConfirmedBy: "enterprise"
+            pickupConfirmedBy: "enterprise",
+            pickupDate: new Date()
           },
           { session }
         );

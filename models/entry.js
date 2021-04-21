@@ -246,7 +246,11 @@ const entrySchema = mongoose.Schema(
       type: String,
       enum: ["rider","enterprise"],
       default: "rider"
-    }
+    },
+    pickupDate: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

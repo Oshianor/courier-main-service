@@ -228,6 +228,13 @@ const filterUnpaidCashOnPickUpEntries = async (entries, total) => {
   return { filteredEntries: entries, filteredTotal: total };
 }
 
+const chunkArray = (array, chunkSize) => {
+  return Array(Math.ceil(array.length / chunkSize))
+    .fill()
+    .map((_, index) => index * chunkSize)
+    .map(begin => array.slice(begin, begin + chunkSize));
+}
+
 module.exports = {
   GenerateToken,
   GenerateOTP,
@@ -243,5 +250,6 @@ module.exports = {
   sendOTPByTermii,
   convertToDailyDataArray,
   calculateInstantPrice,
-  filterUnpaidCashOnPickUpEntries
+  filterUnpaidCashOnPickUpEntries,
+  chunkArray
 };

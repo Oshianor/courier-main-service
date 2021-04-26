@@ -14,7 +14,7 @@ const {
 const { validateGetEnterpriseEntries } = require("../request/enterprise");
 const { JsonResponse } = require("../lib/apiResponse");
 const { MSG_TYPES } = require("../constant/types");
-const { paginate, UploadFileFromLocal, UploadFileFromBinary } = require("../utils");
+const { paginate, UploadFileFromLocal, UploadFileFromBinary, chunkArray } = require("../utils");
 const CountryService = require("../services/country");
 const EntryService = require("../services/entry");
 const DPService = require("../services/distancePrice");
@@ -145,13 +145,33 @@ exports.bulkEntry = async (req, res, next) => {
       deliveryLocation.address = addresses.find((address) => address._id === deliveryLocation.addressId);
     }
 
-    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
-    const deliveryLongLats = req.body.delivery.map((delivery) => [
-      delivery.address.location.coordinates[0],
-      delivery.address.location.coordinates[1]
-    ]);
+    // Chunk delivery addresses into arrays of 25 addresses
+    // And get distance data for each 25
+    // This chunking is due to our distance matrix limit of 25 destinations
+    const chunkedDeliveries = chunkArray(req.body.delivery, 25);
+    let distanceData = {};
+    const distanceDataElements = [];
+    const destinationAddresses = [];
 
-    const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
+    const pickupLongLat = [req.body.pickupLongitude, req.body.pickupLatitude];
+
+    for(let i = 0; i < chunkedDeliveries.length; i++){
+      const deliveryLongLats = chunkedDeliveries[i].map((delivery) => [
+        delivery.address.location.coordinates[0],
+        delivery.address.location.coordinates[1]
+      ]);
+
+      const distance = await entryInstance.getDistanceMetrix(pickupLongLat, deliveryLongLats);
+
+      distanceDataElements.push(distance.data.rows[0].elements);
+      destinationAddresses.push(distance.data.destination_addresses);
+      if(i === 0){
+        distanceData = distance.data;
+      }
+    }
+
+    distanceData.rows[0].elements = distanceDataElements.flat();
+    distanceData.destination_addresses = destinationAddresses.flat();
 
     // Image upload
     if (typeof req.body.img !== "undefined") {
@@ -159,7 +179,7 @@ exports.bulkEntry = async (req, res, next) => {
       req.body.img = images;
     }
 
-    const orderedDeliveries = await entryInstance.sortOrdersByDistance(req.body.delivery, distance.data);
+    const orderedDeliveries = await entryInstance.sortOrdersByDistance(req.body.delivery, distanceData);
 
     req.body.deliveries = orderedDeliveries;
     req.body.enterprise = req.enterprise._id;
@@ -173,7 +193,7 @@ exports.bulkEntry = async (req, res, next) => {
       req.body.company = company;
     }
 
-    const entriesData = await entryInstance.calculateBulkEntry(req.body, req.user, distance.data);
+    const entriesData = await entryInstance.calculateBulkEntry(req.body, req.user, distanceData);
 
     const shipment = await entryInstance.createBulkEntries(entriesData, req.body.parentEntry);
 

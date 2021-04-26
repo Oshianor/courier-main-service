@@ -507,7 +507,6 @@ class EntryService {
     return new Promise(async(resolve, reject) => {
       try{
         for(let i = 0; i < deliveries.length; i++){
-          console.log('Supposed distance => ', distance.rows[0].elements[i]);
           deliveries[i].distance = distance.rows[0].elements[i];
           deliveries[i].deliveryAddress = distance.destination_addresses[i];
         }

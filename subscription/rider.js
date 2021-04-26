@@ -46,7 +46,7 @@ class RiderSubscription {
   }
 
 
-  updateRiderBasket(riderId) {
+  entryPickupConfirmed(riderId) {
     return new Promise(async (resolve, reject) => {
       const riderInstance = new RiderService();
       const rider = { id: riderId };
@@ -55,7 +55,7 @@ class RiderSubscription {
       socket
         .to(riderId)
         .emit(
-          SERVER_EVENTS.UPDATE_RIDER_BASKET,
+          SERVER_EVENTS.ENTRY_PICKUP_CONFIRMED,
           SocketResponse(false, "ok", riderBasket)
         );
 

@@ -735,9 +735,9 @@ exports.enterpriseComfirmPickup = async (req, res, next) => {
     const entrySub = new EntrySubscription();
     await entrySub.updateEntryAdmin(entry);
 
-    // socket - send riderBasket to rider
+    // socket - send updated riderBasket to rider
     const riderSub = new RiderSub();
-    await riderSub.updateRiderBasket(entry.rider);
+    await riderSub.entryPickupConfirmed(entry.rider);
 
     // socket - send updated entry to enterprise
    // await entrySub.updateEnterpriseEntry(entry._id);

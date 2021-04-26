@@ -42,7 +42,7 @@ const SERVER_EVENTS = Object.freeze({
   UPDATE_ENTERPRISE_ENTRY: "updateEnterpriseEntry",
 
   // Updates a rider's basket on the rider app
-  UPDATE_RIDER_BASKET: "updateRiderBasket"
+  ENTRY_PICKUP_CONFIRMED: "entryPickupConfirmed"
 });
 
 const CLIENT_EVENTS = Object.freeze({

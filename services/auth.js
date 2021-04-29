@@ -347,8 +347,7 @@ class AuthSerivice {
 
         const user = await UserTypeModel.findOne({
           email: email,
-          verified: true,
-          status: "active"
+          verified: true
         });
 
         if (!user) {
@@ -410,8 +409,7 @@ class AuthSerivice {
 
         const user = await UserTypeModel.findOne({
           email: email,
-          verified: true,
-          status: "active",
+          verified: true
         });
 
         if (!user) {

@@ -4,16 +4,24 @@ const moment = require("moment")
 // https://github.com/usecanvas/email-templates
 
 Verification = (token, email, type) => {
-  let link;
-  if (type === "company") {
-    link = `${config.get(
-      "application.logisticsService"
-    )}/api/v1/auth/verify/company?token=${token}&email=${email}`;
-  } else {
-    link = `${config.get(
-      "application.logisticsSite"
-    )}/verify-account?t=${token}&e=${email}&type=${type}`;
+
+  const urlConfig = {
+    rider: {
+      path: "set-password",
+      source: ""
+    },
+    admin: {
+      path: "set-password",
+      source: config.get("application.adminSite")
+    },
+    company: {
+      path: "set-company-password",
+      source: config.get("application.companySite")
+    },
   }
+
+  const accountSite = config.get("application.accountSite");
+  const link = `${accountSite}/${urlConfig[type].path}?t=${token}&e=${email}&type=${type}&s=${urlConfig[type].source}`;
 
   return `
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"

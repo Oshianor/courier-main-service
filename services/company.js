@@ -33,26 +33,26 @@ class CompanyService {
           reject({ code: 404, msg: "Account already exist." });
           return;
         }
-        if (!files.cac) {
+        if (!files?.cac) {
           reject({ code: 404, msg: "CAC Document is required" });
           return;
         }
-        if (!files.poi) {
+        if (!files?.poi) {
           reject({ code: 404, msg: "Proof of Identity Document is required" });
           return;
         }
-        if (!files.poa) {
+        if (!files?.poa) {
           reject({ code: 404, msg: "Proof of Address Document is required" });
           return;
         }
-        if (!files.insuranceCert) {
+        if (!files?.insuranceCert) {
           reject({
             code: 404,
             msg: "Insurance Certificate Document is required",
           });
           return;
         }
-        if (!files.logo) {
+        if (!files?.logo) {
           reject({ code: 404, msg: "Company Logo is required" });
           return;
         }

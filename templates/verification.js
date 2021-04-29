@@ -19,23 +19,9 @@ Verification = (token, email, type) => {
       source: config.get("application.companySite")
     },
   }
-  // let link;
-  // let path = "";
-  // let source = "";
+
   const accountSite = config.get("application.accountSite");
-  // if(["rider","admin"].includes(type)){
-  //   path = "set-password";
-  // }
   const link = `${accountSite}/${urlConfig[type].path}?t=${token}&e=${email}&type=${type}&s=${urlConfig[type].source}`;
-  // if (type === "company") {
-  //   link = `${config.get(
-  //     "application.logisticsService"
-  //   )}/api/v1/auth/verify/company?token=${token}&email=${email}`;
-  // } else {
-  //   link = `${config.get(
-  //     "application.logisticsSite"
-  //   )}/verify-account?t=${token}&e=${email}&type=${type}`;
-  // }
 
   return `
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office"

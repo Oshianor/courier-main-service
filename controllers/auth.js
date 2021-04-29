@@ -256,7 +256,7 @@ exports.companyVerify = async (req, res, next) => {
     });
 
     // JsonResponse(res, null, MSG_TYPES.AWAIT_ADMIN);
-    return res.send(MSG_TYPES.AWAIT_ADMIN);
+    return res.send({msg: MSG_TYPES.AWAIT_ADMIN});
   } catch (error) {
     console.log(error);
     next(error)

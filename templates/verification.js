@@ -10,14 +10,14 @@ Verification = (token, email, type) => {
       path: "set-password",
       source: ""
     },
-    company: {
-      path: "set-password",
-      source: config.get("application.companySite")
-    },
     admin: {
       path: "set-password",
       source: config.get("application.adminSite")
-    }
+    },
+    company: {
+      path: "set-company-password",
+      source: config.get("application.companySite")
+    },
   }
   // let link;
   // let path = "";

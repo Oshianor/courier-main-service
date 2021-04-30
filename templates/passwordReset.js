@@ -1,7 +1,7 @@
 const config = require("config");
 
 // https://github.com/usecanvas/email-templates
-const PasswordReset = (token, email, name, domain = config.get("application.website")) => {
+const PasswordReset = (token, email, name) => {
   const link = `https://logistics-comp.netlify.app/reset-password?t=${token}&e=${email}`;
 
   return `
